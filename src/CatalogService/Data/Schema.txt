@@ -1,0 +1,86 @@
+-- ==========================================================
+-- 2. Make Table
+-- ==========================================================
+CREATE TABLE [dbo].[Make] (
+    [MakeID] INT IDENTITY(1,1) PRIMARY KEY,
+    [MakeName] NVARCHAR(100) NOT NULL UNIQUE
+);
+GO
+
+
+-- ==========================================================
+-- 3. Model Table
+-- ==========================================================
+CREATE TABLE [dbo].[Model] (
+    [ModelID] INT IDENTITY(1,1) PRIMARY KEY,
+    [MakeID] INT NOT NULL,
+    [ModelName] NVARCHAR(100) NOT NULL,
+    CONSTRAINT FK_Model_Make FOREIGN KEY ([MakeID])
+        REFERENCES [dbo].[Make]([MakeID]) ON DELETE CASCADE
+);
+GO
+
+
+-- ==========================================================
+-- 4. Generation Table
+-- ==========================================================
+CREATE TABLE [dbo].[Generation] (
+    [GenerationID] INT IDENTITY(1,1) PRIMARY KEY,
+    [ModelID] INT NOT NULL,
+    [GenerationName] NVARCHAR(100) NOT NULL,
+    [StartYear] SMALLINT NULL,
+    [EndYear] SMALLINT NULL,
+    CONSTRAINT FK_Generation_Model FOREIGN KEY ([ModelID])
+        REFERENCES [dbo].[Model]([ModelID]) ON DELETE CASCADE
+);
+GO
+
+
+-- ==========================================================
+-- 5. Variant Table
+-- ==========================================================
+CREATE TABLE [dbo].[Variant] (
+    [VariantID] INT IDENTITY(1,1) PRIMARY KEY,
+    [GenerationID] INT NOT NULL,
+    [VariantName] NVARCHAR(100) NOT NULL,
+    [Engine] NVARCHAR(100) NULL,
+    [Transmission] NVARCHAR(50) NULL,
+    [FuelType] NVARCHAR(50) NULL,
+    CONSTRAINT FK_Variant_Generation FOREIGN KEY ([GenerationID])
+        REFERENCES [dbo].[Generation]([GenerationID]) ON DELETE CASCADE
+);
+GO
+
+
+-- ==========================================================
+-- 7. Feature Table
+-- ==========================================================
+CREATE TABLE [dbo].[Feature] (
+    [FeatureID] INT IDENTITY(1,1) PRIMARY KEY,
+    [FeatureName] NVARCHAR(100) NOT NULL UNIQUE,
+    [Description] NVARCHAR(250) NULL
+);
+GO
+
+
+-- ==========================================================
+-- 8. VariantFeature (Mapping Table)
+-- ==========================================================
+-- Purpose: Defines default features available for each variant.
+--          A many-to-many relationship between Variant and Feature.
+-- ==========================================================
+CREATE TABLE [dbo].[VariantFeature] (
+    [VariantID] INT NOT NULL,
+    [FeatureID] INT NOT NULL,
+    [IsStandard] BIT NOT NULL DEFAULT(1), -- standard (1) or optional (0)
+    [AddedDate] DATETIME NOT NULL DEFAULT(GETDATE()),
+
+    CONSTRAINT PK_VariantFeature PRIMARY KEY ([VariantID], [FeatureID]),
+
+    CONSTRAINT FK_VariantFeature_Variant FOREIGN KEY ([VariantID])
+        REFERENCES [dbo].[Variant]([VariantID]) ON DELETE CASCADE,
+
+    CONSTRAINT FK_VariantFeature_Feature FOREIGN KEY ([FeatureID])
+        REFERENCES [dbo].[Feature]([FeatureID]) ON DELETE CASCADE
+);
+GO

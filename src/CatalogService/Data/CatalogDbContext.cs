@@ -1,0 +1,90 @@
+using CatalogService.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace CatalogService.Data;
+
+public class CatalogDbContext(DbContextOptions options) : DbContext(options)
+{
+    public DbSet<Make> Makes => Set<Make>();
+    public DbSet<Model> Models => Set<Model>();
+    public DbSet<Generation> Generations => Set<Generation>();
+    public DbSet<Variant> Variants => Set<Variant>();
+    public DbSet<Feature> Features => Set<Feature>();
+    public DbSet<VariantFeature> VariantFeatures => Set<VariantFeature>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Make>(entity =>
+        {
+            entity.ToTable("Makes");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            entity.HasIndex(x => x.Name).IsUnique();
+        });
+
+        modelBuilder.Entity<Model>(entity =>
+        {
+            entity.ToTable("Models");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            entity.HasOne(x => x.Make)
+                .WithMany(x => x.Models)
+                .HasForeignKey(x => x.MakeId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Generation>(entity =>
+        {
+            entity.ToTable("Generations");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            entity.HasOne(x => x.Model)
+                .WithMany(x => x.Generations)
+                .HasForeignKey(x => x.ModelId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Variant>(entity =>
+        {
+            entity.ToTable("Variants");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.Engine).HasMaxLength(100);
+            entity.Property(x => x.Transmission).HasMaxLength(50);
+            entity.Property(x => x.FuelType).HasMaxLength(50);
+            entity.HasOne(x => x.Generation)
+                .WithMany(x => x.Variants)
+                .HasForeignKey(x => x.GenerationId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Feature>(entity =>
+        {
+            entity.ToTable("Features");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            entity.HasIndex(x => x.Name).IsUnique();
+            entity.Property(x => x.Description).HasMaxLength(250);
+        });
+
+        modelBuilder.Entity<VariantFeature>(entity =>
+        {
+            entity.ToTable("VariantFeatures");
+            entity.HasKey(x => new { x.VariantId, x.FeatureId });
+            entity.Property(x => x.IsStandard).HasDefaultValue(true);
+            entity.Property(x => x.AddedDate).HasDefaultValueSql("now()");
+
+            entity.HasOne(x => x.Variant)
+                .WithMany(x => x.VariantFeatures)
+                .HasForeignKey(x => x.VariantId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Feature)
+                .WithMany(x => x.VariantFeatures)
+                .HasForeignKey(x => x.FeatureId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+}
