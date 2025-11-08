@@ -15,6 +15,15 @@ builder.Services.AddDbContext<CatalogDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
+// CORS - allow all (dev-friendly; tighten for production)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", policy =>
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
+
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
@@ -26,7 +35,14 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+// Enable CORS for dev
+app.UseCors("CorsPolicy");
+
+// Avoid redirecting to HTTPS if not configured (dev profile is HTTP-only)
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthorization();
 

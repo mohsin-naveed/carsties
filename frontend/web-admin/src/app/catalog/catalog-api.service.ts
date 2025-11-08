@@ -1,0 +1,75 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+// DTO interfaces mirroring backend records
+export interface MakeDto { id: number; name: string; }
+export interface CreateMakeDto { name: string; }
+export interface UpdateMakeDto { name?: string; }
+
+export interface ModelDto { id: number; name: string; makeId: number; }
+export interface CreateModelDto { name: string; makeId: number; }
+export interface UpdateModelDto { name?: string; makeId?: number; }
+
+export interface GenerationDto { id: number; name: string; startYear?: number; endYear?: number; modelId: number; }
+export interface CreateGenerationDto { name: string; modelId: number; startYear?: number; endYear?: number; }
+export interface UpdateGenerationDto { name?: string; modelId?: number; startYear?: number; endYear?: number; }
+
+export interface VariantDto { id: number; name: string; engine?: string; transmission?: string; fuelType?: string; generationId: number; }
+export interface CreateVariantDto { name: string; generationId: number; engine?: string; transmission?: string; fuelType?: string; }
+export interface UpdateVariantDto { name?: string; generationId?: number; engine?: string; transmission?: string; fuelType?: string; }
+
+export interface FeatureDto { id: number; name: string; description?: string; }
+export interface CreateFeatureDto { name: string; description?: string; }
+export interface UpdateFeatureDto { name?: string; description?: string; }
+
+export interface VariantFeatureDto { variantId: number; featureId: number; isStandard: boolean; addedDate: string; }
+export interface CreateVariantFeatureDto { variantId: number; featureId: number; isStandard: boolean; }
+export interface UpdateVariantFeatureDto { isStandard?: boolean; }
+
+@Injectable({ providedIn: 'root' })
+export class CatalogApiService {
+  private readonly http = inject(HttpClient);
+  // Use empty base; environment-based interceptor will prefix with the API base (e.g., http://localhost:7005/api)
+  private readonly baseUrl = '';
+
+  // Makes
+  getMakes(): Observable<MakeDto[]> { return this.http.get<MakeDto[]>(`${this.baseUrl}/makes`); }
+  getMake(id: number): Observable<MakeDto> { return this.http.get<MakeDto>(`${this.baseUrl}/makes/${id}`); }
+  createMake(dto: CreateMakeDto): Observable<MakeDto> { return this.http.post<MakeDto>(`${this.baseUrl}/makes`, dto); }
+  updateMake(id: number, dto: UpdateMakeDto) { return this.http.put(`${this.baseUrl}/makes/${id}`, dto); }
+  deleteMake(id: number) { return this.http.delete(`${this.baseUrl}/makes/${id}`); }
+
+  // Models
+  getModels(makeId?: number): Observable<ModelDto[]> { const params: any = {}; if (makeId) params.makeId = makeId; return this.http.get<ModelDto[]>(`${this.baseUrl}/models`, { params }); }
+  createModel(dto: CreateModelDto): Observable<ModelDto> { return this.http.post<ModelDto>(`${this.baseUrl}/models`, dto); }
+  updateModel(id: number, dto: UpdateModelDto) { return this.http.put(`${this.baseUrl}/models/${id}`, dto); }
+  deleteModel(id: number) { return this.http.delete(`${this.baseUrl}/models/${id}`); }
+
+  // Generations
+  getGenerations(modelId?: number): Observable<GenerationDto[]> { const params: any = {}; if (modelId) params.modelId = modelId; return this.http.get<GenerationDto[]>(`${this.baseUrl}/generations`, { params }); }
+  createGeneration(dto: CreateGenerationDto): Observable<GenerationDto> { return this.http.post<GenerationDto>(`${this.baseUrl}/generations`, dto); }
+  updateGeneration(id: number, dto: UpdateGenerationDto) { return this.http.put(`${this.baseUrl}/generations/${id}`, dto); }
+  deleteGeneration(id: number) { return this.http.delete(`${this.baseUrl}/generations/${id}`); }
+
+  // Variants
+  getVariants(generationId?: number): Observable<VariantDto[]> { const params: any = {}; if (generationId) params.generationId = generationId; return this.http.get<VariantDto[]>(`${this.baseUrl}/variants`, { params }); }
+  createVariant(dto: CreateVariantDto): Observable<VariantDto> { return this.http.post<VariantDto>(`${this.baseUrl}/variants`, dto); }
+  updateVariant(id: number, dto: UpdateVariantDto) { return this.http.put(`${this.baseUrl}/variants/${id}`, dto); }
+  deleteVariant(id: number) { return this.http.delete(`${this.baseUrl}/variants/${id}`); }
+
+  // Features
+  getFeatures(): Observable<FeatureDto[]> { return this.http.get<FeatureDto[]>(`${this.baseUrl}/features`); }
+  createFeature(dto: CreateFeatureDto): Observable<FeatureDto> { return this.http.post<FeatureDto>(`${this.baseUrl}/features`, dto); }
+  updateFeature(id: number, dto: UpdateFeatureDto) { return this.http.put(`${this.baseUrl}/features/${id}`, dto); }
+  deleteFeature(id: number) { return this.http.delete(`${this.baseUrl}/features/${id}`); }
+
+  // VariantFeatures
+  getVariantFeatures(variantId?: number, featureId?: number): Observable<VariantFeatureDto[]> {
+    const params: any = {}; if (variantId) params.variantId = variantId; if (featureId) params.featureId = featureId;
+  return this.http.get<VariantFeatureDto[]>(`${this.baseUrl}/variantfeatures`, { params });
+  }
+  createVariantFeature(dto: CreateVariantFeatureDto): Observable<VariantFeatureDto> { return this.http.post<VariantFeatureDto>(`${this.baseUrl}/variantfeatures`, dto); }
+  updateVariantFeature(variantId: number, featureId: number, dto: UpdateVariantFeatureDto) { return this.http.put(`${this.baseUrl}/variantfeatures/${variantId}/${featureId}`, dto); }
+  deleteVariantFeature(variantId: number, featureId: number) { return this.http.delete(`${this.baseUrl}/variantfeatures/${variantId}/${featureId}`); }
+}
