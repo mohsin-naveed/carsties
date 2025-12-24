@@ -1,0 +1,49 @@
+<section class="header">
+  <h2>Variant Feature Mapping</h2>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form">
+    <mat-form-field appearance="outline">
+      <mat-label>Variant</mat-label>
+      <mat-select formControlName="variantId">
+        <mat-optgroup *ngFor="let g of (variantGroups$ | async) ?? []" [label]="g.label">
+          <mat-option *ngFor="let v of g.variants" [value]="v.id">{{ v.name }}</mat-option>
+        </mat-optgroup>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Feature</mat-label>
+      <mat-select formControlName="featureId">
+        <mat-option *ngFor="let f of (features$ | async) ?? []" [value]="f.id">{{ f.name }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Standard?</mat-label>
+      <mat-select formControlName="isStandard">
+        <mat-option [value]="true">Yes</mat-option>
+        <mat-option [value]="false">Optional</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <button mat-flat-button color="primary">Add</button>
+  </form>
+</section>
+
+<table mat-table [dataSource]="(items$ | async) ?? []" class="mat-elevation-z1">
+  <ng-container matColumnDef="variant">
+    <th mat-header-cell *matHeaderCellDef>Variant</th>
+    <td mat-cell *matCellDef="let it">{{ lookupVariantName(it.variantId, (variants$ | async) ?? []) }}</td>
+  </ng-container>
+  <ng-container matColumnDef="feature">
+    <th mat-header-cell *matHeaderCellDef>Feature</th>
+    <td mat-cell *matCellDef="let it">{{ lookupFeatureName(it.featureId, (features$ | async) ?? []) }}</td>
+  </ng-container>
+  <ng-container matColumnDef="isStandard">
+    <th mat-header-cell *matHeaderCellDef>Standard</th>
+    <td mat-cell *matCellDef="let it">{{ it.isStandard ? 'Yes' : 'Optional' }}</td>
+  </ng-container>
+  <ng-container matColumnDef="actions">
+    <th mat-header-cell *matHeaderCellDef>Actions</th>
+    <td mat-cell *matCellDef="let it"><button mat-icon-button color="warn" (click)="remove(it)"><mat-icon>delete</mat-icon></button></td>
+  </ng-container>
+
+  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+</table>
