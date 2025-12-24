@@ -7,6 +7,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ModelEditDialogComponent } from './model-edit-dialog.component';
 import { CatalogApiService, ModelDto, MakeDto } from '../catalog-api.service';
 import { NotificationService } from '../../core/notification.service';
 import { BehaviorSubject } from 'rxjs';
@@ -15,7 +17,7 @@ import { map, shareReplay } from 'rxjs/operators';
 @Component({
   selector: 'app-models-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule],
+  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, MatDialogModule],
   templateUrl: './models.page.html',
   styles: [`
     .header { display:flex; align-items:center; gap:1rem; justify-content:space-between; margin-bottom:1rem; }
@@ -28,20 +30,18 @@ export class ModelsPage {
   private readonly api = inject(CatalogApiService);
   private readonly notify = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
+  private readonly dialog = inject(MatDialog);
   readonly displayedColumns = ['id','name','make','actions'];
 
   readonly models$ = new BehaviorSubject<ModelDto[]>([]);
   readonly makes$ = new BehaviorSubject<MakeDto[]>([]);
-  readonly editingId$ = new BehaviorSubject<number | null>(null);
+  // editing handled via dialog
   readonly makeById$ = this.makes$.pipe(
     map(ms => ms.reduce((acc, m) => { acc[m.id] = m; return acc; }, {} as Record<number, MakeDto>)),
     shareReplay(1)
   );
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(100)]],
-    makeId: [null as number | null, [Validators.required]]
-  });
+  // page-level form removed; dialogs will handle validation
 
   constructor(){
     this.loadMakes();
@@ -51,22 +51,20 @@ export class ModelsPage {
   loadMakes(){ this.api.getMakes().subscribe(data => this.makes$.next(data)); }
   loadModels(){ this.api.getModels().subscribe({ next: data => this.models$.next(data), error: () => this.notify.error('Failed to load models') }); }
 
-  edit(it: ModelDto){
-    this.editingId$.next(it.id);
-    this.form.patchValue({ name: it.name, makeId: it.makeId });
+  openCreate(){
+    (document.activeElement as HTMLElement | null)?.blur();
+    const ref = this.dialog.open(ModelEditDialogComponent, { data: { title: 'Add Model', makes: this.makes$.value }, width: '480px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; makeId: number } | undefined) => {
+      if (res){ this.api.createModel(res).subscribe({ next: () => { this.notify.success('Model created'); this.loadModels(); } }); }
+    });
   }
-  cancelEdit(){ this.editingId$.next(null); this.form.reset(); }
 
-  onSubmit(){
-    if (this.form.invalid) return;
-    const val = this.form.getRawValue();
-    const id = this.editingId$.value;
-    if (id){
-      this.api.updateModel(id, { name: val.name, makeId: val.makeId || undefined }).subscribe({ next: () => { this.notify.success('Model updated'); this.cancelEdit(); this.loadModels(); } });
-    } else {
-      if (val.makeId == null) return;
-      this.api.createModel({ name: val.name, makeId: val.makeId }).subscribe({ next: () => { this.notify.success('Model created'); this.form.reset(); this.loadModels(); } });
-    }
+  openEdit(it: ModelDto){
+    (document.activeElement as HTMLElement | null)?.blur();
+    const ref = this.dialog.open(ModelEditDialogComponent, { data: { title: 'Edit Model', name: it.name, makeId: it.makeId, makes: this.makes$.value }, width: '480px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; makeId: number } | undefined) => {
+      if (res){ this.api.updateModel(it.id, res).subscribe({ next: () => { this.notify.success('Model updated'); this.loadModels(); } }); }
+    });
   }
 
   remove(it: ModelDto){ if (!confirm(`Delete model '${it.name}'?`)) return; this.api.deleteModel(it.id).subscribe({ next: () => { this.notify.success('Model deleted'); this.loadModels(); } }); }
