@@ -1,0 +1,64 @@
+<section class="header">
+  <h2>Generations</h2>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form">
+    <mat-form-field appearance="outline">
+      <mat-label>Name</mat-label>
+      <input matInput formControlName="name" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Model</mat-label>
+      <mat-select formControlName="modelId">
+        <mat-optgroup *ngFor="let group of (makeGroups$ | async) ?? []" [label]="group.name">
+          <mat-option *ngFor="let mdl of group.models" [value]="mdl.id">{{ mdl.name }}</mat-option>
+        </mat-optgroup>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Start Year</mat-label>
+      <input matInput type="number" formControlName="startYear" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>End Year</mat-label>
+      <input matInput type="number" formControlName="endYear" />
+    </mat-form-field>
+
+    <button mat-flat-button color="primary">{{ (editingId$ | async) ? 'Update' : 'Add' }}</button>
+    <button *ngIf="(editingId$ | async)" mat-button type="button" (click)="cancelEdit()">Cancel</button>
+  </form>
+</section>
+
+<table mat-table [dataSource]="(items$ | async) ?? []" class="mat-elevation-z1">
+  <ng-container matColumnDef="id">
+    <th mat-header-cell *matHeaderCellDef>#</th>
+    <td mat-cell *matCellDef="let it">{{ it.id }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="name">
+    <th mat-header-cell *matHeaderCellDef>Name</th>
+    <td mat-cell *matCellDef="let it">{{ it.name }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="model">
+    <th mat-header-cell *matHeaderCellDef>Model</th>
+    <td mat-cell *matCellDef="let it">{{ (modelById$ | async)?.[it.modelId]?.name }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="years">
+    <th mat-header-cell *matHeaderCellDef>Years</th>
+    <td mat-cell *matCellDef="let it">{{ it.startYear || '—' }} - {{ it.endYear || '—' }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="actions">
+    <th mat-header-cell *matHeaderCellDef>Actions</th>
+    <td mat-cell *matCellDef="let it">
+      <button mat-icon-button color="primary" (click)="edit(it)"><mat-icon>edit</mat-icon></button>
+      <button mat-icon-button color="warn" (click)="remove(it)"><mat-icon>delete</mat-icon></button>
+    </td>
+  </ng-container>
+
+  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+</table>
