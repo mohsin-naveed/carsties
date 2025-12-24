@@ -58,6 +58,25 @@ export class GenerationsPage {
 
   // editing handled via dialog
 
+  readonly filter$ = new BehaviorSubject<string>('');
+  readonly filtered$ = combineLatest([this.items$, this.models$, this.filter$]).pipe(
+    map(([items, models, q]) => {
+      const query = q.toLowerCase().trim();
+      if (!query) return items;
+      const modelMap = models.reduce((acc, m) => { acc[m.id] = m; return acc; }, {} as Record<number, ModelDto>);
+      return items.filter(it => {
+        const modelName = modelMap[it.modelId]?.name ?? '';
+        const years = `${it.startYear ?? ''} ${it.endYear ?? ''}`.toLowerCase();
+        return (
+          it.name.toLowerCase().includes(query) ||
+          modelName.toLowerCase().includes(query) ||
+          years.includes(query) ||
+          String(it.id).includes(query)
+        );
+      });
+    })
+  );
+
   readonly modelById$ = this.models$.pipe(
     map((mdls) => mdls.reduce((acc, m) => { acc[m.id] = m; return acc; }, {} as Record<number, ModelDto>)),
     shareReplay(1)
@@ -103,4 +122,6 @@ export class GenerationsPage {
       }
     });
   }
+
+  onFilterInput(val: string){ this.filter$.next(val); }
 }

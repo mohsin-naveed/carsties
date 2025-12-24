@@ -11,7 +11,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ModelEditDialogComponent } from './model-edit-dialog.component';
 import { CatalogApiService, ModelDto, MakeDto } from '../catalog-api.service';
 import { NotificationService } from '../../core/notification.service';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, combineLatest } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 
 @Component({
@@ -42,6 +42,22 @@ export class ModelsPage {
   );
 
   // page-level form removed; dialogs will handle validation
+  readonly filter$ = new BehaviorSubject<string>('');
+  readonly filtered$ = combineLatest([this.models$, this.makes$, this.filter$]).pipe(
+    map(([items, makes, q]) => {
+      const query = q.toLowerCase().trim();
+      if (!query) return items;
+      const makeMap = makes.reduce((acc, m) => { acc[m.id] = m; return acc; }, {} as Record<number, MakeDto>);
+      return items.filter(it => {
+        const makeName = makeMap[it.makeId]?.name ?? '';
+        return (
+          it.name.toLowerCase().includes(query) ||
+          makeName.toLowerCase().includes(query) ||
+          String(it.id).includes(query)
+        );
+      });
+    })
+  );
 
   constructor(){
     this.loadMakes();
@@ -68,4 +84,6 @@ export class ModelsPage {
   }
 
   remove(it: ModelDto){ if (!confirm(`Delete model '${it.name}'?`)) return; this.api.deleteModel(it.id).subscribe({ next: () => { this.notify.success('Model deleted'); this.loadModels(); } }); }
+
+  onFilterInput(val: string){ this.filter$.next(val); }
 }

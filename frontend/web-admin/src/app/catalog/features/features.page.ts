@@ -11,7 +11,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { CatalogApiService, FeatureDto } from '../catalog-api.service';
 import { NotificationService } from '../../core/notification.service';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, combineLatest } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-features-page',
@@ -36,6 +37,18 @@ export class FeaturesPage {
   // editing handled via dialog
 
   // page-level form removed; dialogs will handle validation
+  readonly filter$ = new BehaviorSubject<string>('');
+  readonly filtered$ = combineLatest([this.items$, this.filter$]).pipe(
+    map(([items, q]) => {
+      const query = q.toLowerCase().trim();
+      if (!query) return items;
+      return items.filter(it => (
+        it.name.toLowerCase().includes(query) ||
+        (it.description ?? '').toLowerCase().includes(query) ||
+        String(it.id).includes(query)
+      ));
+    })
+  );
 
   constructor(){ this.load(); }
   load(){ this.api.getFeatures().subscribe({ next: data => this.items$.next(data), error: () => this.notify.error('Failed to load features') }); }
@@ -68,4 +81,6 @@ export class FeaturesPage {
       }
     });
   }
+
+  onFilterInput(val: string){ this.filter$.next(val); }
 }

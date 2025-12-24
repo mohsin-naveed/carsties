@@ -56,6 +56,26 @@ export class VariantsPage {
 
   // page-level form removed; dialogs will handle validation
 
+  readonly filter$ = new BehaviorSubject<string>('');
+  readonly filtered$ = combineLatest([this.items$, this.generations$, this.filter$]).pipe(
+    map(([items, generations, q]) => {
+      const query = q.toLowerCase().trim();
+      if (!query) return items;
+      const genMap = generations.reduce((acc, g) => { acc[g.id] = g; return acc; }, {} as Record<number, GenerationDto>);
+      return items.filter(it => {
+        const genName = genMap[it.generationId]?.name ?? '';
+        return (
+          it.name.toLowerCase().includes(query) ||
+          genName.toLowerCase().includes(query) ||
+          (it.engine ?? '').toLowerCase().includes(query) ||
+          (it.transmission ?? '').toLowerCase().includes(query) ||
+          (it.fuelType ?? '').toLowerCase().includes(query) ||
+          String(it.id).includes(query)
+        );
+      });
+    })
+  );
+
   constructor(){
     this.api.getMakes().subscribe({ next: m => this.makes$.next(m), error: () => this.notify.error('Failed to load makes') });
     this.api.getModels().subscribe({ next: m => this.models$.next(m), error: () => this.notify.error('Failed to load models') });
@@ -94,4 +114,6 @@ export class VariantsPage {
       }
     });
   }
+
+  onFilterInput(val: string){ this.filter$.next(val); }
 }
