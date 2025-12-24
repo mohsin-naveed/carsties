@@ -1,6 +1,9 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { GenerationEditDialogComponent } from './generation-edit-dialog.component';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog.component';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -15,7 +18,7 @@ import { catchError, map, shareReplay, switchMap, tap } from 'rxjs/operators';
 @Component({
   selector: 'app-generations-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule],
+  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, MatDialogModule],
   templateUrl: './generations.page.html',
   styles: [`
     .header { display:flex; align-items:center; gap:1rem; justify-content:space-between; margin-bottom:1rem; }
@@ -28,6 +31,7 @@ export class GenerationsPage {
   private readonly api = inject(CatalogApiService);
   private readonly notify = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
+  private readonly dialog = inject(MatDialog);
   readonly displayedColumns = ['id','name','model','years','actions'];
 
   private readonly reload$ = new BehaviorSubject<void>(undefined);
@@ -52,7 +56,7 @@ export class GenerationsPage {
     shareReplay(1)
   );
 
-  readonly editingId$ = new BehaviorSubject<number | null>(null);
+  // editing handled via dialog
 
   readonly modelById$ = this.models$.pipe(
     map((mdls) => mdls.reduce((acc, m) => { acc[m.id] = m; return acc; }, {} as Record<number, ModelDto>)),
@@ -63,12 +67,7 @@ export class GenerationsPage {
     map(([makes, models]) => makes.map(m => ({ name: m.name, models: models.filter(md => md.makeId === m.id) })))
   );
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(100)]],
-    modelId: [null as number | null, [Validators.required]],
-    startYear: [null as number | null],
-    endYear: [null as number | null]
-  });
+  // page-level form removed; dialogs will handle validation
 
   constructor(){
     this.load();
@@ -76,23 +75,32 @@ export class GenerationsPage {
 
   load(){ this.reload$.next(); }
 
-  edit(it: GenerationDto){
-    this.editingId$.next(it.id);
-    this.form.patchValue({ name: it.name, modelId: it.modelId, startYear: it.startYear ?? null, endYear: it.endYear ?? null });
-  }
-  cancelEdit(){ this.editingId$.next(null); this.form.reset(); }
-
-  onSubmit(){
-    if (this.form.invalid) return;
-    const val = this.form.getRawValue();
-    const id = this.editingId$.value;
-    const payload = { name: val.name, modelId: val.modelId!, startYear: val.startYear ?? undefined, endYear: val.endYear ?? undefined };
-    if (id){
-      this.api.updateGeneration(id, payload).subscribe({ next: () => { this.notify.success('Generation updated'); this.cancelEdit(); this.load(); } });
-    } else {
-      this.api.createGeneration(payload).subscribe({ next: () => { this.notify.success('Generation created'); this.form.reset(); this.load(); } });
-    }
+  openCreate(models: ModelDto[]){
+    (document.activeElement as HTMLElement | null)?.blur();
+    const ref = this.dialog.open(GenerationEditDialogComponent, { data: { title: 'Add Generation', models }, width: '480px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; modelId: number; startYear?: number; endYear?: number } | undefined) => {
+      if (res){
+        this.api.createGeneration(res).subscribe({ next: () => { this.notify.success('Generation created'); this.load(); } });
+      }
+    });
   }
 
-  remove(it: GenerationDto){ if (!confirm(`Delete generation '${it.name}'?`)) return; this.api.deleteGeneration(it.id).subscribe({ next: () => { this.notify.success('Generation deleted'); this.load(); } }); }
+  openEdit(it: GenerationDto, models: ModelDto[]){
+    (document.activeElement as HTMLElement | null)?.blur();
+    const ref = this.dialog.open(GenerationEditDialogComponent, { data: { title: 'Edit Generation', name: it.name, modelId: it.modelId, startYear: it.startYear, endYear: it.endYear, models }, width: '480px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; modelId: number; startYear?: number; endYear?: number } | undefined) => {
+      if (res){
+        this.api.updateGeneration(it.id, res).subscribe({ next: () => { this.notify.success('Generation updated'); this.load(); } });
+      }
+    });
+  }
+
+  remove(it: GenerationDto){
+    const ref = this.dialog.open(ConfirmDialogComponent, { data: { message: `Delete generation '${it.name}'?` } });
+    ref.afterClosed().subscribe((ok: boolean) => {
+      if (ok){
+        this.api.deleteGeneration(it.id).subscribe({ next: () => { this.notify.success('Generation deleted'); this.load(); } });
+      }
+    });
+  }
 }

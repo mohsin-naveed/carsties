@@ -1,6 +1,9 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { VariantEditDialogComponent } from './variant-edit-dialog.component';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog.component';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -15,7 +18,7 @@ import { map, shareReplay } from 'rxjs/operators';
 @Component({
   selector: 'app-variants-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule],
+  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, MatDialogModule],
   templateUrl: './variants.page.html',
   styles:[`
     .header { display:flex; align-items:center; gap:1rem; justify-content:space-between; margin-bottom:1rem; }
@@ -28,13 +31,14 @@ export class VariantsPage {
   private readonly api = inject(CatalogApiService);
   private readonly notify = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
+  private readonly dialog = inject(MatDialog);
   readonly displayedColumns = ['id','name','generation','engine','transmission','fuelType','actions'];
 
   readonly items$ = new BehaviorSubject<VariantDto[]>([]);
   readonly generations$ = new BehaviorSubject<GenerationDto[]>([]);
   readonly models$ = new BehaviorSubject<ModelDto[]>([]);
   readonly makes$ = new BehaviorSubject<MakeDto[]>([]);
-  readonly editingId$ = new BehaviorSubject<number | null>(null);
+  // editing handled via dialog
   readonly generationById$ = this.generations$.pipe(
     map(gs => gs.reduce((acc, g) => { acc[g.id] = g; return acc; }, {} as Record<number, GenerationDto>)), shareReplay(1)
   );
@@ -50,13 +54,7 @@ export class VariantsPage {
     })
   );
 
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(100)]],
-    generationId: [null as number | null, [Validators.required]],
-    engine: [''],
-    transmission: [''],
-    fuelType: ['']
-  });
+  // page-level form removed; dialogs will handle validation
 
   constructor(){
     this.api.getMakes().subscribe({ next: m => this.makes$.next(m), error: () => this.notify.error('Failed to load makes') });
@@ -68,17 +66,32 @@ export class VariantsPage {
   load(){ this.api.getVariants().subscribe({ next: data => this.items$.next(data), error: () => this.notify.error('Failed to load variants') }); }
   lookupGeneration(id: number){ return undefined; }
 
-  edit(it: VariantDto){ this.editingId$.next(it.id); this.form.patchValue({ name: it.name, generationId: it.generationId, engine: it.engine || '', transmission: it.transmission || '', fuelType: it.fuelType || '' }); }
-  cancelEdit(){ this.editingId$.next(null); this.form.reset(); }
-
-  onSubmit(){
-    if (this.form.invalid) return;
-    const val = this.form.getRawValue();
-    const id = this.editingId$.value;
-    const payload = { name: val.name, generationId: val.generationId!, engine: val.engine || undefined, transmission: val.transmission || undefined, fuelType: val.fuelType || undefined };
-    if (id){ this.api.updateVariant(id, payload).subscribe({ next: () => { this.notify.success('Variant updated'); this.cancelEdit(); this.load(); } }); }
-    else { this.api.createVariant(payload).subscribe({ next: () => { this.notify.success('Variant created'); this.form.reset(); this.load(); } }); }
+  openCreate(generations: GenerationDto[]){
+    (document.activeElement as HTMLElement | null)?.blur();
+    const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Add Variant', generations }, width: '600px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; generationId: number; engine?: string; transmission?: string; fuelType?: string } | undefined) => {
+      if (res){
+        this.api.createVariant(res).subscribe({ next: () => { this.notify.success('Variant created'); this.load(); } });
+      }
+    });
   }
 
-  remove(it: VariantDto){ if (!confirm(`Delete variant '${it.name}'?`)) return; this.api.deleteVariant(it.id).subscribe({ next: () => { this.notify.success('Variant deleted'); this.load(); } }); }
+  openEdit(it: VariantDto, generations: GenerationDto[]){
+    (document.activeElement as HTMLElement | null)?.blur();
+    const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Edit Variant', name: it.name, generationId: it.generationId, engine: it.engine, transmission: it.transmission, fuelType: it.fuelType, generations }, width: '600px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; generationId: number; engine?: string; transmission?: string; fuelType?: string } | undefined) => {
+      if (res){
+        this.api.updateVariant(it.id, res).subscribe({ next: () => { this.notify.success('Variant updated'); this.load(); } });
+      }
+    });
+  }
+
+  remove(it: VariantDto){
+    const ref = this.dialog.open(ConfirmDialogComponent, { data: { message: `Delete variant '${it.name}'?` } });
+    ref.afterClosed().subscribe((ok: boolean) => {
+      if (ok){
+        this.api.deleteVariant(it.id).subscribe({ next: () => { this.notify.success('Variant deleted'); this.load(); } });
+      }
+    });
+  }
 }

@@ -1,6 +1,9 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { VariantFeatureEditDialogComponent } from './variant-feature-edit-dialog.component';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog.component';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -14,7 +17,7 @@ import { map, shareReplay } from 'rxjs/operators';
 @Component({
   selector: 'app-variant-features-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatSelectModule, MatIconModule],
+  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatSelectModule, MatIconModule, MatDialogModule],
   templateUrl: './variant-features.page.html',
   styles:[`
     .header { display:flex; align-items:center; gap:1rem; justify-content:space-between; margin-bottom:1rem; }
@@ -27,6 +30,7 @@ export class VariantFeaturesPage {
   private readonly api = inject(CatalogApiService);
   private readonly notify = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
+  private readonly dialog = inject(MatDialog);
   readonly displayedColumns = ['variant','feature','isStandard','actions'];
 
   readonly items$ = new BehaviorSubject<VariantFeatureDto[]>([]);
@@ -49,11 +53,7 @@ export class VariantFeaturesPage {
     })
   );
 
-  readonly form = this.fb.nonNullable.group({
-    variantId: [null as number | null, [Validators.required]],
-    featureId: [null as number | null, [Validators.required]],
-    isStandard: [true, [Validators.required]]
-  });
+  // page-level form removed; dialogs will handle validation
 
   constructor(){
     this.api.getMakes().subscribe({ next: m => this.makes$.next(m), error: () => this.notify.error('Failed to load makes') });
@@ -69,16 +69,32 @@ export class VariantFeaturesPage {
   lookupVariantName(id: number, variants: VariantDto[]){ return variants.find(v => v.id === id)?.name; }
   lookupFeatureName(id: number, features: FeatureDto[]){ return features.find(f => f.id === id)?.name; }
 
-  onSubmit(){
-    if (this.form.invalid) return;
-    const val = this.form.getRawValue();
-    if (val.variantId == null || val.featureId == null) return;
-    this.api.createVariantFeature({ variantId: val.variantId, featureId: val.featureId, isStandard: val.isStandard })
-      .subscribe({ next: () => { this.notify.success('Mapping created'); this.form.reset({ variantId: null, featureId: null, isStandard: true }); this.load(); } });
+  openCreate(variants: VariantDto[], features: FeatureDto[]){
+    (document.activeElement as HTMLElement | null)?.blur();
+    const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Add Mapping', variants, features }, width: '560px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { variantId: number; featureId: number; isStandard: boolean } | undefined) => {
+      if (res){
+        this.api.createVariantFeature(res).subscribe({ next: () => { this.notify.success('Mapping created'); this.load(); } });
+      }
+    });
+  }
+
+  openEdit(it: VariantFeatureDto, variants: VariantDto[], features: FeatureDto[]){
+    (document.activeElement as HTMLElement | null)?.blur();
+    const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Edit Mapping', variantId: it.variantId, featureId: it.featureId, isStandard: it.isStandard, variants, features }, width: '560px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { variantId: number; featureId: number; isStandard: boolean } | undefined) => {
+      if (res){
+        this.api.updateVariantFeature(it.variantId, it.featureId, { isStandard: res.isStandard }).subscribe({ next: () => { this.notify.success('Mapping updated'); this.load(); } });
+      }
+    });
   }
 
   remove(it: VariantFeatureDto){
-    if (!confirm('Delete mapping?')) return;
-    this.api.deleteVariantFeature(it.variantId, it.featureId).subscribe({ next: () => { this.notify.success('Mapping deleted'); this.load(); } });
+    const ref = this.dialog.open(ConfirmDialogComponent, { data: { message: 'Delete mapping?' } });
+    ref.afterClosed().subscribe((ok: boolean) => {
+      if (ok){
+        this.api.deleteVariantFeature(it.variantId, it.featureId).subscribe({ next: () => { this.notify.success('Mapping deleted'); this.load(); } });
+      }
+    });
   }
 }
