@@ -44,8 +44,23 @@ body {
 .elevated { @include mat.elevation(2); background:#fff; border-radius:8px; }
 
 // Table tweaks
-table.mat-table { background: #fff; }
+table.mat-table { background: #fff; width: 100%; }
 th.mat-header-cell { font-weight:600; }
+
+// Angular Material (MDC) table refinements
+.mat-mdc-table { width: 100%; }
+.mat-mdc-header-cell, .mat-mdc-cell { padding: 12px 16px; }
+tr.mat-mdc-row { border-bottom: 1px solid rgba(0,0,0,.06); }
+
+// Compact, centered actions column used across catalog tables
+th.mat-mdc-header-cell.mat-column-actions,
+td.mat-mdc-cell.mat-column-actions { text-align: center; }
+th.mat-mdc-header-cell.mat-column-actions { width: 96px; padding: 0; }
+td.mat-mdc-cell.mat-column-actions { padding: 0; }
+td.mat-mdc-cell.mat-column-actions .mat-icon-button { margin: 0 2px; inline-size: 36px; block-size: 36px; }
+
+// Ensure Material Symbols render as expected
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
 
 // Toolbar refinement
 .app-toolbar { box-shadow: 0 2px 4px rgba(0,0,0,.08); }
