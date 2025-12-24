@@ -32,7 +32,7 @@ export class GenerationsPage {
   private readonly notify = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
-  readonly displayedColumns = ['id','name','model','years','actions'];
+  readonly displayedColumns = ['name','model','years','actions'];
 
   private readonly reload$ = new BehaviorSubject<void>(undefined);
 

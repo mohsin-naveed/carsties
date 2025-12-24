@@ -10,10 +10,6 @@
 </mat-form-field>
 
 <table mat-table [dataSource]="(filtered$ | async) ?? []" class="mat-elevation-z1">
-  <ng-container matColumnDef="id">
-    <th mat-header-cell *matHeaderCellDef>#</th>
-    <td mat-cell *matCellDef="let m">{{ m.id }}</td>
-  </ng-container>
   <ng-container matColumnDef="name">
     <th mat-header-cell *matHeaderCellDef>Name</th>
     <td mat-cell *matCellDef="let m">{{ m.name }}</td>

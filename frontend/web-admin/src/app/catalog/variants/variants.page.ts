@@ -32,7 +32,7 @@ export class VariantsPage {
   private readonly notify = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
-  readonly displayedColumns = ['id','name','generation','engine','transmission','fuelType','actions'];
+  readonly displayedColumns = ['name','generation','engine','transmission','fuelType','actions'];
 
   readonly items$ = new BehaviorSubject<VariantDto[]>([]);
   readonly generations$ = new BehaviorSubject<GenerationDto[]>([]);

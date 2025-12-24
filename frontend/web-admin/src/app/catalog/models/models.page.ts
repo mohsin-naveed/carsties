@@ -31,7 +31,7 @@ export class ModelsPage {
   private readonly notify = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
-  readonly displayedColumns = ['id','name','make','actions'];
+  readonly displayedColumns = ['name','make','actions'];
 
   readonly models$ = new BehaviorSubject<ModelDto[]>([]);
   readonly makes$ = new BehaviorSubject<MakeDto[]>([]);
