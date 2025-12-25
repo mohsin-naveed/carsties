@@ -33,6 +33,7 @@ export interface VariantsContextDto {
   generations: GenerationDto[];
   variants: VariantDto[];
 }
+export interface VariantOptionsDto { transmissions: string[]; fuelTypes: string[]; }
 
 export interface ModelsContextDto {
   makes: MakeDto[];
@@ -85,7 +86,14 @@ export class CatalogApiService {
 
   // Variants
   getVariants(generationId?: number): Observable<VariantDto[]> { const params: any = {}; if (generationId) params.generationId = generationId; return this.http.get<VariantDto[]>(`${this.baseUrl}/variants`, { params }); }
-  getVariantsContext(): Observable<VariantsContextDto> { return this.http.get<VariantsContextDto>(`${this.baseUrl}/variants/context`); }
+  getVariantsContext(makeId?: number, modelId?: number, generationId?: number): Observable<VariantsContextDto> {
+    const params: any = {};
+    if (makeId) params.makeId = makeId;
+    if (modelId) params.modelId = modelId;
+    if (generationId) params.generationId = generationId;
+    return this.http.get<VariantsContextDto>(`${this.baseUrl}/variants/context`, { params });
+  }
+  getVariantOptions(): Observable<VariantOptionsDto> { return this.http.get<VariantOptionsDto>(`${this.baseUrl}/variants/options`); }
   createVariant(dto: CreateVariantDto): Observable<VariantDto> { return this.http.post<VariantDto>(`${this.baseUrl}/variants`, dto); }
   updateVariant(id: number, dto: UpdateVariantDto) { return this.http.put(`${this.baseUrl}/variants/${id}`, dto); }
   deleteVariant(id: number) { return this.http.delete(`${this.baseUrl}/variants/${id}`); }

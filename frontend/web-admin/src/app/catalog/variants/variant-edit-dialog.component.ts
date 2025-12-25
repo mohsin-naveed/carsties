@@ -7,7 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { A11yModule } from '@angular/cdk/a11y';
-import { GenerationDto } from '../catalog-api.service';
+import { GenerationDto, MakeDto, ModelDto } from '../catalog-api.service';
 
 @Component({
   selector: 'app-variant-edit-dialog',
@@ -18,14 +18,26 @@ import { GenerationDto } from '../catalog-api.service';
     <div mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" style="width:100%">
-          <mat-label>Name</mat-label>
-          <input #nameInput matInput formControlName="name" placeholder="e.g. 2.0 TDI" cdkFocusInitial />
+          <mat-label>Make</mat-label>
+          <mat-select formControlName="makeId">
+            <mat-option *ngFor="let mk of data.makes" [value]="mk.id">{{ mk.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" style="width:100%">
+          <mat-label>Model</mat-label>
+          <mat-select formControlName="modelId" [disabled]="!form.value.makeId">
+            <mat-option *ngFor="let md of filteredModels()" [value]="md.id">{{ md.name }}</mat-option>
+          </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline" style="width:100%">
           <mat-label>Generation</mat-label>
-          <mat-select formControlName="generationId">
-            <mat-option *ngFor="let gen of data.generations" [value]="gen.id">{{ gen.name }}</mat-option>
+          <mat-select formControlName="generationId" [disabled]="!form.value.modelId">
+            <mat-option *ngFor="let gen of filteredGenerations()" [value]="gen.id">{{ gen.name }}</mat-option>
           </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" style="width:100%">
+          <mat-label>Name</mat-label>
+          <input #nameInput matInput formControlName="name" placeholder="e.g. 2.0 TDI" cdkFocusInitial />
         </mat-form-field>
         <div class="grid">
           <mat-form-field appearance="outline">
@@ -34,11 +46,15 @@ import { GenerationDto } from '../catalog-api.service';
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Transmission</mat-label>
-            <input matInput formControlName="transmission" />
+            <mat-select formControlName="transmission">
+              <mat-option *ngFor="let t of data.transmissions" [value]="t">{{ t }}</mat-option>
+            </mat-select>
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Fuel</mat-label>
-            <input matInput formControlName="fuelType" />
+            <mat-select formControlName="fuelType">
+              <mat-option *ngFor="let f of data.fuelTypes" [value]="f">{{ f }}</mat-option>
+            </mat-select>
           </mat-form-field>
         </div>
       </form>
@@ -57,12 +73,14 @@ import { GenerationDto } from '../catalog-api.service';
 export class VariantEditDialogComponent implements AfterViewInit {
   private readonly fb = inject(FormBuilder);
   public ref: MatDialogRef<VariantEditDialogComponent, { name: string; generationId: number; engine?: string; transmission?: string; fuelType?: string }> = inject(MatDialogRef);
-  public data: { title: string; name?: string; generationId?: number; engine?: string; transmission?: string; fuelType?: string; generations: GenerationDto[] } = inject(MAT_DIALOG_DATA);
+  public data: { title: string; name?: string; generationId?: number; engine?: string; transmission?: string; fuelType?: string; generations: GenerationDto[]; models: ModelDto[]; makes: MakeDto[]; transmissions: string[]; fuelTypes: string[] } = inject(MAT_DIALOG_DATA);
 
   @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
 
   readonly form = this.fb.group({
     name: [this.data.name ?? '', [Validators.required, Validators.maxLength(100)]],
+    makeId: [this.deriveMakeId(this.data.generationId) ?? null as number | null, [Validators.required]],
+    modelId: [this.deriveModelId(this.data.generationId) ?? null as number | null, [Validators.required]],
     generationId: [this.data.generationId ?? null as number | null, [Validators.required]],
     engine: [this.data.engine ?? ''],
     transmission: [this.data.transmission ?? ''],
@@ -70,6 +88,29 @@ export class VariantEditDialogComponent implements AfterViewInit {
   });
 
   ngAfterViewInit(){ setTimeout(() => this.nameInput?.nativeElement.focus(), 0); }
+
+  filteredModels(): ModelDto[] {
+    const makeId = this.form.value.makeId as number | null;
+    if (!makeId) return [];
+    return this.data.models.filter(m => m.makeId === makeId);
+  }
+  filteredGenerations(): GenerationDto[] {
+    const modelId = this.form.value.modelId as number | null;
+    if (!modelId) return [];
+    return this.data.generations.filter(g => g.modelId === modelId);
+  }
+  private deriveMakeId(generationId?: number){
+    if (!generationId) return null;
+    const gen = this.data.generations.find(g => g.id === generationId);
+    if (!gen) return null;
+    const model = this.data.models.find(m => m.id === gen.modelId);
+    return model ? model.makeId : null;
+  }
+  private deriveModelId(generationId?: number){
+    if (!generationId) return null;
+    const gen = this.data.generations.find(g => g.id === generationId);
+    return gen ? gen.modelId : null;
+  }
 
   save(){
     const raw = this.form.getRawValue();

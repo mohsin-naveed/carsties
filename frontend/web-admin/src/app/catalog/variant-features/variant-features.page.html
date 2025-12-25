@@ -3,7 +3,13 @@
   <span class="spacer"></span>
   <ng-container *ngIf="variants$ | async as variants; else noVariants">
     <ng-container *ngIf="features$ | async as features">
-      <button mat-flat-button color="primary" (click)="openCreate(variants, features)">Add Mapping</button>
+      <ng-container *ngIf="generations$ | async as generations">
+        <ng-container *ngIf="models$ | async as models">
+          <ng-container *ngIf="makes$ | async as makes">
+            <button mat-flat-button color="primary" (click)="openCreate(variants, features, generations, models, makes)">Add Mapping</button>
+          </ng-container>
+        </ng-container>
+      </ng-container>
     </ng-container>
   </ng-container>
   <ng-template #noVariants></ng-template>
@@ -35,7 +41,13 @@
     <td mat-cell *matCellDef="let it">
       <ng-container *ngIf="variants$ | async as variants">
         <ng-container *ngIf="features$ | async as features">
-          <button mat-icon-button color="primary" (click)="openEdit(it, variants, features)"><mat-icon>edit</mat-icon></button>
+          <ng-container *ngIf="generations$ | async as generations">
+            <ng-container *ngIf="models$ | async as models">
+              <ng-container *ngIf="makes$ | async as makes">
+                <button mat-icon-button color="primary" (click)="openEdit(it, variants, features, generations, models, makes)"><mat-icon>edit</mat-icon></button>
+              </ng-container>
+            </ng-container>
+          </ng-container>
         </ng-container>
       </ng-container>
       <button mat-icon-button color="warn" (click)="remove(it)"><mat-icon>delete</mat-icon></button>

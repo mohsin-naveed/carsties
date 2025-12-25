@@ -1,9 +1,7 @@
 <section class="header">
   <h2>Variants</h2>
   <span class="spacer"></span>
-  <ng-container *ngIf="generations$ | async as generations">
-    <button mat-flat-button color="primary" (click)="openCreate(generations)">Add Variant</button>
-  </ng-container>
+  <button mat-flat-button color="primary" (click)="openCreate()">Add Variant</button>
 </section>
 
 <mat-form-field appearance="outline" class="filter-field">
@@ -29,9 +27,7 @@
   <ng-container matColumnDef="actions">
     <th mat-header-cell *matHeaderCellDef>Actions</th>
     <td mat-cell *matCellDef="let it">
-      <ng-container *ngIf="generations$ | async as generations">
-        <button mat-icon-button color="primary" (click)="openEdit(it, generations)"><mat-icon>edit</mat-icon></button>
-      </ng-container>
+      <button mat-icon-button color="primary" (click)="openEdit(it)"><mat-icon>edit</mat-icon></button>
       <button mat-icon-button color="warn" (click)="remove(it)"><mat-icon>delete</mat-icon></button>
     </td>
   </ng-container>

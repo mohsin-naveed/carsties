@@ -12,22 +12,36 @@ namespace CatalogService.Controllers;
 [Route("api/[controller]")]
 public class VariantsController(CatalogDbContext context, IMapper mapper) : ControllerBase
 {
+    [HttpGet("options")]
+    public ActionResult<VariantOptionsDto> GetOptions()
+    {
+        // Static canonical lists; adjust as needed
+        var transmissions = new List<string> { "Manual", "Automatic", "CVT", "Dual-Clutch" };
+        var fuelTypes = new List<string> { "Petrol", "Diesel", "Hybrid", "Electric" };
+        return Ok(new VariantOptionsDto(transmissions, fuelTypes));
+    }
     [HttpGet("context")]
-    public async Task<ActionResult<VariantsContextDto>> GetContext()
+    public async Task<ActionResult<VariantsContextDto>> GetContext([FromQuery] int? makeId, [FromQuery] int? modelId, [FromQuery] int? generationId)
     {
         var makes = await context.Makes
             .OrderBy(x => x.Name)
             .ProjectTo<MakeDto>(mapper.ConfigurationProvider)
             .ToListAsync();
-        var models = await context.Models
+        var modelsQuery = context.Models.AsQueryable();
+        if (makeId.HasValue) modelsQuery = modelsQuery.Where(m => m.MakeId == makeId.Value);
+        var models = await modelsQuery
             .OrderBy(x => x.Name)
             .ProjectTo<ModelDto>(mapper.ConfigurationProvider)
             .ToListAsync();
-        var generations = await context.Generations
+        var generationsQuery = context.Generations.AsQueryable();
+        if (modelId.HasValue) generationsQuery = generationsQuery.Where(g => g.ModelId == modelId.Value);
+        var generations = await generationsQuery
             .OrderBy(x => x.Name)
             .ProjectTo<GenerationDto>(mapper.ConfigurationProvider)
             .ToListAsync();
-        var variants = await context.Variants
+        var variantsQuery = context.Variants.AsQueryable();
+        if (generationId.HasValue) variantsQuery = variantsQuery.Where(v => v.GenerationId == generationId.Value);
+        var variants = await variantsQuery
             .OrderBy(x => x.Name)
             .ProjectTo<VariantDto>(mapper.ConfigurationProvider)
             .ToListAsync();

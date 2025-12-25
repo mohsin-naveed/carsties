@@ -87,22 +87,40 @@ export class VariantFeaturesPage {
   lookupVariantName(id: number, variants: VariantDto[]){ return variants.find(v => v.id === id)?.name; }
   lookupFeatureName(id: number, features: FeatureDto[]){ return features.find(f => f.id === id)?.name; }
 
-  openCreate(variants: VariantDto[], features: FeatureDto[]){
+  openCreate(variants: VariantDto[], features: FeatureDto[], generations: GenerationDto[], models: ModelDto[], makes: MakeDto[]){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Add Mapping', variants, features }, width: '560px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { variantId: number; featureId: number; isStandard: boolean } | undefined) => {
+    const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Add Mapping', variants, features, generations, models, makes }, width: '560px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { variantId: number; featureIds: number[]; isStandard: boolean } | undefined) => {
       if (res){
-        this.api.createVariantFeature(res).subscribe({ next: () => { this.notify.success('Mapping created'); this.loadContext(); } });
+        const ops = res.featureIds.map(fid => this.api.createVariantFeature({ variantId: res.variantId, featureId: fid, isStandard: res.isStandard }));
+        // Execute sequentially to keep UI consistent
+        let done = 0;
+        ops.forEach(op => op.subscribe({ next: () => { done++; if (done === ops.length){ this.notify.success('Mappings created'); this.loadContext(); } }, error: () => this.notify.error('Failed to create mapping') }));
       }
     });
   }
 
-  openEdit(it: VariantFeatureDto, variants: VariantDto[], features: FeatureDto[]){
+  openEdit(it: VariantFeatureDto, variants: VariantDto[], features: FeatureDto[], generations: GenerationDto[], models: ModelDto[], makes: MakeDto[]){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Edit Mapping', variantId: it.variantId, featureId: it.featureId, isStandard: it.isStandard, variants, features }, width: '560px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { variantId: number; featureId: number; isStandard: boolean } | undefined) => {
+    const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Edit Mapping', variantId: it.variantId, featureId: it.featureId, isStandard: it.isStandard, variants, features, generations, models, makes }, width: '560px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { variantId: number; featureIds: number[]; isStandard: boolean } | undefined) => {
       if (res){
-        this.api.updateVariantFeature(it.variantId, it.featureId, { isStandard: res.isStandard }).subscribe({ next: () => { this.notify.success('Mapping updated'); this.loadContext(); } });
+        const originalFeatureId = it.featureId;
+        const selected = new Set(res.featureIds);
+        const hasOriginal = selected.has(originalFeatureId);
+        // Update isStandard for original if still selected
+        const ops: Array<ReturnType<CatalogApiService['createVariantFeature']> | ReturnType<CatalogApiService['deleteVariantFeature']> | ReturnType<CatalogApiService['updateVariantFeature']>> = [];
+        if (hasOriginal){
+          ops.push(this.api.updateVariantFeature(it.variantId, originalFeatureId, { isStandard: res.isStandard }));
+          selected.delete(originalFeatureId);
+        } else {
+          // Original removed -> delete it
+          ops.push(this.api.deleteVariantFeature(it.variantId, originalFeatureId));
+        }
+        // Add any new features
+        selected.forEach(fid => ops.push(this.api.createVariantFeature({ variantId: it.variantId, featureId: fid, isStandard: res.isStandard })));
+        let done = 0; let failed = false;
+        ops.forEach(op => op.subscribe({ next: () => { done++; if (done === ops.length && !failed){ this.notify.success('Mapping updated'); this.loadContext(); } }, error: () => { failed = true; this.notify.error('Failed to update mapping'); } }));
       }
     });
   }

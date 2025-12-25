@@ -6,7 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { A11yModule } from '@angular/cdk/a11y';
-import { VariantDto, FeatureDto } from '../catalog-api.service';
+import { VariantDto, FeatureDto, GenerationDto, ModelDto, MakeDto } from '../catalog-api.service';
 
 @Component({
   selector: 'app-variant-feature-edit-dialog',
@@ -17,14 +17,26 @@ import { VariantDto, FeatureDto } from '../catalog-api.service';
     <div mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline">
+          <mat-label>Make</mat-label>
+          <mat-select formControlName="makeId" [disabled]="isEdit">
+            <mat-option *ngFor="let mk of data.makes" [value]="mk.id">{{ mk.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Model</mat-label>
+          <mat-select formControlName="modelId" [disabled]="!form.value.makeId || isEdit">
+            <mat-option *ngFor="let md of filteredModels()" [value]="md.id">{{ md.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
           <mat-label>Variant</mat-label>
-          <mat-select #variantSelect formControlName="variantId" cdkFocusInitial>
-            <mat-option *ngFor="let v of data.variants" [value]="v.id">{{ v.name }}</mat-option>
+          <mat-select #variantSelect formControlName="variantId" cdkFocusInitial [disabled]="!form.value.modelId || isEdit">
+            <mat-option *ngFor="let v of filteredVariants()" [value]="v.id">{{ v.name }}</mat-option>
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Feature</mat-label>
-          <mat-select formControlName="featureId">
+          <mat-select formControlName="featureIds" multiple>
             <mat-option *ngFor="let f of data.features" [value]="f.id">{{ f.name }}</mat-option>
           </mat-select>
         </mat-form-field>
@@ -48,14 +60,18 @@ import { VariantDto, FeatureDto } from '../catalog-api.service';
 })
 export class VariantFeatureEditDialogComponent implements AfterViewInit {
   private readonly fb = inject(FormBuilder);
-  public ref: MatDialogRef<VariantFeatureEditDialogComponent, { variantId: number; featureId: number; isStandard: boolean }> = inject(MatDialogRef);
-  public data: { title: string; variantId?: number; featureId?: number; isStandard?: boolean; variants: VariantDto[]; features: FeatureDto[] } = inject(MAT_DIALOG_DATA);
+  public ref: MatDialogRef<VariantFeatureEditDialogComponent, { variantId: number; featureIds: number[]; isStandard: boolean }> = inject(MatDialogRef);
+  public data: { title: string; variantId?: number; featureId?: number; isStandard?: boolean; variants: VariantDto[]; features: FeatureDto[]; generations: GenerationDto[]; models: ModelDto[]; makes: MakeDto[] } = inject(MAT_DIALOG_DATA);
+
+  get isEdit(){ return this.data.variantId != null && this.data.featureId != null; }
 
   @ViewChild('variantSelect') variantSelect!: ElementRef<HTMLElement>;
 
   readonly form = this.fb.group({
+    makeId: [this.deriveMakeId(this.data.variantId) ?? null as number | null, [Validators.required]],
+    modelId: [this.deriveModelId(this.data.variantId) ?? null as number | null, [Validators.required]],
     variantId: [this.data.variantId ?? null as number | null, [Validators.required]],
-    featureId: [this.data.featureId ?? null as number | null, [Validators.required]],
+    featureIds: [this.data.featureId != null ? [this.data.featureId] : [], [Validators.required]],
     isStandard: [this.data.isStandard ?? true, [Validators.required]]
   });
 
@@ -63,7 +79,36 @@ export class VariantFeatureEditDialogComponent implements AfterViewInit {
 
   save(){
     const raw = this.form.getRawValue();
-    if (raw.variantId == null || raw.featureId == null) return;
-    this.ref.close({ variantId: raw.variantId, featureId: raw.featureId, isStandard: raw.isStandard! });
+    const variantId = raw.variantId as number | null;
+    const featureIds = raw.featureIds as number[];
+    if (variantId == null || !featureIds || featureIds.length === 0) return;
+    this.ref.close({ variantId, featureIds, isStandard: raw.isStandard! });
+  }
+
+  filteredModels(): ModelDto[] {
+    const makeId = this.form.value.makeId as number | null;
+    if (!makeId) return [];
+    return this.data.models.filter(m => m.makeId === makeId);
+  }
+
+  filteredVariants(): VariantDto[] {
+    const modelId = this.form.value.modelId as number | null;
+    if (!modelId) return [];
+    const gensForModel = this.data.generations.filter(g => g.modelId === modelId).map(g => g.id);
+    return this.data.variants.filter(v => gensForModel.includes(v.generationId));
+  }
+
+  private deriveMakeId(variantId?: number){
+    if (!variantId) return null;
+    const gen = this.data.generations.find(g => g.id === this.data.variants.find(v => v.id === variantId)?.generationId);
+    if (!gen) return null;
+    const model = this.data.models.find(m => m.id === gen.modelId);
+    return model ? model.makeId : null;
+  }
+
+  private deriveModelId(variantId?: number){
+    if (!variantId) return null;
+    const gen = this.data.generations.find(g => g.id === this.data.variants.find(v => v.id === variantId)?.generationId);
+    return gen ? gen.modelId : null;
   }
 }

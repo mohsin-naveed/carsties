@@ -82,7 +82,15 @@ export class VariantsPage {
     })
   );
 
+  private makesCache: MakeDto[] = [];
+  private modelsCache: ModelDto[] = [];
+  private generationsCache: GenerationDto[] = [];
+  private variantOptions: { transmissions: string[]; fuelTypes: string[] } = { transmissions: [], fuelTypes: [] };
+
   constructor(){
+    this.makes$.subscribe(ms => this.makesCache = ms);
+    this.models$.subscribe(ms => this.modelsCache = ms);
+    this.generations$.subscribe(gs => this.generationsCache = gs);
     this.loadContext();
   }
 
@@ -97,12 +105,13 @@ export class VariantsPage {
       },
       error: () => this.notify.error('Failed to load variants data')
     });
+    this.api.getVariantOptions().subscribe({ next: (opts) => this.variantOptions = opts, error: () => {} });
   }
   lookupGeneration(id: number){ return undefined; }
 
-  openCreate(generations: GenerationDto[]){
+  openCreate(){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Add Variant', generations }, width: '600px', autoFocus: true, restoreFocus: true });
+    const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Add Variant', generations: this.generationsCache, models: this.modelsCache, makes: this.makesCache, transmissions: this.variantOptions.transmissions, fuelTypes: this.variantOptions.fuelTypes }, width: '600px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { name: string; generationId: number; engine?: string; transmission?: string; fuelType?: string } | undefined) => {
       if (res){
         this.api.createVariant(res).subscribe({ next: () => { this.notify.success('Variant created'); this.loadContext(); } });
@@ -110,9 +119,9 @@ export class VariantsPage {
     });
   }
 
-  openEdit(it: VariantDto, generations: GenerationDto[]){
+  openEdit(it: VariantDto){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Edit Variant', name: it.name, generationId: it.generationId, engine: it.engine, transmission: it.transmission, fuelType: it.fuelType, generations }, width: '600px', autoFocus: true, restoreFocus: true });
+    const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Edit Variant', name: it.name, generationId: it.generationId, engine: it.engine, transmission: it.transmission, fuelType: it.fuelType, generations: this.generationsCache, models: this.modelsCache, makes: this.makesCache, transmissions: this.variantOptions.transmissions, fuelTypes: this.variantOptions.fuelTypes }, width: '600px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { name: string; generationId: number; engine?: string; transmission?: string; fuelType?: string } | undefined) => {
       if (res){
         this.api.updateVariant(it.id, res).subscribe({ next: () => { this.notify.success('Variant updated'); this.loadContext(); } });
