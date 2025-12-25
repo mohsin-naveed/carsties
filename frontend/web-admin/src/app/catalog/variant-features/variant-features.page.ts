@@ -31,7 +31,7 @@ export class VariantFeaturesPage {
   private readonly notify = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
-  readonly displayedColumns = ['variant','feature','isStandard','actions'];
+  readonly displayedColumns = ['make','model','variant','feature','isStandard','actions'];
 
   readonly items$ = new BehaviorSubject<VariantFeatureDto[]>([]);
   readonly variants$ = new BehaviorSubject<VariantDto[]>([]);
@@ -51,6 +51,16 @@ export class VariantFeaturesPage {
       }
       return groups;
     })
+  );
+
+  readonly generationById$ = this.generations$.pipe(
+    map(gs => gs.reduce((acc, g) => { acc[g.id] = g; return acc; }, {} as Record<number, GenerationDto>)), shareReplay(1)
+  );
+  readonly modelById$ = this.models$.pipe(
+    map(ms => ms.reduce((acc, m) => { acc[m.id] = m; return acc; }, {} as Record<number, ModelDto>)), shareReplay(1)
+  );
+  readonly makeById$ = this.makes$.pipe(
+    map(ms => ms.reduce((acc, m) => { acc[m.id] = m; return acc; }, {} as Record<number, MakeDto>)), shareReplay(1)
   );
 
   // page-level form removed; dialogs will handle validation
@@ -96,5 +106,28 @@ export class VariantFeaturesPage {
         this.api.deleteVariantFeature(it.variantId, it.featureId).subscribe({ next: () => { this.notify.success('Mapping deleted'); this.load(); } });
       }
     });
+  }
+
+  readonly variantById$ = this.variants$.pipe(
+    map(vs => vs.reduce((acc, v) => { acc[v.id] = v; return acc; }, {} as Record<number, VariantDto>)), shareReplay(1)
+  );
+
+  getModelName(variantId: number){
+    const v = this.variants$.value.find(x => x.id === variantId);
+    if (!v) return '';
+    const gen = this.generations$.value.find(g => g.id === v.generationId);
+    if (!gen) return '';
+    const model = this.models$.value.find(m => m.id === gen.modelId);
+    return model?.name ?? '';
+  }
+
+  getMakeName(variantId: number){
+    const v = this.variants$.value.find(x => x.id === variantId);
+    if (!v) return '';
+    const gen = this.generations$.value.find(g => g.id === v.generationId);
+    if (!gen) return '';
+    const model = this.models$.value.find(m => m.id === gen.modelId);
+    const make = model ? this.makes$.value.find(x => x.id === model.makeId) : undefined;
+    return make?.name ?? '';
   }
 }

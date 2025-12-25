@@ -12,6 +12,10 @@
 </mat-form-field>
 
 <table mat-table [dataSource]="(filtered$ | async) ?? []" class="mat-elevation-z1">
+  <ng-container matColumnDef="make">
+    <th mat-header-cell *matHeaderCellDef>Make</th>
+    <td mat-cell *matCellDef="let it">{{ getMakeName(it.modelId) }}</td>
+  </ng-container>
   <ng-container matColumnDef="id">
     <th mat-header-cell *matHeaderCellDef>#</th>
     <td mat-cell *matCellDef="let it">{{ it.id }}</td>
@@ -24,7 +28,7 @@
 
   <ng-container matColumnDef="model">
     <th mat-header-cell *matHeaderCellDef>Model</th>
-    <td mat-cell *matCellDef="let it">{{ (modelById$ | async)?.[it.modelId]?.name }}</td>
+    <td mat-cell *matCellDef="let it">{{ getModelName(it.modelId) }}</td>
   </ng-container>
 
   <ng-container matColumnDef="years">

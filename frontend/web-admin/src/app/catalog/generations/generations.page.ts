@@ -32,7 +32,7 @@ export class GenerationsPage {
   private readonly notify = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
-  readonly displayedColumns = ['name','model','years','actions'];
+  readonly displayedColumns = ['make','model','name','years','actions'];
 
   private readonly reload$ = new BehaviorSubject<void>(undefined);
 
@@ -81,6 +81,13 @@ export class GenerationsPage {
     map((mdls) => mdls.reduce((acc, m) => { acc[m.id] = m; return acc; }, {} as Record<number, ModelDto>)),
     shareReplay(1)
   );
+  readonly makeById$ = this.makes$.pipe(
+    map(ms => ms.reduce((acc, m) => { acc[m.id] = m; return acc; }, {} as Record<number, MakeDto>)),
+    shareReplay(1)
+  );
+
+  private modelsCache: ModelDto[] = [];
+  private makesCache: MakeDto[] = [];
 
   readonly makeGroups$ = combineLatest([this.makes$, this.models$]).pipe(
     map(([makes, models]) => makes.map(m => ({ name: m.name, models: models.filter(md => md.makeId === m.id) })))
@@ -90,6 +97,8 @@ export class GenerationsPage {
 
   constructor(){
     this.load();
+    this.models$.subscribe(ms => { this.modelsCache = ms; });
+    this.makes$.subscribe(ms => { this.makesCache = ms; });
   }
 
   load(){ this.reload$.next(); }
@@ -121,6 +130,18 @@ export class GenerationsPage {
         this.api.deleteGeneration(it.id).subscribe({ next: () => { this.notify.success('Generation deleted'); this.load(); } });
       }
     });
+  }
+
+  getMakeName(modelId: number){
+    const model = this.modelsCache.find((m: ModelDto) => m.id === modelId);
+    if (!model) return '';
+    const make = this.makesCache.find((x: MakeDto) => x.id === model.makeId);
+    return make?.name ?? '';
+  }
+
+  getModelName(modelId: number){
+    const model = this.modelsCache.find((m: ModelDto) => m.id === modelId);
+    return model?.name ?? '';
   }
 
   onFilterInput(val: string){ this.filter$.next(val); }

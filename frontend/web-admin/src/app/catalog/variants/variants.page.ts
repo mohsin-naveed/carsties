@@ -32,7 +32,7 @@ export class VariantsPage {
   private readonly notify = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
-  readonly displayedColumns = ['name','generation','engine','transmission','fuelType','actions'];
+  readonly displayedColumns = ['make','model','name','generation','engine','transmission','fuelType','actions'];
 
   readonly items$ = new BehaviorSubject<VariantDto[]>([]);
   readonly generations$ = new BehaviorSubject<GenerationDto[]>([]);
@@ -41,6 +41,12 @@ export class VariantsPage {
   // editing handled via dialog
   readonly generationById$ = this.generations$.pipe(
     map(gs => gs.reduce((acc, g) => { acc[g.id] = g; return acc; }, {} as Record<number, GenerationDto>)), shareReplay(1)
+  );
+  readonly modelById$ = this.models$.pipe(
+    map(ms => ms.reduce((acc, m) => { acc[m.id] = m; return acc; }, {} as Record<number, ModelDto>)), shareReplay(1)
+  );
+  readonly makeById$ = this.makes$.pipe(
+    map(ms => ms.reduce((acc, m) => { acc[m.id] = m; return acc; }, {} as Record<number, MakeDto>)), shareReplay(1)
   );
   readonly generationGroups$ = combineLatest([this.generations$, this.models$, this.makes$]).pipe(
     map(([gens, models, makes]) => {
@@ -113,6 +119,21 @@ export class VariantsPage {
         this.api.deleteVariant(it.id).subscribe({ next: () => { this.notify.success('Variant deleted'); this.load(); } });
       }
     });
+  }
+
+  getModelName(it: VariantDto){
+    const gen = this.generations$.value.find(g => g.id === it.generationId);
+    if (!gen) return '';
+    const model = this.models$.value.find(m => m.id === gen.modelId);
+    return model?.name ?? '';
+  }
+
+  getMakeName(it: VariantDto){
+    const gen = this.generations$.value.find(g => g.id === it.generationId);
+    if (!gen) return '';
+    const model = this.models$.value.find(m => m.id === gen.modelId);
+    const make = model ? this.makes$.value.find(x => x.id === model.makeId) : undefined;
+    return make?.name ?? '';
   }
 
   onFilterInput(val: string){ this.filter$.next(val); }

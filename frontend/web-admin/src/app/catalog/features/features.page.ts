@@ -32,7 +32,7 @@ export class FeaturesPage {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
 
-  readonly displayedColumns = ['name','description','actions'];
+  readonly displayedColumns = ['make','model','name','description','actions'];
   readonly items$ = new BehaviorSubject<FeatureDto[]>([]);
   // editing handled via dialog
 
