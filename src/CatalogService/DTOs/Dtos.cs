@@ -24,3 +24,11 @@ public record UpdateFeatureDto(string? Name, string? Description);
 public record VariantFeatureDto(int VariantId, int FeatureId, bool IsStandard, DateTime AddedDate);
 public record CreateVariantFeatureDto(int VariantId, int FeatureId, bool IsStandard);
 public record UpdateVariantFeatureDto(bool? IsStandard);
+
+// Grouped payload for Variants page to reduce client API calls
+public record VariantsContextDto(
+	List<MakeDto> Makes,
+	List<ModelDto> Models,
+	List<GenerationDto> Generations,
+	List<VariantDto> Variants
+);

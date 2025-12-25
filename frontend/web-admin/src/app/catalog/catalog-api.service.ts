@@ -27,6 +27,13 @@ export interface VariantFeatureDto { variantId: number; featureId: number; isSta
 export interface CreateVariantFeatureDto { variantId: number; featureId: number; isStandard: boolean; }
 export interface UpdateVariantFeatureDto { isStandard?: boolean; }
 
+export interface VariantsContextDto {
+  makes: MakeDto[];
+  models: ModelDto[];
+  generations: GenerationDto[];
+  variants: VariantDto[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class CatalogApiService {
   private readonly http = inject(HttpClient);
@@ -54,6 +61,7 @@ export class CatalogApiService {
 
   // Variants
   getVariants(generationId?: number): Observable<VariantDto[]> { const params: any = {}; if (generationId) params.generationId = generationId; return this.http.get<VariantDto[]>(`${this.baseUrl}/variants`, { params }); }
+  getVariantsContext(): Observable<VariantsContextDto> { return this.http.get<VariantsContextDto>(`${this.baseUrl}/variants/context`); }
   createVariant(dto: CreateVariantDto): Observable<VariantDto> { return this.http.post<VariantDto>(`${this.baseUrl}/variants`, dto); }
   updateVariant(id: number, dto: UpdateVariantDto) { return this.http.put(`${this.baseUrl}/variants/${id}`, dto); }
   deleteVariant(id: number) { return this.http.delete(`${this.baseUrl}/variants/${id}`); }

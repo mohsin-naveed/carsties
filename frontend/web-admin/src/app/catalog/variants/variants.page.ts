@@ -83,13 +83,21 @@ export class VariantsPage {
   );
 
   constructor(){
-    this.api.getMakes().subscribe({ next: m => this.makes$.next(m), error: () => this.notify.error('Failed to load makes') });
-    this.api.getModels().subscribe({ next: m => this.models$.next(m), error: () => this.notify.error('Failed to load models') });
-    this.api.getGenerations().subscribe({ next: g => this.generations$.next(g), error: () => this.notify.error('Failed to load generations') });
-    this.load();
+    this.loadContext();
   }
 
-  load(){ this.api.getVariants().subscribe({ next: data => this.items$.next(data), error: () => this.notify.error('Failed to load variants') }); }
+  load(){ this.loadContext(); }
+  private loadContext(){
+    this.api.getVariantsContext().subscribe({
+      next: (ctx) => {
+        this.makes$.next(ctx.makes);
+        this.models$.next(ctx.models);
+        this.generations$.next(ctx.generations);
+        this.items$.next(ctx.variants);
+      },
+      error: () => this.notify.error('Failed to load variants data')
+    });
+  }
   lookupGeneration(id: number){ return undefined; }
 
   openCreate(generations: GenerationDto[]){
@@ -97,7 +105,7 @@ export class VariantsPage {
     const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Add Variant', generations }, width: '600px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { name: string; generationId: number; engine?: string; transmission?: string; fuelType?: string } | undefined) => {
       if (res){
-        this.api.createVariant(res).subscribe({ next: () => { this.notify.success('Variant created'); this.load(); } });
+        this.api.createVariant(res).subscribe({ next: () => { this.notify.success('Variant created'); this.loadContext(); } });
       }
     });
   }
@@ -107,7 +115,7 @@ export class VariantsPage {
     const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Edit Variant', name: it.name, generationId: it.generationId, engine: it.engine, transmission: it.transmission, fuelType: it.fuelType, generations }, width: '600px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { name: string; generationId: number; engine?: string; transmission?: string; fuelType?: string } | undefined) => {
       if (res){
-        this.api.updateVariant(it.id, res).subscribe({ next: () => { this.notify.success('Variant updated'); this.load(); } });
+        this.api.updateVariant(it.id, res).subscribe({ next: () => { this.notify.success('Variant updated'); this.loadContext(); } });
       }
     });
   }
@@ -116,7 +124,7 @@ export class VariantsPage {
     const ref = this.dialog.open(ConfirmDialogComponent, { data: { message: `Delete variant '${it.name}'?` } });
     ref.afterClosed().subscribe((ok: boolean) => {
       if (ok){
-        this.api.deleteVariant(it.id).subscribe({ next: () => { this.notify.success('Variant deleted'); this.load(); } });
+        this.api.deleteVariant(it.id).subscribe({ next: () => { this.notify.success('Variant deleted'); this.loadContext(); } });
       }
     });
   }

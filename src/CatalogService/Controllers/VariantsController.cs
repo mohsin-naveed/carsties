@@ -12,6 +12,29 @@ namespace CatalogService.Controllers;
 [Route("api/[controller]")]
 public class VariantsController(CatalogDbContext context, IMapper mapper) : ControllerBase
 {
+    [HttpGet("context")]
+    public async Task<ActionResult<VariantsContextDto>> GetContext()
+    {
+        var makes = await context.Makes
+            .OrderBy(x => x.Name)
+            .ProjectTo<MakeDto>(mapper.ConfigurationProvider)
+            .ToListAsync();
+        var models = await context.Models
+            .OrderBy(x => x.Name)
+            .ProjectTo<ModelDto>(mapper.ConfigurationProvider)
+            .ToListAsync();
+        var generations = await context.Generations
+            .OrderBy(x => x.Name)
+            .ProjectTo<GenerationDto>(mapper.ConfigurationProvider)
+            .ToListAsync();
+        var variants = await context.Variants
+            .OrderBy(x => x.Name)
+            .ProjectTo<VariantDto>(mapper.ConfigurationProvider)
+            .ToListAsync();
+
+        var payload = new VariantsContextDto(makes, models, generations, variants);
+        return Ok(payload);
+    }
     [HttpGet]
     public async Task<ActionResult<List<VariantDto>>> GetAll([FromQuery] int? generationId)
     {
