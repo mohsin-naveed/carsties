@@ -66,15 +66,23 @@ export class VariantFeaturesPage {
   // page-level form removed; dialogs will handle validation
 
   constructor(){
-    this.api.getMakes().subscribe({ next: m => this.makes$.next(m), error: () => this.notify.error('Failed to load makes') });
-    this.api.getModels().subscribe({ next: m => this.models$.next(m), error: () => this.notify.error('Failed to load models') });
-    this.api.getGenerations().subscribe({ next: g => this.generations$.next(g), error: () => this.notify.error('Failed to load generations') });
-    this.api.getVariants().subscribe({ next: v => this.variants$.next(v), error: () => this.notify.error('Failed to load variants') });
-    this.api.getFeatures().subscribe({ next: f => this.features$.next(f), error: () => this.notify.error('Failed to load features') });
-    this.load();
+    this.loadContext();
   }
 
-  load(){ this.api.getVariantFeatures().subscribe({ next: data => this.items$.next(data), error: () => this.notify.error('Failed to load mappings') }); }
+  load(){ this.loadContext(); }
+  private loadContext(makeId?: number, modelId?: number, generationId?: number){
+    this.api.getVariantFeaturesContext(makeId, modelId, generationId).subscribe({
+      next: (ctx) => {
+        this.makes$.next(ctx.makes);
+        this.models$.next(ctx.models);
+        this.generations$.next(ctx.generations);
+        this.variants$.next(ctx.variants);
+        this.features$.next(ctx.features);
+      },
+      error: () => this.notify.error('Failed to load mapping data')
+    });
+    this.api.getVariantFeatures().subscribe({ next: data => this.items$.next(data), error: () => this.notify.error('Failed to load mappings') });
+  }
 
   lookupVariantName(id: number, variants: VariantDto[]){ return variants.find(v => v.id === id)?.name; }
   lookupFeatureName(id: number, features: FeatureDto[]){ return features.find(f => f.id === id)?.name; }
@@ -84,7 +92,7 @@ export class VariantFeaturesPage {
     const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Add Mapping', variants, features }, width: '560px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { variantId: number; featureId: number; isStandard: boolean } | undefined) => {
       if (res){
-        this.api.createVariantFeature(res).subscribe({ next: () => { this.notify.success('Mapping created'); this.load(); } });
+        this.api.createVariantFeature(res).subscribe({ next: () => { this.notify.success('Mapping created'); this.loadContext(); } });
       }
     });
   }
@@ -94,7 +102,7 @@ export class VariantFeaturesPage {
     const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Edit Mapping', variantId: it.variantId, featureId: it.featureId, isStandard: it.isStandard, variants, features }, width: '560px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { variantId: number; featureId: number; isStandard: boolean } | undefined) => {
       if (res){
-        this.api.updateVariantFeature(it.variantId, it.featureId, { isStandard: res.isStandard }).subscribe({ next: () => { this.notify.success('Mapping updated'); this.load(); } });
+        this.api.updateVariantFeature(it.variantId, it.featureId, { isStandard: res.isStandard }).subscribe({ next: () => { this.notify.success('Mapping updated'); this.loadContext(); } });
       }
     });
   }
@@ -103,7 +111,7 @@ export class VariantFeaturesPage {
     const ref = this.dialog.open(ConfirmDialogComponent, { data: { message: 'Delete mapping?' } });
     ref.afterClosed().subscribe((ok: boolean) => {
       if (ok){
-        this.api.deleteVariantFeature(it.variantId, it.featureId).subscribe({ next: () => { this.notify.success('Mapping deleted'); this.load(); } });
+        this.api.deleteVariantFeature(it.variantId, it.featureId).subscribe({ next: () => { this.notify.success('Mapping deleted'); this.loadContext(); } });
       }
     });
   }

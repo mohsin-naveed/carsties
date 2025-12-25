@@ -32,3 +32,22 @@ public record VariantsContextDto(
 	List<GenerationDto> Generations,
 	List<VariantDto> Variants
 );
+
+public record ModelsContextDto(
+	List<MakeDto> Makes,
+	List<ModelDto> Models
+);
+
+public record GenerationsContextDto(
+	List<MakeDto> Makes,
+	List<ModelDto> Models,
+	List<GenerationDto> Generations
+);
+
+public record VariantFeaturesContextDto(
+	List<MakeDto> Makes,
+	List<ModelDto> Models,
+	List<GenerationDto> Generations,
+	List<VariantDto> Variants,
+	List<FeatureDto> Features
+);

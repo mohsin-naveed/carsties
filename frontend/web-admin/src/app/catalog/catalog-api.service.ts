@@ -34,6 +34,25 @@ export interface VariantsContextDto {
   variants: VariantDto[];
 }
 
+export interface ModelsContextDto {
+  makes: MakeDto[];
+  models: ModelDto[];
+}
+
+export interface GenerationsContextDto {
+  makes: MakeDto[];
+  models: ModelDto[];
+  generations: GenerationDto[];
+}
+
+export interface VariantFeaturesContextDto {
+  makes: MakeDto[];
+  models: ModelDto[];
+  generations: GenerationDto[];
+  variants: VariantDto[];
+  features: FeatureDto[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class CatalogApiService {
   private readonly http = inject(HttpClient);
@@ -49,12 +68,17 @@ export class CatalogApiService {
 
   // Models
   getModels(makeId?: number): Observable<ModelDto[]> { const params: any = {}; if (makeId) params.makeId = makeId; return this.http.get<ModelDto[]>(`${this.baseUrl}/models`, { params }); }
+  getModelsContext(makeId?: number): Observable<ModelsContextDto> { const params: any = {}; if (makeId) params.makeId = makeId; return this.http.get<ModelsContextDto>(`${this.baseUrl}/models/context`, { params }); }
   createModel(dto: CreateModelDto): Observable<ModelDto> { return this.http.post<ModelDto>(`${this.baseUrl}/models`, dto); }
   updateModel(id: number, dto: UpdateModelDto) { return this.http.put(`${this.baseUrl}/models/${id}`, dto); }
   deleteModel(id: number) { return this.http.delete(`${this.baseUrl}/models/${id}`); }
 
   // Generations
   getGenerations(modelId?: number): Observable<GenerationDto[]> { const params: any = {}; if (modelId) params.modelId = modelId; return this.http.get<GenerationDto[]>(`${this.baseUrl}/generations`, { params }); }
+  getGenerationsContext(makeId?: number, modelId?: number): Observable<GenerationsContextDto> {
+    const params: any = {}; if (makeId) params.makeId = makeId; if (modelId) params.modelId = modelId;
+    return this.http.get<GenerationsContextDto>(`${this.baseUrl}/generations/context`, { params });
+  }
   createGeneration(dto: CreateGenerationDto): Observable<GenerationDto> { return this.http.post<GenerationDto>(`${this.baseUrl}/generations`, dto); }
   updateGeneration(id: number, dto: UpdateGenerationDto) { return this.http.put(`${this.baseUrl}/generations/${id}`, dto); }
   deleteGeneration(id: number) { return this.http.delete(`${this.baseUrl}/generations/${id}`); }
@@ -76,6 +100,10 @@ export class CatalogApiService {
   getVariantFeatures(variantId?: number, featureId?: number): Observable<VariantFeatureDto[]> {
     const params: any = {}; if (variantId) params.variantId = variantId; if (featureId) params.featureId = featureId;
   return this.http.get<VariantFeatureDto[]>(`${this.baseUrl}/variantfeatures`, { params });
+  }
+  getVariantFeaturesContext(makeId?: number, modelId?: number, generationId?: number): Observable<VariantFeaturesContextDto> {
+    const params: any = {}; if (makeId) params.makeId = makeId; if (modelId) params.modelId = modelId; if (generationId) params.generationId = generationId;
+    return this.http.get<VariantFeaturesContextDto>(`${this.baseUrl}/variantfeatures/context`, { params });
   }
   createVariantFeature(dto: CreateVariantFeatureDto): Observable<VariantFeatureDto> { return this.http.post<VariantFeatureDto>(`${this.baseUrl}/variantfeatures`, dto); }
   updateVariantFeature(variantId: number, featureId: number, dto: UpdateVariantFeatureDto) { return this.http.put(`${this.baseUrl}/variantfeatures/${variantId}/${featureId}`, dto); }

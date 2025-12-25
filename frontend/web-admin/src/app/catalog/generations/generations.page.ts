@@ -12,8 +12,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { CatalogApiService, GenerationDto, ModelDto, MakeDto } from '../catalog-api.service';
 import { NotificationService } from '../../core/notification.service';
-import { BehaviorSubject, Subject, combineLatest, of } from 'rxjs';
-import { catchError, map, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest } from 'rxjs';
+import { map, shareReplay } from 'rxjs/operators';
 
 @Component({
   selector: 'app-generations-page',
@@ -34,27 +34,9 @@ export class GenerationsPage {
   private readonly dialog = inject(MatDialog);
   readonly displayedColumns = ['make','model','name','years','actions'];
 
-  private readonly reload$ = new BehaviorSubject<void>(undefined);
-
-  readonly makes$ = this.api.getMakes().pipe(
-    tap({ error: () => this.notify.error('Failed to load makes') }),
-    catchError(() => of([] as MakeDto[])),
-    shareReplay(1)
-  );
-
-  readonly models$ = this.api.getModels().pipe(
-    tap({ error: () => this.notify.error('Failed to load models') }),
-    catchError(() => of([] as ModelDto[])),
-    shareReplay(1)
-  );
-
-  readonly items$ = this.reload$.pipe(
-    switchMap(() => this.api.getGenerations().pipe(
-      tap({ error: () => this.notify.error('Failed to load generations') }),
-      catchError(() => of([] as GenerationDto[]))
-    )),
-    shareReplay(1)
-  );
+  readonly makes$ = new BehaviorSubject<MakeDto[]>([]);
+  readonly models$ = new BehaviorSubject<ModelDto[]>([]);
+  readonly items$ = new BehaviorSubject<GenerationDto[]>([]);
 
   // editing handled via dialog
 
@@ -96,19 +78,25 @@ export class GenerationsPage {
   // page-level form removed; dialogs will handle validation
 
   constructor(){
-    this.load();
+    this.loadContext();
     this.models$.subscribe(ms => { this.modelsCache = ms; });
     this.makes$.subscribe(ms => { this.makesCache = ms; });
   }
 
-  load(){ this.reload$.next(); }
+  load(){ this.loadContext(); }
+  private loadContext(makeId?: number, modelId?: number){
+    this.api.getGenerationsContext(makeId, modelId).subscribe({
+      next: (ctx) => { this.makes$.next(ctx.makes); this.models$.next(ctx.models); this.items$.next(ctx.generations); },
+      error: () => this.notify.error('Failed to load generations')
+    });
+  }
 
   openCreate(models: ModelDto[]){
     (document.activeElement as HTMLElement | null)?.blur();
     const ref = this.dialog.open(GenerationEditDialogComponent, { data: { title: 'Add Generation', models }, width: '480px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { name: string; modelId: number; startYear?: number; endYear?: number } | undefined) => {
       if (res){
-        this.api.createGeneration(res).subscribe({ next: () => { this.notify.success('Generation created'); this.load(); } });
+        this.api.createGeneration(res).subscribe({ next: () => { this.notify.success('Generation created'); this.loadContext(); } });
       }
     });
   }
@@ -118,7 +106,7 @@ export class GenerationsPage {
     const ref = this.dialog.open(GenerationEditDialogComponent, { data: { title: 'Edit Generation', name: it.name, modelId: it.modelId, startYear: it.startYear, endYear: it.endYear, models }, width: '480px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { name: string; modelId: number; startYear?: number; endYear?: number } | undefined) => {
       if (res){
-        this.api.updateGeneration(it.id, res).subscribe({ next: () => { this.notify.success('Generation updated'); this.load(); } });
+        this.api.updateGeneration(it.id, res).subscribe({ next: () => { this.notify.success('Generation updated'); this.loadContext(); } });
       }
     });
   }
@@ -127,7 +115,7 @@ export class GenerationsPage {
     const ref = this.dialog.open(ConfirmDialogComponent, { data: { message: `Delete generation '${it.name}'?` } });
     ref.afterClosed().subscribe((ok: boolean) => {
       if (ok){
-        this.api.deleteGeneration(it.id).subscribe({ next: () => { this.notify.success('Generation deleted'); this.load(); } });
+        this.api.deleteGeneration(it.id).subscribe({ next: () => { this.notify.success('Generation deleted'); this.loadContext(); } });
       }
     });
   }

@@ -60,18 +60,21 @@ export class ModelsPage {
   );
 
   constructor(){
-    this.loadMakes();
-    this.loadModels();
+    this.loadContext();
   }
 
-  loadMakes(){ this.api.getMakes().subscribe(data => this.makes$.next(data)); }
-  loadModels(){ this.api.getModels().subscribe({ next: data => this.models$.next(data), error: () => this.notify.error('Failed to load models') }); }
+  private loadContext(makeId?: number){
+    this.api.getModelsContext(makeId).subscribe({
+      next: (ctx) => { this.makes$.next(ctx.makes); this.models$.next(ctx.models); },
+      error: () => this.notify.error('Failed to load models')
+    });
+  }
 
   openCreate(){
     (document.activeElement as HTMLElement | null)?.blur();
     const ref = this.dialog.open(ModelEditDialogComponent, { data: { title: 'Add Model', makes: this.makes$.value }, width: '480px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { name: string; makeId: number } | undefined) => {
-      if (res){ this.api.createModel(res).subscribe({ next: () => { this.notify.success('Model created'); this.loadModels(); } }); }
+      if (res){ this.api.createModel(res).subscribe({ next: () => { this.notify.success('Model created'); this.loadContext(); } }); }
     });
   }
 
@@ -79,11 +82,11 @@ export class ModelsPage {
     (document.activeElement as HTMLElement | null)?.blur();
     const ref = this.dialog.open(ModelEditDialogComponent, { data: { title: 'Edit Model', name: it.name, makeId: it.makeId, makes: this.makes$.value }, width: '480px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { name: string; makeId: number } | undefined) => {
-      if (res){ this.api.updateModel(it.id, res).subscribe({ next: () => { this.notify.success('Model updated'); this.loadModels(); } }); }
+      if (res){ this.api.updateModel(it.id, res).subscribe({ next: () => { this.notify.success('Model updated'); this.loadContext(); } }); }
     });
   }
 
-  remove(it: ModelDto){ if (!confirm(`Delete model '${it.name}'?`)) return; this.api.deleteModel(it.id).subscribe({ next: () => { this.notify.success('Model deleted'); this.loadModels(); } }); }
+  remove(it: ModelDto){ if (!confirm(`Delete model '${it.name}'?`)) return; this.api.deleteModel(it.id).subscribe({ next: () => { this.notify.success('Model deleted'); this.loadContext(); } }); }
 
   onFilterInput(val: string){ this.filter$.next(val); }
 }

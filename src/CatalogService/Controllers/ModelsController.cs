@@ -12,6 +12,21 @@ namespace CatalogService.Controllers;
 [Route("api/[controller]")]
 public class ModelsController(CatalogDbContext context, IMapper mapper) : ControllerBase
 {
+    [HttpGet("context")]
+    public async Task<ActionResult<ModelsContextDto>> GetContext([FromQuery] int? makeId)
+    {
+        var makes = await context.Makes
+            .OrderBy(x => x.Name)
+            .ProjectTo<MakeDto>(mapper.ConfigurationProvider)
+            .ToListAsync();
+        var modelsQuery = context.Models.AsQueryable();
+        if (makeId.HasValue) modelsQuery = modelsQuery.Where(x => x.MakeId == makeId);
+        var models = await modelsQuery
+            .OrderBy(x => x.Name)
+            .ProjectTo<ModelDto>(mapper.ConfigurationProvider)
+            .ToListAsync();
+        return Ok(new ModelsContextDto(makes, models));
+    }
     [HttpGet]
     public async Task<ActionResult<List<ModelDto>>> GetAll([FromQuery] int? makeId)
     {

@@ -12,6 +12,40 @@ namespace CatalogService.Controllers;
 [Route("api/[controller]")]
 public class GenerationsController(CatalogDbContext context, IMapper mapper) : ControllerBase
 {
+    [HttpGet("context")]
+    public async Task<ActionResult<GenerationsContextDto>> GetContext([FromQuery] int? makeId, [FromQuery] int? modelId)
+    {
+        var makesQuery = context.Makes.AsQueryable();
+        var modelsQuery = context.Models.AsQueryable();
+        var generationsQuery = context.Generations.AsQueryable();
+
+        if (makeId.HasValue)
+        {
+            modelsQuery = modelsQuery.Where(m => m.MakeId == makeId);
+            var modelIds = await modelsQuery.Select(m => m.Id).ToListAsync();
+            generationsQuery = generationsQuery.Where(g => modelIds.Contains(g.ModelId));
+        }
+        if (modelId.HasValue)
+        {
+            modelsQuery = modelsQuery.Where(m => m.Id == modelId);
+            generationsQuery = generationsQuery.Where(g => g.ModelId == modelId);
+        }
+
+        var makes = await makesQuery
+            .OrderBy(x => x.Name)
+            .ProjectTo<MakeDto>(mapper.ConfigurationProvider)
+            .ToListAsync();
+        var models = await modelsQuery
+            .OrderBy(x => x.Name)
+            .ProjectTo<ModelDto>(mapper.ConfigurationProvider)
+            .ToListAsync();
+        var generations = await generationsQuery
+            .OrderBy(x => x.Name)
+            .ProjectTo<GenerationDto>(mapper.ConfigurationProvider)
+            .ToListAsync();
+
+        return Ok(new GenerationsContextDto(makes, models, generations));
+    }
     [HttpGet]
     public async Task<ActionResult<List<GenerationDto>>> GetAll([FromQuery] int? modelId)
     {

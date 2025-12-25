@@ -12,6 +12,37 @@ namespace CatalogService.Controllers;
 [Route("api/[controller]")]
 public class VariantFeaturesController(CatalogDbContext context, IMapper mapper) : ControllerBase
 {
+    [HttpGet("context")]
+    public async Task<ActionResult<VariantFeaturesContextDto>> GetContext([FromQuery] int? makeId, [FromQuery] int? modelId, [FromQuery] int? generationId)
+    {
+        var makesQuery = context.Makes.AsQueryable();
+        var modelsQuery = context.Models.AsQueryable();
+        var generationsQuery = context.Generations.AsQueryable();
+        var variantsQuery = context.Variants.AsQueryable();
+        var featuresQuery = context.Features.AsQueryable();
+
+        if (makeId.HasValue)
+        {
+            modelsQuery = modelsQuery.Where(m => m.MakeId == makeId);
+        }
+        if (modelId.HasValue)
+        {
+            modelsQuery = modelsQuery.Where(m => m.Id == modelId);
+            generationsQuery = generationsQuery.Where(g => g.ModelId == modelId);
+        }
+        if (generationId.HasValue)
+        {
+            variantsQuery = variantsQuery.Where(v => v.GenerationId == generationId);
+        }
+
+        var makes = await makesQuery.OrderBy(x => x.Name).ProjectTo<MakeDto>(mapper.ConfigurationProvider).ToListAsync();
+        var models = await modelsQuery.OrderBy(x => x.Name).ProjectTo<ModelDto>(mapper.ConfigurationProvider).ToListAsync();
+        var generations = await generationsQuery.OrderBy(x => x.Name).ProjectTo<GenerationDto>(mapper.ConfigurationProvider).ToListAsync();
+        var variants = await variantsQuery.OrderBy(x => x.Name).ProjectTo<VariantDto>(mapper.ConfigurationProvider).ToListAsync();
+        var features = await featuresQuery.OrderBy(x => x.Name).ProjectTo<FeatureDto>(mapper.ConfigurationProvider).ToListAsync();
+
+        return Ok(new VariantFeaturesContextDto(makes, models, generations, variants, features));
+    }
     [HttpGet]
     public async Task<ActionResult<List<VariantFeatureDto>>> GetAll([FromQuery] int? variantId, [FromQuery] int? featureId)
     {
