@@ -7,7 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { A11yModule } from '@angular/cdk/a11y';
-import { ModelDto } from '../catalog-api.service';
+import { MakeDto, ModelDto } from '../catalog-api.service';
 
 @Component({
   selector: 'app-generation-edit-dialog',
@@ -18,14 +18,20 @@ import { ModelDto } from '../catalog-api.service';
     <div mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" style="width:100%">
-          <mat-label>Name</mat-label>
-          <input #nameInput matInput formControlName="name" placeholder="e.g. E90" cdkFocusInitial />
+          <mat-label>Make</mat-label>
+          <mat-select formControlName="makeId">
+            <mat-option *ngFor="let mk of data.makes" [value]="mk.id">{{ mk.name }}</mat-option>
+          </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline" style="width:100%">
           <mat-label>Model</mat-label>
-          <mat-select formControlName="modelId">
-            <mat-option *ngFor="let m of data.models" [value]="m.id">{{ m.name }}</mat-option>
+          <mat-select formControlName="modelId" [disabled]="!form.value.makeId">
+            <mat-option *ngFor="let m of filteredModels()" [value]="m.id">{{ m.name }}</mat-option>
           </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" style="width:100%">
+          <mat-label>Name</mat-label>
+          <input #nameInput matInput formControlName="name" placeholder="e.g. E90" cdkFocusInitial />
         </mat-form-field>
         <div class="grid">
           <mat-form-field appearance="outline">
@@ -53,18 +59,38 @@ import { ModelDto } from '../catalog-api.service';
 export class GenerationEditDialogComponent implements AfterViewInit {
   private readonly fb = inject(FormBuilder);
   public ref: MatDialogRef<GenerationEditDialogComponent, { name: string; modelId: number; startYear?: number; endYear?: number }> = inject(MatDialogRef);
-  public data: { title: string; name?: string; modelId?: number; startYear?: number; endYear?: number; models: ModelDto[] } = inject(MAT_DIALOG_DATA);
+  public data: { title: string; name?: string; makeId?: number; modelId?: number; startYear?: number; endYear?: number; models: ModelDto[]; makes: MakeDto[] } = inject(MAT_DIALOG_DATA);
 
   @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
 
   readonly form = this.fb.group({
     name: [this.data.name ?? '', [Validators.required, Validators.maxLength(100)]],
+    makeId: [this.data.makeId ?? this.deriveMakeId(this.data.modelId) ?? null as number | null, [Validators.required]],
     modelId: [this.data.modelId ?? null as number | null, [Validators.required]],
     startYear: [this.data.startYear ?? null],
     endYear: [this.data.endYear ?? null]
   });
 
   ngAfterViewInit(){ setTimeout(() => this.nameInput?.nativeElement.focus(), 0); }
+
+  private deriveMakeId(modelId?: number){
+    if (!modelId) return null;
+    const m = this.data.models.find(x => x.id === modelId);
+    return m ? m.makeId : null;
+  }
+
+  constructor(){
+    // When make changes, clear model selection to force a valid pick
+    this.form.get('makeId')!.valueChanges.subscribe(() => {
+      this.form.get('modelId')!.setValue(null);
+    });
+  }
+
+  filteredModels(): ModelDto[] {
+    const makeId = this.form.value.makeId as number | null;
+    if (!makeId) return [];
+    return this.data.models.filter(m => m.makeId === makeId);
+  }
 
   save(){
     const raw = this.form.getRawValue();

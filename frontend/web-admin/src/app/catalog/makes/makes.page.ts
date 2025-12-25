@@ -31,7 +31,7 @@ export class MakesPage {
   private readonly notify = inject(NotificationService);
   private readonly dialog = inject(MatDialog);
 
-  readonly displayedColumns = ['make','model','actions'];
+  readonly displayedColumns = ['make','actions'];
   readonly makes$ = new BehaviorSubject<MakeDto[]>([]);
   readonly filter$ = new BehaviorSubject<string>('');
   readonly filtered$ = combineLatest([this.makes$, this.filter$]).pipe(
