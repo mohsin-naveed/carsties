@@ -7,6 +7,7 @@ import { ConfirmDialogComponent } from '../../shared/confirm-dialog.component';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { CatalogApiService, VariantFeatureDto, VariantDto, FeatureDto, GenerationDto, ModelDto, MakeDto } from '../catalog-api.service';
@@ -17,11 +18,12 @@ import { map, shareReplay } from 'rxjs/operators';
 @Component({
   selector: 'app-variant-features-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatSelectModule, MatIconModule, MatDialogModule],
+  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatDialogModule],
   templateUrl: './variant-features.page.html',
   styles:[`
     .header { display:flex; align-items:center; gap:1rem; justify-content:space-between; margin-bottom:1rem; }
     .form { display:flex; align-items:end; gap:.75rem; flex-wrap:wrap; }
+    .filter-field { margin-bottom:1rem; width:300px; display:block; }
     table { width:100%; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -39,6 +41,7 @@ export class VariantFeaturesPage {
   readonly models$ = new BehaviorSubject<ModelDto[]>([]);
   readonly makes$ = new BehaviorSubject<MakeDto[]>([]);
   readonly features$ = new BehaviorSubject<FeatureDto[]>([]);
+  readonly filter$ = new BehaviorSubject<string>('');
   readonly variantGroups$ = combineLatest([this.variants$, this.generations$, this.models$, this.makes$]).pipe(
     map(([variants, generations, models, makes]) => {
       const groups: { label: string; variants: VariantDto[] }[] = [];
@@ -50,6 +53,26 @@ export class VariantFeaturesPage {
         groups.push({ label, variants: [v] });
       }
       return groups;
+    })
+  );
+
+  readonly filtered$ = combineLatest([this.items$, this.variants$, this.features$, this.generations$, this.models$, this.makes$, this.filter$]).pipe(
+    map(([items, variants, features, generations, models, makes, q]) => {
+      const query = q.toLowerCase().trim();
+      if (!query) return items;
+      return items.filter(it => {
+        const variant = variants.find(v => v.id === it.variantId);
+        const gen = variant ? generations.find(g => g.id === variant.generationId) : undefined;
+        const model = gen ? models.find(m => m.id === gen.modelId) : undefined;
+        const make = model ? makes.find(x => x.id === model.makeId) : undefined;
+        const makeName = make?.name ?? '';
+        const modelName = model?.name ?? '';
+        const variantName = variant?.name ?? '';
+        const featureName = features.find(f => f.id === it.featureId)?.name ?? '';
+        const standardLabel = it.isStandard ? 'yes' : 'optional';
+        return [makeName, modelName, variantName, featureName, standardLabel]
+          .some(s => s.toLowerCase().includes(query));
+      });
     })
   );
 
@@ -84,12 +107,14 @@ export class VariantFeaturesPage {
     this.api.getVariantFeatures().subscribe({ next: data => this.items$.next(data), error: () => this.notify.error('Failed to load mappings') });
   }
 
+  onFilterInput(val: string){ this.filter$.next(val); }
+
   lookupVariantName(id: number, variants: VariantDto[]){ return variants.find(v => v.id === id)?.name; }
   lookupFeatureName(id: number, features: FeatureDto[]){ return features.find(f => f.id === id)?.name; }
 
   openCreate(variants: VariantDto[], features: FeatureDto[], generations: GenerationDto[], models: ModelDto[], makes: MakeDto[]){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Add Mapping', variants, features, generations, models, makes }, width: '560px', autoFocus: true, restoreFocus: true });
+    const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Add Variant Feature', variants, features, generations, models, makes }, width: '560px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { variantId: number; featureIds: number[]; isStandard: boolean } | undefined) => {
       if (res){
         const ops = res.featureIds.map(fid => this.api.createVariantFeature({ variantId: res.variantId, featureId: fid, isStandard: res.isStandard }));
@@ -102,7 +127,7 @@ export class VariantFeaturesPage {
 
   openEdit(it: VariantFeatureDto, variants: VariantDto[], features: FeatureDto[], generations: GenerationDto[], models: ModelDto[], makes: MakeDto[]){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Edit Mapping', variantId: it.variantId, featureId: it.featureId, isStandard: it.isStandard, variants, features, generations, models, makes }, width: '560px', autoFocus: true, restoreFocus: true });
+    const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Edit Variant Feature', variantId: it.variantId, featureId: it.featureId, isStandard: it.isStandard, variants, features, generations, models, makes }, width: '560px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { variantId: number; featureIds: number[]; isStandard: boolean } | undefined) => {
       if (res){
         const originalFeatureId = it.featureId;

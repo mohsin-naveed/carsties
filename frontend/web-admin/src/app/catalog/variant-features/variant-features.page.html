@@ -1,12 +1,12 @@
 <section class="header">
-  <h2>Variant Feature Mapping</h2>
+  <h2>Variant Feature</h2>
   <span class="spacer"></span>
   <ng-container *ngIf="variants$ | async as variants; else noVariants">
     <ng-container *ngIf="features$ | async as features">
       <ng-container *ngIf="generations$ | async as generations">
         <ng-container *ngIf="models$ | async as models">
           <ng-container *ngIf="makes$ | async as makes">
-            <button mat-flat-button color="primary" (click)="openCreate(variants, features, generations, models, makes)">Add Mapping</button>
+            <button mat-flat-button color="primary" (click)="openCreate(variants, features, generations, models, makes)">Add Variant Feature</button>
           </ng-container>
         </ng-container>
       </ng-container>
@@ -15,7 +15,13 @@
   <ng-template #noVariants></ng-template>
 </section>
 
-<table mat-table [dataSource]="(items$ | async) ?? []" class="mat-elevation-z1">
+<mat-form-field appearance="outline" class="filter-field">
+  <mat-label>Search</mat-label>
+  <input matInput (input)="onFilterInput($any($event.target).value)" placeholder="Search variant features" />
+  
+</mat-form-field>
+
+<table mat-table [dataSource]="(filtered$ | async) ?? []" class="mat-elevation-z1">
   <ng-container matColumnDef="make">
     <th mat-header-cell *matHeaderCellDef>Make</th>
     <td mat-cell *matCellDef="let it">{{ getMakeName(it.variantId) }}</td>
