@@ -1,3 +1,4 @@
 namespace CatalogService.DTOs;
 
-public record VariantOptionsDto(List<string> Transmissions, List<string> FuelTypes);
+public record OptionDto(int Id, string Name);
+public record VariantOptionsDto(List<OptionDto> Transmissions, List<OptionDto> FuelTypes);

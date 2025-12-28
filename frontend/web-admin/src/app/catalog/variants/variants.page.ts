@@ -10,7 +10,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
-import { CatalogApiService, VariantDto, GenerationDto, ModelDto, MakeDto } from '../catalog-api.service';
+import { CatalogApiService, VariantDto, GenerationDto, ModelDto, MakeDto, OptionDto } from '../catalog-api.service';
 import { NotificationService } from '../../core/notification.service';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
@@ -70,12 +70,14 @@ export class VariantsPage {
       const genMap = generations.reduce((acc, g) => { acc[g.id] = g; return acc; }, {} as Record<number, GenerationDto>);
       return items.filter(it => {
         const genName = genMap[it.generationId]?.name ?? '';
+        const transName = this.getTransmissionName(it).toLowerCase();
+        const fuelName = this.getFuelTypeName(it).toLowerCase();
         return (
           it.name.toLowerCase().includes(query) ||
           genName.toLowerCase().includes(query) ||
           (it.engine ?? '').toLowerCase().includes(query) ||
-          (it.transmission ?? '').toLowerCase().includes(query) ||
-          (it.fuelType ?? '').toLowerCase().includes(query) ||
+          transName.includes(query) ||
+          fuelName.includes(query) ||
           String(it.id).includes(query)
         );
       });
@@ -85,7 +87,9 @@ export class VariantsPage {
   private makesCache: MakeDto[] = [];
   private modelsCache: ModelDto[] = [];
   private generationsCache: GenerationDto[] = [];
-  private variantOptions: { transmissions: string[]; fuelTypes: string[] } = { transmissions: [], fuelTypes: [] };
+  private variantOptions: { transmissions: OptionDto[]; fuelTypes: OptionDto[] } = { transmissions: [], fuelTypes: [] };
+  private transMap: Record<number, string> = {};
+  private fuelMap: Record<number, string> = {};
 
   constructor(){
     this.makes$.subscribe(ms => this.makesCache = ms);
@@ -105,14 +109,14 @@ export class VariantsPage {
       },
       error: () => this.notify.error('Failed to load variants data')
     });
-    this.api.getVariantOptions().subscribe({ next: (opts) => this.variantOptions = opts, error: () => {} });
+    this.api.getVariantOptions().subscribe({ next: (opts) => { this.variantOptions = opts; this.transMap = Object.fromEntries(opts.transmissions.map(o => [o.id, o.name])); this.fuelMap = Object.fromEntries(opts.fuelTypes.map(o => [o.id, o.name])); }, error: () => {} });
   }
   lookupGeneration(id: number){ return undefined; }
 
   openCreate(){
     (document.activeElement as HTMLElement | null)?.blur();
     const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Add Variant', generations: this.generationsCache, models: this.modelsCache, makes: this.makesCache, transmissions: this.variantOptions.transmissions, fuelTypes: this.variantOptions.fuelTypes }, width: '600px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { name: string; generationId: number; engine?: string; transmission?: string; fuelType?: string } | undefined) => {
+    ref.afterClosed().subscribe((res: { name: string; generationId: number; engine?: string; transmissionId?: number; fuelTypeId?: number } | undefined) => {
       if (res){
         this.api.createVariant(res).subscribe({ next: () => { this.notify.success('Variant created'); this.loadContext(); } });
       }
@@ -121,8 +125,8 @@ export class VariantsPage {
 
   openEdit(it: VariantDto){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Edit Variant', name: it.name, generationId: it.generationId, engine: it.engine, transmission: it.transmission, fuelType: it.fuelType, generations: this.generationsCache, models: this.modelsCache, makes: this.makesCache, transmissions: this.variantOptions.transmissions, fuelTypes: this.variantOptions.fuelTypes }, width: '600px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { name: string; generationId: number; engine?: string; transmission?: string; fuelType?: string } | undefined) => {
+    const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Edit Variant', name: it.name, generationId: it.generationId, engine: it.engine, transmissionId: it.transmissionId, fuelTypeId: it.fuelTypeId, generations: this.generationsCache, models: this.modelsCache, makes: this.makesCache, transmissions: this.variantOptions.transmissions, fuelTypes: this.variantOptions.fuelTypes }, width: '600px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; generationId: number; engine?: string; transmissionId?: number; fuelTypeId?: number } | undefined) => {
       if (res){
         this.api.updateVariant(it.id, res).subscribe({ next: () => { this.notify.success('Variant updated'); this.loadContext(); } });
       }
@@ -152,6 +156,9 @@ export class VariantsPage {
     const make = model ? this.makes$.value.find(x => x.id === model.makeId) : undefined;
     return make?.name ?? '';
   }
+
+  getTransmissionName(it: VariantDto){ return it.transmissionId ? (this.transMap[it.transmissionId] ?? '') : ''; }
+  getFuelTypeName(it: VariantDto){ return it.fuelTypeId ? (this.fuelMap[it.fuelTypeId] ?? '') : ''; }
 
   onFilterInput(val: string){ this.filter$.next(val); }
 }

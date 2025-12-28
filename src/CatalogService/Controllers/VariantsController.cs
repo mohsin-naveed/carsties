@@ -5,6 +5,7 @@ using CatalogService.DTOs;
 using CatalogService.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 
 namespace CatalogService.Controllers;
 
@@ -15,10 +16,25 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
     [HttpGet("options")]
     public ActionResult<VariantOptionsDto> GetOptions()
     {
-        // Static canonical lists; adjust as needed
-        var transmissions = new List<string> { "Manual", "Automatic", "CVT", "Dual-Clutch" };
-        var fuelTypes = new List<string> { "Petrol", "Diesel", "Hybrid", "Electric" };
+        var transmissions = context.Transmissions
+            .OrderBy(x => x.Name)
+            .Select(x => new OptionDto(x.Id, x.Name))
+            .ToList();
+        var fuelTypes = context.FuelTypes
+            .OrderBy(x => x.Name)
+            .Select(x => new OptionDto(x.Id, x.Name))
+            .ToList();
         return Ok(new VariantOptionsDto(transmissions, fuelTypes));
+    }
+
+    // Dev-only reseed endpoint to align data with new reference tables
+    [HttpPost("reseed")]
+    public ActionResult Reseed([FromServices] IHostEnvironment env)
+    {
+        if (!env.IsDevelopment()) return Forbid();
+        DbInitializer.ClearCatalogData(context);
+        DbInitializer.SeedIfEmpty(context);
+        return Ok(new { status = "reseeded" });
     }
     [HttpGet("context")]
     public async Task<ActionResult<VariantsContextDto>> GetContext([FromQuery] int? makeId, [FromQuery] int? modelId, [FromQuery] int? generationId)
@@ -43,7 +59,15 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
         if (generationId.HasValue) variantsQuery = variantsQuery.Where(v => v.GenerationId == generationId.Value);
         var variants = await variantsQuery
             .OrderBy(x => x.Name)
-            .ProjectTo<VariantDto>(mapper.ConfigurationProvider)
+            .Select(v => new VariantDto(
+                v.Id,
+                v.Name,
+                v.Engine,
+                v.TransmissionId,
+                v.TransmissionRef != null ? v.TransmissionRef.Name : null,
+                v.FuelTypeId,
+                v.FuelTypeRef != null ? v.FuelTypeRef.Name : null,
+                v.GenerationId))
             .ToListAsync();
 
         var payload = new VariantsContextDto(makes, models, generations, variants);
@@ -56,7 +80,15 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
         if (generationId.HasValue) query = query.Where(x => x.GenerationId == generationId);
         return await query
             .OrderBy(x => x.Name)
-            .ProjectTo<VariantDto>(mapper.ConfigurationProvider)
+            .Select(v => new VariantDto(
+                v.Id,
+                v.Name,
+                v.Engine,
+                v.TransmissionId,
+                v.TransmissionRef != null ? v.TransmissionRef.Name : null,
+                v.FuelTypeId,
+                v.FuelTypeRef != null ? v.FuelTypeRef.Name : null,
+                v.GenerationId))
             .ToListAsync();
     }
 
@@ -72,6 +104,10 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
     {
         if (!await context.Generations.AnyAsync(x => x.Id == dto.GenerationId))
             return BadRequest("Invalid GenerationId");
+        if (dto.TransmissionId.HasValue && !await context.Transmissions.AnyAsync(x => x.Id == dto.TransmissionId.Value))
+            return BadRequest("Invalid TransmissionId");
+        if (dto.FuelTypeId.HasValue && !await context.FuelTypes.AnyAsync(x => x.Id == dto.FuelTypeId.Value))
+            return BadRequest("Invalid FuelTypeId");
         var entity = mapper.Map<Variant>(dto);
         context.Variants.Add(entity);
         var ok = await context.SaveChangesAsync() > 0;
@@ -93,8 +129,18 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
             entity.GenerationId = dto.GenerationId.Value;
         }
         if (dto.Engine is not null) entity.Engine = dto.Engine;
-        if (dto.Transmission is not null) entity.Transmission = dto.Transmission;
-        if (dto.FuelType is not null) entity.FuelType = dto.FuelType;
+        if (dto.TransmissionId.HasValue)
+        {
+            var exists = await context.Transmissions.AnyAsync(x => x.Id == dto.TransmissionId.Value);
+            if (!exists) return BadRequest("Invalid TransmissionId");
+            entity.TransmissionId = dto.TransmissionId.Value;
+        }
+        if (dto.FuelTypeId.HasValue)
+        {
+            var exists = await context.FuelTypes.AnyAsync(x => x.Id == dto.FuelTypeId.Value);
+            if (!exists) return BadRequest("Invalid FuelTypeId");
+            entity.FuelTypeId = dto.FuelTypeId.Value;
+        }
         var ok = await context.SaveChangesAsync() > 0;
         return ok ? Ok() : BadRequest("Failed to update variant");
     }

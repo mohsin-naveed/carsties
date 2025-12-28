@@ -14,22 +14,52 @@ public class DbInitializer
         SeedIfEmpty(context);
     }
 
-    private static void SeedIfEmpty(CatalogDbContext context)
+    public static void SeedIfEmpty(CatalogDbContext context)
     {
-        // If there are already makes, assume DB is seeded
-        if (context.Makes.Any()) return;
-
-        // Seed a small feature catalog used across variants
-        var features = new List<Feature>
+        // Ensure reference data exists regardless of other data
+        if (!context.Transmissions.Any())
         {
-            new() { Name = "Air Conditioning", Description = "Automatic climate control" },
-            new() { Name = "ABS", Description = "Anti-lock Braking System" },
-            new() { Name = "Bluetooth", Description = "Hands-free connectivity" },
-            new() { Name = "Cruise Control", Description = "Adaptive cruise control" },
-            new() { Name = "Sunroof", Description = "Electric sunroof" }
-        };
-        context.Features.AddRange(features);
+            var transmissions = new List<Transmission>
+            {
+                new() { Name = "Automatic" },
+                new() { Name = "Manual" },
+                new() { Name = "CVT" },
+                new() { Name = "Dual-Clutch" }
+            };
+            context.Transmissions.AddRange(transmissions);
+        }
+        if (!context.FuelTypes.Any())
+        {
+            var fuelTypes = new List<FuelType>
+            {
+                new() { Name = "Petrol" },
+                new() { Name = "Diesel" },
+                new() { Name = "Hybrid" },
+                new() { Name = "Electric" }
+            };
+            context.FuelTypes.AddRange(fuelTypes);
+        }
+        if (!context.Features.Any())
+        {
+            // Seed a small feature catalog used across variants
+            var seedFeatures = new List<Feature>
+            {
+                new() { Name = "Air Conditioning", Description = "Automatic climate control" },
+                new() { Name = "ABS", Description = "Anti-lock Braking System" },
+                new() { Name = "Bluetooth", Description = "Hands-free connectivity" },
+                new() { Name = "Cruise Control", Description = "Adaptive cruise control" },
+                new() { Name = "Sunroof", Description = "Electric sunroof" }
+            };
+            context.Features.AddRange(seedFeatures);
+        }
         context.SaveChanges();
+        var transMap = context.Transmissions.ToDictionary(t => t.Name, t => t.Id);
+        var fuelMap = context.FuelTypes.ToDictionary(f => f.Name, f => f.Id);
+
+        // If there are already makes, we only needed to ensure reference data exists
+        if (context.Makes.Any()) return;
+        // At this point, features/transmissions/fuel types exist; get features for seeding variants
+        var features = context.Features.ToList();
 
         Feature F(string name) => features.First(f => f.Name == name);
 
@@ -261,7 +291,7 @@ public class DbInitializer
         context.SaveChanges();
 
         // local function to construct a variant with features
-        static Variant BuildVariant(
+        Variant BuildVariant(
             string name,
             string engine,
             string transmission,
@@ -274,12 +304,24 @@ public class DbInitializer
             {
                 Name = name,
                 Engine = engine,
-                Transmission = transmission,
-                FuelType = fuelType
+                TransmissionId = transMap.TryGetValue(transmission, out var tid) ? tid : (int?)null,
+                FuelTypeId = fuelMap.TryGetValue(fuelType, out var fid) ? fid : (int?)null
             };
             var feats = featureNames.Select(featureFinder).ToArray();
             addFeatures(v, feats);
             return v;
         }
+        // after creating makes/models/generations with variants, EF cascade will save with FK ids
+    }
+
+    public static void ClearCatalogData(CatalogDbContext context)
+    {
+        // Remove dependent rows in correct order
+        context.VariantFeatures.RemoveRange(context.VariantFeatures);
+        context.Variants.RemoveRange(context.Variants);
+        context.Generations.RemoveRange(context.Generations);
+        context.Models.RemoveRange(context.Models);
+        context.Makes.RemoveRange(context.Makes);
+        context.SaveChanges();
     }
 }

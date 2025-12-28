@@ -11,6 +11,8 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<Variant> Variants => Set<Variant>();
     public DbSet<Feature> Features => Set<Feature>();
     public DbSet<VariantFeature> VariantFeatures => Set<VariantFeature>();
+    public DbSet<Transmission> Transmissions => Set<Transmission>();
+    public DbSet<FuelType> FuelTypes => Set<FuelType>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -52,12 +54,19 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
             entity.Property(x => x.Engine).HasMaxLength(100);
-            entity.Property(x => x.Transmission).HasMaxLength(50);
-            entity.Property(x => x.FuelType).HasMaxLength(50);
             entity.HasOne(x => x.Generation)
                 .WithMany(x => x.Variants)
                 .HasForeignKey(x => x.GenerationId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.TransmissionRef)
+                .WithMany()
+                .HasForeignKey(x => x.TransmissionId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.FuelTypeRef)
+                .WithMany()
+                .HasForeignKey(x => x.FuelTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Feature>(entity =>
@@ -85,6 +94,22 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
                 .WithMany(x => x.VariantFeatures)
                 .HasForeignKey(x => x.FeatureId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Transmission>(entity =>
+        {
+            entity.ToTable("Transmissions");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(50);
+            entity.HasIndex(x => x.Name).IsUnique();
+        });
+
+        modelBuilder.Entity<FuelType>(entity =>
+        {
+            entity.ToTable("FuelTypes");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(50);
+            entity.HasIndex(x => x.Name).IsUnique();
         });
     }
 }

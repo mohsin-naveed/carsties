@@ -15,9 +15,9 @@ export interface GenerationDto { id: number; name: string; startYear?: number; e
 export interface CreateGenerationDto { name: string; modelId: number; startYear?: number; endYear?: number; }
 export interface UpdateGenerationDto { name?: string; modelId?: number; startYear?: number; endYear?: number; }
 
-export interface VariantDto { id: number; name: string; engine?: string; transmission?: string; fuelType?: string; generationId: number; }
-export interface CreateVariantDto { name: string; generationId: number; engine?: string; transmission?: string; fuelType?: string; }
-export interface UpdateVariantDto { name?: string; generationId?: number; engine?: string; transmission?: string; fuelType?: string; }
+export interface VariantDto { id: number; name: string; engine?: string; transmissionId?: number; fuelTypeId?: number; generationId: number; }
+export interface CreateVariantDto { name: string; generationId: number; engine?: string; transmissionId?: number; fuelTypeId?: number; }
+export interface UpdateVariantDto { name?: string; generationId?: number; engine?: string; transmissionId?: number; fuelTypeId?: number; }
 
 export interface FeatureDto { id: number; name: string; description?: string; }
 export interface CreateFeatureDto { name: string; description?: string; }
@@ -33,7 +33,8 @@ export interface VariantsContextDto {
   generations: GenerationDto[];
   variants: VariantDto[];
 }
-export interface VariantOptionsDto { transmissions: string[]; fuelTypes: string[]; }
+export interface OptionDto { id: number; name: string; }
+export interface VariantOptionsDto { transmissions: OptionDto[]; fuelTypes: OptionDto[]; }
 
 export interface ModelsContextDto {
   makes: MakeDto[];

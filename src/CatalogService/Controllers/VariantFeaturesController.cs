@@ -38,7 +38,18 @@ public class VariantFeaturesController(CatalogDbContext context, IMapper mapper)
         var makes = await makesQuery.OrderBy(x => x.Name).ProjectTo<MakeDto>(mapper.ConfigurationProvider).ToListAsync();
         var models = await modelsQuery.OrderBy(x => x.Name).ProjectTo<ModelDto>(mapper.ConfigurationProvider).ToListAsync();
         var generations = await generationsQuery.OrderBy(x => x.Name).ProjectTo<GenerationDto>(mapper.ConfigurationProvider).ToListAsync();
-        var variants = await variantsQuery.OrderBy(x => x.Name).ProjectTo<VariantDto>(mapper.ConfigurationProvider).ToListAsync();
+        var variants = await variantsQuery
+            .OrderBy(x => x.Name)
+            .Select(v => new VariantDto(
+                v.Id,
+                v.Name,
+                v.Engine,
+                v.TransmissionId,
+                v.TransmissionRef != null ? v.TransmissionRef.Name : null,
+                v.FuelTypeId,
+                v.FuelTypeRef != null ? v.FuelTypeRef.Name : null,
+                v.GenerationId))
+            .ToListAsync();
         var features = await featuresQuery.OrderBy(x => x.Name).ProjectTo<FeatureDto>(mapper.ConfigurationProvider).ToListAsync();
 
         return Ok(new VariantFeaturesContextDto(makes, models, generations, variants, features));

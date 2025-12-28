@@ -14,8 +14,11 @@ public class MappingProfiles : Profile
         CreateMap<CreateModelDto, Model>().ForMember(d => d.Id, o => o.Ignore());
         CreateMap<Generation, GenerationDto>();
         CreateMap<CreateGenerationDto, Generation>().ForMember(d => d.Id, o => o.Ignore());
-        CreateMap<Variant, VariantDto>();
-        CreateMap<CreateVariantDto, Variant>().ForMember(d => d.Id, o => o.Ignore());
+        CreateMap<Variant, VariantDto>()
+            .ForMember(d => d.Transmission, o => o.MapFrom(s => s.TransmissionRef != null ? s.TransmissionRef.Name : null))
+            .ForMember(d => d.FuelType, o => o.MapFrom(s => s.FuelTypeRef != null ? s.FuelTypeRef.Name : null));
+        CreateMap<CreateVariantDto, Variant>()
+            .ForMember(d => d.Id, o => o.Ignore());
         CreateMap<Feature, FeatureDto>();
         CreateMap<CreateFeatureDto, Feature>().ForMember(d => d.Id, o => o.Ignore());
         CreateMap<VariantFeature, VariantFeatureDto>();
