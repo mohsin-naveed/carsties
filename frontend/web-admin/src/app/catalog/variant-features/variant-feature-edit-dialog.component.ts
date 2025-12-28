@@ -55,7 +55,8 @@ import { VariantDto, FeatureDto, GenerationDto, ModelDto, MakeDto } from '../cat
     </div>
   `,
   styles: [`
-    .form { display:flex; align-items:end; gap:.75rem; flex-wrap:wrap; }
+    .form { display:flex; flex-direction:column; gap:12px; }
+    .form mat-form-field { width:100%; }
   `]
 })
 export class VariantFeatureEditDialogComponent implements AfterViewInit {
