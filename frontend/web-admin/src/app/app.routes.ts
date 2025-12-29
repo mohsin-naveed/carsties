@@ -26,6 +26,10 @@ export const routes: Routes = [
 				loadComponent: () => import('./catalog/variants/variants.page').then(m => m.VariantsPage)
 			},
 			{
+				path: 'model-bodies',
+				loadComponent: () => import('./catalog/model-bodies/model-bodies.page').then(m => m.ModelBodiesPage)
+			},
+			{
 				path: 'features',
 				loadComponent: () => import('./catalog/features/features.page').then(m => m.FeaturesPage)
 			},

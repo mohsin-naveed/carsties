@@ -55,6 +55,12 @@ export interface VariantFeaturesContextDto {
   features: FeatureDto[];
 }
 
+// Model Bodies
+export interface ModelBodyDto { id: number; modelId: number; bodyTypeId: number; bodyType?: string; seats: number; doors: number; }
+export interface CreateModelBodyDto { modelId: number; bodyTypeId: number; seats: number; doors: number; }
+export interface UpdateModelBodyDto { modelId?: number; bodyTypeId?: number; seats?: number; doors?: number; }
+export interface ModelBodiesContextDto { makes: MakeDto[]; models: ModelDto[]; modelBodies: ModelBodyDto[]; }
+
 @Injectable({ providedIn: 'root' })
 export class CatalogApiService {
   private readonly http = inject(HttpClient);
@@ -117,4 +123,12 @@ export class CatalogApiService {
   createVariantFeature(dto: CreateVariantFeatureDto): Observable<VariantFeatureDto> { return this.http.post<VariantFeatureDto>(`${this.baseUrl}/variantfeatures`, dto); }
   updateVariantFeature(variantId: number, featureId: number, dto: UpdateVariantFeatureDto) { return this.http.put(`${this.baseUrl}/variantfeatures/${variantId}/${featureId}`, dto); }
   deleteVariantFeature(variantId: number, featureId: number) { return this.http.delete(`${this.baseUrl}/variantfeatures/${variantId}/${featureId}`); }
+
+  // ModelBodies
+  getModelBodies(modelId?: number): Observable<ModelBodyDto[]> { const params: any = {}; if (modelId) params.modelId = modelId; return this.http.get<ModelBodyDto[]>(`${this.baseUrl}/modelbodies`, { params }); }
+  getModelBodiesContext(makeId?: number, modelId?: number): Observable<ModelBodiesContextDto> { const params: any = {}; if (makeId) params.makeId = makeId; if (modelId) params.modelId = modelId; return this.http.get<ModelBodiesContextDto>(`${this.baseUrl}/modelbodies/context`, { params }); }
+  getBodyTypeOptions(): Observable<OptionDto[]> { return this.http.get<OptionDto[]>(`${this.baseUrl}/modelbodies/options`); }
+  createModelBody(dto: CreateModelBodyDto): Observable<ModelBodyDto> { return this.http.post<ModelBodyDto>(`${this.baseUrl}/modelbodies`, dto); }
+  updateModelBody(id: number, dto: UpdateModelBodyDto) { return this.http.put(`${this.baseUrl}/modelbodies/${id}`, dto); }
+  deleteModelBody(id: number) { return this.http.delete(`${this.baseUrl}/modelbodies/${id}`); }
 }

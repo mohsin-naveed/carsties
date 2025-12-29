@@ -13,6 +13,8 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<VariantFeature> VariantFeatures => Set<VariantFeature>();
     public DbSet<Transmission> Transmissions => Set<Transmission>();
     public DbSet<FuelType> FuelTypes => Set<FuelType>();
+    public DbSet<ModelBody> ModelBodies => Set<ModelBody>();
+    public DbSet<BodyType> BodyTypes => Set<BodyType>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -110,6 +112,35 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).IsRequired().HasMaxLength(50);
             entity.HasIndex(x => x.Name).IsUnique();
+        });
+
+        modelBuilder.Entity<BodyType>(entity =>
+        {
+            entity.ToTable("BodyTypes");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(50);
+            entity.HasIndex(x => x.Name).IsUnique();
+        });
+
+        modelBuilder.Entity<ModelBody>(entity =>
+        {
+            entity.ToTable("ModelBodies");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Seats).IsRequired();
+            entity.Property(x => x.Doors).IsRequired();
+            // Basic range constraints for seats/doors
+            entity.HasCheckConstraint("CK_ModelBodies_Seats", "\"Seats\" BETWEEN 2 AND 9");
+            entity.HasCheckConstraint("CK_ModelBodies_Doors", "\"Doors\" BETWEEN 2 AND 5");
+
+            entity.HasOne(x => x.Model)
+                .WithMany(x => x.ModelBodies)
+                .HasForeignKey(x => x.ModelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.BodyTypeRef)
+                .WithMany(x => x.ModelBodies)
+                .HasForeignKey(x => x.BodyTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

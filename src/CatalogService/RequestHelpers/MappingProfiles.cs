@@ -22,5 +22,11 @@ public class MappingProfiles : Profile
         CreateMap<Feature, FeatureDto>();
         CreateMap<CreateFeatureDto, Feature>().ForMember(d => d.Id, o => o.Ignore());
         CreateMap<VariantFeature, VariantFeatureDto>();
+
+        // ModelBody - map via constructor parameters for ProjectTo support
+        CreateMap<ModelBody, ModelBodyDto>()
+            .ForCtorParam("BodyType", o => o.MapFrom(s => s.BodyTypeRef != null ? s.BodyTypeRef.Name : null));
+        CreateMap<CreateModelBodyDto, ModelBody>()
+            .ForMember(d => d.Id, o => o.Ignore());
     }
 }

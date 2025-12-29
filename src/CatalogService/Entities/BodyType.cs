@@ -1,13 +1,9 @@
 namespace CatalogService.Entities;
 
-public class Model
+public class BodyType
 {
     public int Id { get; set; }
     public required string Name { get; set; }
 
-    public int MakeId { get; set; }
-    public Make? Make { get; set; }
-
-    public List<Generation> Generations { get; set; } = new();
     public List<ModelBody> ModelBodies { get; set; } = new();
 }

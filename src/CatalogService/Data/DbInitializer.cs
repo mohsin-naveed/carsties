@@ -39,6 +39,19 @@ public class DbInitializer
             };
             context.FuelTypes.AddRange(fuelTypes);
         }
+        if (!context.BodyTypes.Any())
+        {
+            var bodyTypes = new List<BodyType>
+            {
+                new() { Name = "Saloon" },
+                new() { Name = "Estate" },
+                new() { Name = "Hatchback" },
+                new() { Name = "SUV" },
+                new() { Name = "Coupe" },
+                new() { Name = "Convertible" }
+            };
+            context.BodyTypes.AddRange(bodyTypes);
+        }
         if (!context.Features.Any())
         {
             // Seed a small feature catalog used across variants

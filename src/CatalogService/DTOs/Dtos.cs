@@ -51,3 +51,14 @@ public record VariantFeaturesContextDto(
 	List<VariantDto> Variants,
 	List<FeatureDto> Features
 );
+
+// Model Bodies
+public record ModelBodyDto(int Id, int ModelId, int BodyTypeId, string? BodyType, short Seats, short Doors);
+public record CreateModelBodyDto(int ModelId, int BodyTypeId, short Seats, short Doors);
+public record UpdateModelBodyDto(int? ModelId, int? BodyTypeId, short? Seats, short? Doors);
+
+public record ModelBodiesContextDto(
+	List<MakeDto> Makes,
+	List<ModelDto> Models,
+	List<ModelBodyDto> ModelBodies
+);
