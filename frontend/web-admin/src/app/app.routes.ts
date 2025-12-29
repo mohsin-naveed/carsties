@@ -30,6 +30,10 @@ export const routes: Routes = [
 				loadComponent: () => import('./catalog/model-bodies/model-bodies.page').then(m => m.ModelBodiesPage)
 			},
 			{
+				path: 'derivatives',
+				loadComponent: () => import('./catalog/model-bodies/model-bodies.page').then(m => m.ModelBodiesPage)
+			},
+			{
 				path: 'features',
 				loadComponent: () => import('./catalog/features/features.page').then(m => m.FeaturesPage)
 			},
