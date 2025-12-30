@@ -88,7 +88,7 @@ export class ModelBodiesPage {
   openCreate(){
     (document.activeElement as HTMLElement | null)?.blur();
     const ref = this.dialog.open(ModelBodyEditDialogComponent, { data: { title: 'Add Model Body', makes: this.makesCache, models: this.modelsCache }, width: '640px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { modelId: number; bodyTypeId: number; seats: number; doors: number } | undefined) => {
+    ref.afterClosed().subscribe((res: { modelId: number; bodyTypeId: number; seats: number; doors: number; code?: string } | undefined) => {
       if (res){ this.api.createModelBody(res).subscribe({ next: () => { this.notify.success('Model body created'); this.loadContext(); } }); }
     });
   }
@@ -96,7 +96,7 @@ export class ModelBodiesPage {
   openEdit(it: ModelBodyDto){
     (document.activeElement as HTMLElement | null)?.blur();
     const ref = this.dialog.open(ModelBodyEditDialogComponent, { data: { title: 'Edit Model Body', makes: this.makesCache, models: this.modelsCache, modelId: it.modelId, bodyTypeId: it.bodyTypeId, seats: it.seats, doors: it.doors }, width: '640px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { modelId: number; bodyTypeId: number; seats: number; doors: number } | undefined) => {
+    ref.afterClosed().subscribe((res: { modelId: number; bodyTypeId: number; seats: number; doors: number; code?: string } | undefined) => {
       if (res){ this.api.updateModelBody(it.id, res).subscribe({ next: () => { this.notify.success('Model body updated'); this.loadContext(); } }); }
     });
   }

@@ -44,9 +44,9 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.ToTable("Generations");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
-            entity.HasOne(x => x.Model)
+            entity.HasOne(x => x.ModelBody)
                 .WithMany(x => x.Generations)
-                .HasForeignKey(x => x.ModelId)
+                .HasForeignKey(x => x.ModelBodyId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

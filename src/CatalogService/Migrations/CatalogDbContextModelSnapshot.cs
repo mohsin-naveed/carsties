@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace CatalogService.Data.Migrations
+namespace CatalogService.Migrations
 {
     [DbContext(typeof(CatalogDbContext))]
     partial class CatalogDbContextModelSnapshot : ModelSnapshot
@@ -100,7 +100,10 @@ namespace CatalogService.Data.Migrations
                     b.Property<short?>("EndYear")
                         .HasColumnType("smallint");
 
-                    b.Property<int>("ModelId")
+                    b.Property<int>("ModelBodyId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ModelId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
@@ -112,6 +115,8 @@ namespace CatalogService.Data.Migrations
                         .HasColumnType("smallint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ModelBodyId");
 
                     b.HasIndex("ModelId");
 
@@ -281,13 +286,17 @@ namespace CatalogService.Data.Migrations
 
             modelBuilder.Entity("CatalogService.Entities.Generation", b =>
                 {
-                    b.HasOne("CatalogService.Entities.Model", "Model")
+                    b.HasOne("CatalogService.Entities.ModelBody", "ModelBody")
                         .WithMany("Generations")
-                        .HasForeignKey("ModelId")
+                        .HasForeignKey("ModelBodyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Model");
+                    b.HasOne("CatalogService.Entities.Model", null)
+                        .WithMany("Generations")
+                        .HasForeignKey("ModelId");
+
+                    b.Navigation("ModelBody");
                 });
 
             modelBuilder.Entity("CatalogService.Entities.Model", b =>
@@ -389,6 +398,11 @@ namespace CatalogService.Data.Migrations
                     b.Navigation("Generations");
 
                     b.Navigation("ModelBodies");
+                });
+
+            modelBuilder.Entity("CatalogService.Entities.ModelBody", b =>
+                {
+                    b.Navigation("Generations");
                 });
 
             modelBuilder.Entity("CatalogService.Entities.Variant", b =>

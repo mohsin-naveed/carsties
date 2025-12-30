@@ -12,4 +12,6 @@ public class ModelBody
 
     public short Seats { get; set; }
     public short Doors { get; set; }
+
+    public List<Generation> Generations { get; set; } = new();
 }

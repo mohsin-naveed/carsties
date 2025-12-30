@@ -9,11 +9,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace CatalogService.Data.Migrations
+namespace CatalogService.Migrations
 {
     [DbContext(typeof(CatalogDbContext))]
-    [Migration("20251017123035_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251230140818_InitialCurrentModel")]
+    partial class InitialCurrentModel
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,27 @@ namespace CatalogService.Data.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("CatalogService.Entities.BodyType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("BodyTypes", (string)null);
+                });
 
             modelBuilder.Entity("CatalogService.Entities.Feature", b =>
                 {
@@ -50,6 +71,27 @@ namespace CatalogService.Data.Migrations
                     b.ToTable("Features", (string)null);
                 });
 
+            modelBuilder.Entity("CatalogService.Entities.FuelType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("FuelTypes", (string)null);
+                });
+
             modelBuilder.Entity("CatalogService.Entities.Generation", b =>
                 {
                     b.Property<int>("Id")
@@ -61,7 +103,10 @@ namespace CatalogService.Data.Migrations
                     b.Property<short?>("EndYear")
                         .HasColumnType("smallint");
 
-                    b.Property<int>("ModelId")
+                    b.Property<int>("ModelBodyId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ModelId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
@@ -73,6 +118,8 @@ namespace CatalogService.Data.Migrations
                         .HasColumnType("smallint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ModelBodyId");
 
                     b.HasIndex("ModelId");
 
@@ -123,6 +170,61 @@ namespace CatalogService.Data.Migrations
                     b.ToTable("Models", (string)null);
                 });
 
+            modelBuilder.Entity("CatalogService.Entities.ModelBody", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BodyTypeId")
+                        .HasColumnType("integer");
+
+                    b.Property<short>("Doors")
+                        .HasColumnType("smallint");
+
+                    b.Property<int>("ModelId")
+                        .HasColumnType("integer");
+
+                    b.Property<short>("Seats")
+                        .HasColumnType("smallint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BodyTypeId");
+
+                    b.HasIndex("ModelId");
+
+                    b.ToTable("ModelBodies", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ModelBodies_Doors", "\"Doors\" BETWEEN 2 AND 5");
+
+                            t.HasCheckConstraint("CK_ModelBodies_Seats", "\"Seats\" BETWEEN 2 AND 9");
+                        });
+                });
+
+            modelBuilder.Entity("CatalogService.Entities.Transmission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Transmissions", (string)null);
+                });
+
             modelBuilder.Entity("CatalogService.Entities.Variant", b =>
                 {
                     b.Property<int>("Id")
@@ -135,9 +237,8 @@ namespace CatalogService.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("FuelType")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                    b.Property<int?>("FuelTypeId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("GenerationId")
                         .HasColumnType("integer");
@@ -147,13 +248,16 @@ namespace CatalogService.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("Transmission")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                    b.Property<int?>("TransmissionId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("FuelTypeId");
+
                     b.HasIndex("GenerationId");
+
+                    b.HasIndex("TransmissionId");
 
                     b.ToTable("Variants", (string)null);
                 });
@@ -185,13 +289,17 @@ namespace CatalogService.Data.Migrations
 
             modelBuilder.Entity("CatalogService.Entities.Generation", b =>
                 {
-                    b.HasOne("CatalogService.Entities.Model", "Model")
+                    b.HasOne("CatalogService.Entities.ModelBody", "ModelBody")
                         .WithMany("Generations")
-                        .HasForeignKey("ModelId")
+                        .HasForeignKey("ModelBodyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Model");
+                    b.HasOne("CatalogService.Entities.Model", null)
+                        .WithMany("Generations")
+                        .HasForeignKey("ModelId");
+
+                    b.Navigation("ModelBody");
                 });
 
             modelBuilder.Entity("CatalogService.Entities.Model", b =>
@@ -205,15 +313,48 @@ namespace CatalogService.Data.Migrations
                     b.Navigation("Make");
                 });
 
+            modelBuilder.Entity("CatalogService.Entities.ModelBody", b =>
+                {
+                    b.HasOne("CatalogService.Entities.BodyType", "BodyTypeRef")
+                        .WithMany("ModelBodies")
+                        .HasForeignKey("BodyTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CatalogService.Entities.Model", "Model")
+                        .WithMany("ModelBodies")
+                        .HasForeignKey("ModelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BodyTypeRef");
+
+                    b.Navigation("Model");
+                });
+
             modelBuilder.Entity("CatalogService.Entities.Variant", b =>
                 {
+                    b.HasOne("CatalogService.Entities.FuelType", "FuelTypeRef")
+                        .WithMany()
+                        .HasForeignKey("FuelTypeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("CatalogService.Entities.Generation", "Generation")
                         .WithMany("Variants")
                         .HasForeignKey("GenerationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("CatalogService.Entities.Transmission", "TransmissionRef")
+                        .WithMany()
+                        .HasForeignKey("TransmissionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("FuelTypeRef");
+
                     b.Navigation("Generation");
+
+                    b.Navigation("TransmissionRef");
                 });
 
             modelBuilder.Entity("CatalogService.Entities.VariantFeature", b =>
@@ -235,6 +376,11 @@ namespace CatalogService.Data.Migrations
                     b.Navigation("Variant");
                 });
 
+            modelBuilder.Entity("CatalogService.Entities.BodyType", b =>
+                {
+                    b.Navigation("ModelBodies");
+                });
+
             modelBuilder.Entity("CatalogService.Entities.Feature", b =>
                 {
                     b.Navigation("VariantFeatures");
@@ -251,6 +397,13 @@ namespace CatalogService.Data.Migrations
                 });
 
             modelBuilder.Entity("CatalogService.Entities.Model", b =>
+                {
+                    b.Navigation("Generations");
+
+                    b.Navigation("ModelBodies");
+                });
+
+            modelBuilder.Entity("CatalogService.Entities.ModelBody", b =>
                 {
                     b.Navigation("Generations");
                 });

@@ -89,221 +89,7 @@ public class DbInitializer
             }
         }
 
-        var makes = new List<Make>
-        {
-            new()
-            {
-                Name = "BMW",
-                Models =
-                {
-                    new Model
-                    {
-                        Name = "3 Series",
-                        Generations =
-                        {
-                            new Generation
-                            {
-                                Name = "G20",
-                                StartYear = 2018,
-                                Variants =
-                                {
-                                    BuildVariant("320i", "2.0L I4 Turbo", "Automatic", "Petrol", F, AddFeatures,
-                                        new[]{"Air Conditioning","Bluetooth","ABS"}),
-                                    BuildVariant("330i", "2.0L I4 Turbo", "Automatic", "Petrol", F, AddFeatures,
-                                        new[]{"Air Conditioning","Bluetooth","Cruise Control"})
-                                }
-                            }
-                        }
-                    },
-                    new Model
-                    {
-                        Name = "5 Series",
-                        Generations =
-                        {
-                            new Generation
-                            {
-                                Name = "G30",
-                                StartYear = 2017,
-                                Variants =
-                                {
-                                    BuildVariant("520d", "2.0L I4 Diesel", "Automatic", "Diesel", F, AddFeatures,
-                                        new[]{"Air Conditioning","Bluetooth","Cruise Control"})
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            new()
-            {
-                Name = "Audi",
-                Models =
-                {
-                    new Model
-                    {
-                        Name = "A4",
-                        Generations =
-                        {
-                            new Generation
-                            {
-                                Name = "B9",
-                                StartYear = 2016,
-                                Variants =
-                                {
-                                    BuildVariant("35 TFSI", "2.0L I4 Turbo", "Automatic", "Petrol", F, AddFeatures,
-                                        new[]{"Air Conditioning","Bluetooth","ABS"})
-                                }
-                            }
-                        }
-                    },
-                    new Model
-                    {
-                        Name = "A6",
-                        Generations =
-                        {
-                            new Generation
-                            {
-                                Name = "C8",
-                                StartYear = 2018,
-                                Variants =
-                                {
-                                    BuildVariant("45 TFSI", "2.0L I4 Turbo", "Automatic", "Petrol", F, AddFeatures,
-                                        new[]{"Air Conditioning","Bluetooth","Cruise Control","Sunroof"})
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            new()
-            {
-                Name = "Toyota",
-                Models =
-                {
-                    new Model
-                    {
-                        Name = "Corolla",
-                        Generations =
-                        {
-                            new Generation
-                            {
-                                Name = "E210",
-                                StartYear = 2018,
-                                Variants =
-                                {
-                                    BuildVariant("1.8 Hybrid", "1.8L I4 Hybrid", "CVT", "Hybrid", F, AddFeatures,
-                                        new[]{"Air Conditioning","Bluetooth","ABS"})
-                                }
-                            }
-                        }
-                    },
-                    new Model
-                    {
-                        Name = "Camry",
-                        Generations =
-                        {
-                            new Generation
-                            {
-                                Name = "XV70",
-                                StartYear = 2017,
-                                Variants =
-                                {
-                                    BuildVariant("2.5", "2.5L I4", "Automatic", "Petrol", F, AddFeatures,
-                                        new[]{"Air Conditioning","Bluetooth","Cruise Control"})
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            new()
-            {
-                Name = "Kia",
-                Models =
-                {
-                    new Model
-                    {
-                        Name = "Sportage",
-                        Generations =
-                        {
-                            new Generation
-                            {
-                                Name = "NQ5",
-                                StartYear = 2021,
-                                Variants =
-                                {
-                                    BuildVariant("2.0", "2.0L I4", "Automatic", "Petrol", F, AddFeatures,
-                                        new[]{"Air Conditioning","Bluetooth"})
-                                }
-                            }
-                        }
-                    },
-                    new Model
-                    {
-                        Name = "Sorento",
-                        Generations =
-                        {
-                            new Generation
-                            {
-                                Name = "MQ4",
-                                StartYear = 2020,
-                                Variants =
-                                {
-                                    BuildVariant("2.2D", "2.2L I4 Diesel", "Automatic", "Diesel", F, AddFeatures,
-                                        new[]{"Air Conditioning","Bluetooth","Cruise Control"})
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            new()
-            {
-                Name = "Ford",
-                Models =
-                {
-                    new Model
-                    {
-                        Name = "Focus",
-                        Generations =
-                        {
-                            new Generation
-                            {
-                                Name = "Mk4",
-                                StartYear = 2018,
-                                Variants =
-                                {
-                                    BuildVariant("1.5 EcoBoost", "1.5L I3 Turbo", "Manual", "Petrol", F, AddFeatures,
-                                        new[]{"Air Conditioning","Bluetooth","ABS"})
-                                }
-                            }
-                        }
-                    },
-                    new Model
-                    {
-                        Name = "Mustang",
-                        Generations =
-                        {
-                            new Generation
-                            {
-                                Name = "S550",
-                                StartYear = 2015,
-                                Variants =
-                                {
-                                    BuildVariant("GT", "5.0L V8", "Manual", "Petrol", F, AddFeatures,
-                                        new[]{"Air Conditioning","Bluetooth","Cruise Control","Sunroof"})
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        };
-
-        context.Makes.AddRange(makes);
-        context.SaveChanges();
-
-        // local function to construct a variant with features
+        // Helper to construct a variant with features
         Variant BuildVariant(
             string name,
             string engine,
@@ -324,7 +110,112 @@ public class DbInitializer
             addFeatures(v, feats);
             return v;
         }
-        // after creating makes/models/generations with variants, EF cascade will save with FK ids
+
+        // Seed makes/models first (without generations) so we can attach model bodies explicitly
+        var makes = new List<Make>
+        {
+            new()
+            {
+                Name = "BMW",
+                Models =
+                {
+                    new Model
+                    {
+                        Name = "3 Series"
+                    },
+                    new Model
+                    {
+                        Name = "5 Series"
+                    }
+                }
+            },
+            new()
+            {
+                Name = "Audi",
+                Models =
+                {
+                    new Model
+                    {
+                        Name = "A4"
+                    },
+                    new Model
+                    {
+                        Name = "A6"
+                    }
+                }
+            },
+            new()
+            {
+                Name = "Toyota",
+                Models =
+                {
+                    new Model
+                    {
+                        Name = "Corolla"
+                    },
+                    new Model
+                    {
+                        Name = "Camry"
+                    }
+                }
+            },
+            new()
+            {
+                Name = "Kia",
+                Models =
+                {
+                    new Model
+                    {
+                        Name = "Sportage"
+                    },
+                    new Model
+                    {
+                        Name = "Sorento"
+                    }
+                }
+            },
+            new()
+            {
+                Name = "Ford",
+                Models =
+                {
+                    new Model
+                    {
+                        Name = "Focus"
+                    },
+                    new Model
+                    {
+                        Name = "Mustang"
+                    }
+                }
+            }
+        };
+
+        context.Makes.AddRange(makes);
+        context.SaveChanges();
+        // Create a single default model body per model
+        var saloonId = context.BodyTypes.Where(b => b.Name == "Saloon").Select(b => b.Id).First();
+        var modelBodies = new List<ModelBody>();
+        var allModels = context.Models.Include(m => m.Make).ToList();
+        foreach (var m in allModels)
+        {
+            modelBodies.Add(new ModelBody
+            {
+                ModelId = m.Id,
+                BodyTypeId = saloonId,
+                Seats = 5,
+                Doors = 4
+            });
+        }
+        context.ModelBodies.AddRange(modelBodies);
+        context.SaveChanges();
+
+        // Build robust maps for model -> model body
+        var modelIdsByName = context.Models.ToDictionary(m => m.Name, m => m.Id);
+        var modelBodyByModelId = context.ModelBodies.ToDictionary(mb => mb.ModelId, mb => mb.Id);
+
+        // Note: Generations and Variants are intentionally not seeded here to avoid FK issues.
+        // They can be added via API once ModelBodies exist.
     }
 
     public static void ClearCatalogData(CatalogDbContext context)
@@ -333,6 +224,9 @@ public class DbInitializer
         context.VariantFeatures.RemoveRange(context.VariantFeatures);
         context.Variants.RemoveRange(context.Variants);
         context.Generations.RemoveRange(context.Generations);
+        context.Variants.RemoveRange(context.Variants);
+        context.Generations.RemoveRange(context.Generations);
+        context.ModelBodies.RemoveRange(context.ModelBodies);
         context.Models.RemoveRange(context.Models);
         context.Makes.RemoveRange(context.Makes);
         context.SaveChanges();

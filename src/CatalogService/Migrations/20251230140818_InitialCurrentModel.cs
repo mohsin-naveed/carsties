@@ -4,14 +4,27 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace CatalogService.Data.Migrations
+namespace CatalogService.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialCurrentModel : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "BodyTypes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BodyTypes", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "Features",
                 columns: table => new
@@ -27,6 +40,19 @@ namespace CatalogService.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "FuelTypes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FuelTypes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Makes",
                 columns: table => new
                 {
@@ -37,6 +63,19 @@ namespace CatalogService.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Makes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Transmissions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Transmissions", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -60,6 +99,36 @@ namespace CatalogService.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ModelBodies",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ModelId = table.Column<int>(type: "integer", nullable: false),
+                    BodyTypeId = table.Column<int>(type: "integer", nullable: false),
+                    Seats = table.Column<short>(type: "smallint", nullable: false),
+                    Doors = table.Column<short>(type: "smallint", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ModelBodies", x => x.Id);
+                    table.CheckConstraint("CK_ModelBodies_Doors", "\"Doors\" BETWEEN 2 AND 5");
+                    table.CheckConstraint("CK_ModelBodies_Seats", "\"Seats\" BETWEEN 2 AND 9");
+                    table.ForeignKey(
+                        name: "FK_ModelBodies_BodyTypes_BodyTypeId",
+                        column: x => x.BodyTypeId,
+                        principalTable: "BodyTypes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ModelBodies_Models_ModelId",
+                        column: x => x.ModelId,
+                        principalTable: "Models",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Generations",
                 columns: table => new
                 {
@@ -68,17 +137,23 @@ namespace CatalogService.Data.Migrations
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     StartYear = table.Column<short>(type: "smallint", nullable: true),
                     EndYear = table.Column<short>(type: "smallint", nullable: true),
-                    ModelId = table.Column<int>(type: "integer", nullable: false)
+                    ModelBodyId = table.Column<int>(type: "integer", nullable: false),
+                    ModelId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Generations", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_Generations_ModelBodies_ModelBodyId",
+                        column: x => x.ModelBodyId,
+                        principalTable: "ModelBodies",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
                         name: "FK_Generations_Models_ModelId",
                         column: x => x.ModelId,
                         principalTable: "Models",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -89,19 +164,31 @@ namespace CatalogService.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Engine = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    Transmission = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    FuelType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    TransmissionId = table.Column<int>(type: "integer", nullable: true),
+                    FuelTypeId = table.Column<int>(type: "integer", nullable: true),
                     GenerationId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Variants", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_Variants_FuelTypes_FuelTypeId",
+                        column: x => x.FuelTypeId,
+                        principalTable: "FuelTypes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_Variants_Generations_GenerationId",
                         column: x => x.GenerationId,
                         principalTable: "Generations",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Variants_Transmissions_TransmissionId",
+                        column: x => x.TransmissionId,
+                        principalTable: "Transmissions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -131,10 +218,27 @@ namespace CatalogService.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_BodyTypes_Name",
+                table: "BodyTypes",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Features_Name",
                 table: "Features",
                 column: "Name",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FuelTypes_Name",
+                table: "FuelTypes",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Generations_ModelBodyId",
+                table: "Generations",
+                column: "ModelBodyId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Generations_ModelId",
@@ -148,9 +252,25 @@ namespace CatalogService.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ModelBodies_BodyTypeId",
+                table: "ModelBodies",
+                column: "BodyTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ModelBodies_ModelId",
+                table: "ModelBodies",
+                column: "ModelId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Models_MakeId",
                 table: "Models",
                 column: "MakeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transmissions_Name",
+                table: "Transmissions",
+                column: "Name",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_VariantFeatures_FeatureId",
@@ -158,9 +278,19 @@ namespace CatalogService.Data.Migrations
                 column: "FeatureId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Variants_FuelTypeId",
+                table: "Variants",
+                column: "FuelTypeId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Variants_GenerationId",
                 table: "Variants",
                 column: "GenerationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Variants_TransmissionId",
+                table: "Variants",
+                column: "TransmissionId");
         }
 
         /// <inheritdoc />
@@ -176,7 +306,19 @@ namespace CatalogService.Data.Migrations
                 name: "Variants");
 
             migrationBuilder.DropTable(
+                name: "FuelTypes");
+
+            migrationBuilder.DropTable(
                 name: "Generations");
+
+            migrationBuilder.DropTable(
+                name: "Transmissions");
+
+            migrationBuilder.DropTable(
+                name: "ModelBodies");
+
+            migrationBuilder.DropTable(
+                name: "BodyTypes");
 
             migrationBuilder.DropTable(
                 name: "Models");
