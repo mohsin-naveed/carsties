@@ -3,6 +3,7 @@ using System;
 using CatalogService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CatalogService.Migrations
 {
     [DbContext(typeof(CatalogDbContext))]
-    partial class CatalogDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260102103639_UseModelFkInGeneration")]
+    partial class UseModelFkInGeneration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -41,45 +44,6 @@ namespace CatalogService.Migrations
                         .IsUnique();
 
                     b.ToTable("BodyTypes", (string)null);
-                });
-
-            modelBuilder.Entity("CatalogService.Entities.Derivative", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BodyTypeId")
-                        .HasColumnType("integer");
-
-                    b.Property<short>("Doors")
-                        .HasColumnType("smallint");
-
-                    b.Property<int?>("GenerationId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ModelId")
-                        .HasColumnType("integer");
-
-                    b.Property<short>("Seats")
-                        .HasColumnType("smallint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BodyTypeId");
-
-                    b.HasIndex("GenerationId");
-
-                    b.HasIndex("ModelId");
-
-                    b.ToTable("Derivatives", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_Derivatives_Doors", "\"Doors\" BETWEEN 2 AND 5");
-
-                            t.HasCheckConstraint("CK_Derivatives_Seats", "\"Seats\" BETWEEN 2 AND 9");
-                        });
                 });
 
             modelBuilder.Entity("CatalogService.Entities.Feature", b =>
@@ -201,6 +165,40 @@ namespace CatalogService.Migrations
                     b.ToTable("Models", (string)null);
                 });
 
+            modelBuilder.Entity("CatalogService.Entities.ModelBody", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BodyTypeId")
+                        .HasColumnType("integer");
+
+                    b.Property<short>("Doors")
+                        .HasColumnType("smallint");
+
+                    b.Property<int>("ModelId")
+                        .HasColumnType("integer");
+
+                    b.Property<short>("Seats")
+                        .HasColumnType("smallint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BodyTypeId");
+
+                    b.HasIndex("ModelId");
+
+                    b.ToTable("ModelBodies", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ModelBodies_Doors", "\"Doors\" BETWEEN 2 AND 5");
+
+                            t.HasCheckConstraint("CK_ModelBodies_Seats", "\"Seats\" BETWEEN 2 AND 9");
+                        });
+                });
+
             modelBuilder.Entity("CatalogService.Entities.Transmission", b =>
                 {
                     b.Property<int>("Id")
@@ -284,32 +282,6 @@ namespace CatalogService.Migrations
                     b.ToTable("VariantFeatures", (string)null);
                 });
 
-            modelBuilder.Entity("CatalogService.Entities.Derivative", b =>
-                {
-                    b.HasOne("CatalogService.Entities.BodyType", "BodyTypeRef")
-                        .WithMany("Derivatives")
-                        .HasForeignKey("BodyTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("CatalogService.Entities.Generation", "Generation")
-                        .WithMany()
-                        .HasForeignKey("GenerationId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("CatalogService.Entities.Model", "Model")
-                        .WithMany("Derivatives")
-                        .HasForeignKey("ModelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("BodyTypeRef");
-
-                    b.Navigation("Generation");
-
-                    b.Navigation("Model");
-                });
-
             modelBuilder.Entity("CatalogService.Entities.Generation", b =>
                 {
                     b.HasOne("CatalogService.Entities.Model", "Model")
@@ -330,6 +302,25 @@ namespace CatalogService.Migrations
                         .IsRequired();
 
                     b.Navigation("Make");
+                });
+
+            modelBuilder.Entity("CatalogService.Entities.ModelBody", b =>
+                {
+                    b.HasOne("CatalogService.Entities.BodyType", "BodyTypeRef")
+                        .WithMany("ModelBodies")
+                        .HasForeignKey("BodyTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CatalogService.Entities.Model", "Model")
+                        .WithMany("ModelBodies")
+                        .HasForeignKey("ModelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BodyTypeRef");
+
+                    b.Navigation("Model");
                 });
 
             modelBuilder.Entity("CatalogService.Entities.Variant", b =>
@@ -378,7 +369,7 @@ namespace CatalogService.Migrations
 
             modelBuilder.Entity("CatalogService.Entities.BodyType", b =>
                 {
-                    b.Navigation("Derivatives");
+                    b.Navigation("ModelBodies");
                 });
 
             modelBuilder.Entity("CatalogService.Entities.Feature", b =>
@@ -398,9 +389,9 @@ namespace CatalogService.Migrations
 
             modelBuilder.Entity("CatalogService.Entities.Model", b =>
                 {
-                    b.Navigation("Derivatives");
-
                     b.Navigation("Generations");
+
+                    b.Navigation("ModelBodies");
                 });
 
             modelBuilder.Entity("CatalogService.Entities.Variant", b =>

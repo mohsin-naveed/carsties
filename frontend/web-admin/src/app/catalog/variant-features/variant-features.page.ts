@@ -10,7 +10,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
-import { CatalogApiService, VariantFeatureDto, VariantDto, FeatureDto, GenerationDto, ModelDto, MakeDto, ModelBodyDto } from '../catalog-api.service';
+import { CatalogApiService, VariantFeatureDto, VariantDto, FeatureDto, GenerationDto, ModelDto, MakeDto } from '../catalog-api.service';
 import { NotificationService } from '../../core/notification.service';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
@@ -38,18 +38,16 @@ export class VariantFeaturesPage {
   readonly items$ = new BehaviorSubject<VariantFeatureDto[]>([]);
   readonly variants$ = new BehaviorSubject<VariantDto[]>([]);
   readonly generations$ = new BehaviorSubject<GenerationDto[]>([]);
-  readonly modelBodies$ = new BehaviorSubject<ModelBodyDto[]>([]);
   readonly models$ = new BehaviorSubject<ModelDto[]>([]);
   readonly makes$ = new BehaviorSubject<MakeDto[]>([]);
   readonly features$ = new BehaviorSubject<FeatureDto[]>([]);
   readonly filter$ = new BehaviorSubject<string>('');
-  readonly variantGroups$ = combineLatest([this.variants$, this.generations$, this.modelBodies$, this.models$, this.makes$]).pipe(
-    map(([variants, generations, modelBodies, models, makes]) => {
+  readonly variantGroups$ = combineLatest([this.variants$, this.generations$, this.models$, this.makes$]).pipe(
+    map(([variants, generations, models, makes]) => {
       const groups: { label: string; variants: VariantDto[] }[] = [];
       for (const v of variants){
         const gen = generations.find(g => g.id === v.generationId);
-        const mb = gen ? modelBodies.find(b => b.id === gen.modelBodyId) : undefined;
-        const model = mb ? models.find(m => m.id === mb.modelId) : undefined;
+        const model = gen ? models.find(m => m.id === gen.modelId) : undefined;
         const make = model ? makes.find(x => x.id === model.makeId) : undefined;
         const label = `${make?.name ?? 'Make'} / ${model?.name ?? 'Model'} / ${gen?.name ?? 'Gen'}`;
         groups.push({ label, variants: [v] });
@@ -58,15 +56,14 @@ export class VariantFeaturesPage {
     })
   );
 
-  readonly filtered$ = combineLatest([this.items$, this.variants$, this.features$, this.generations$, this.modelBodies$, this.models$, this.makes$, this.filter$]).pipe(
-    map(([items, variants, features, generations, modelBodies, models, makes, q]) => {
+  readonly filtered$ = combineLatest([this.items$, this.variants$, this.features$, this.generations$, this.models$, this.makes$, this.filter$]).pipe(
+    map(([items, variants, features, generations, models, makes, q]) => {
       const query = q.toLowerCase().trim();
       if (!query) return items;
       return items.filter(it => {
         const variant = variants.find(v => v.id === it.variantId);
         const gen = variant ? generations.find(g => g.id === variant.generationId) : undefined;
-        const mb = gen ? modelBodies.find(b => b.id === gen.modelBodyId) : undefined;
-        const model = mb ? models.find(m => m.id === mb.modelId) : undefined;
+        const model = gen ? models.find(m => m.id === gen.modelId) : undefined;
         const make = model ? makes.find(x => x.id === model.makeId) : undefined;
         const makeName = make?.name ?? '';
         const modelName = model?.name ?? '';
@@ -101,7 +98,6 @@ export class VariantFeaturesPage {
       next: (ctx) => {
         this.makes$.next(ctx.makes);
         this.models$.next(ctx.models);
-        this.modelBodies$.next(ctx.modelBodies ?? []);
         this.generations$.next(ctx.generations);
         this.variants$.next(ctx.variants);
         this.features$.next(ctx.features);
@@ -118,7 +114,7 @@ export class VariantFeaturesPage {
 
   openCreate(variants: VariantDto[], features: FeatureDto[], generations: GenerationDto[], models: ModelDto[], makes: MakeDto[]){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Add Variant Feature', variants, features, generations, models, makes, modelBodies: this.modelBodies$.value }, width: '560px', autoFocus: true, restoreFocus: true });
+    const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Add Variant Feature', variants, features, generations, models, makes }, width: '560px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { variantId: number; featureIds: number[]; isStandard: boolean } | undefined) => {
       if (res){
         const ops = res.featureIds.map(fid => this.api.createVariantFeature({ variantId: res.variantId, featureId: fid, isStandard: res.isStandard }));
@@ -131,7 +127,7 @@ export class VariantFeaturesPage {
 
   openEdit(it: VariantFeatureDto, variants: VariantDto[], features: FeatureDto[], generations: GenerationDto[], models: ModelDto[], makes: MakeDto[]){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Edit Variant Feature', variantId: it.variantId, featureId: it.featureId, isStandard: it.isStandard, variants, features, generations, models, makes, modelBodies: this.modelBodies$.value }, width: '560px', autoFocus: true, restoreFocus: true });
+    const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Edit Variant Feature', variantId: it.variantId, featureId: it.featureId, isStandard: it.isStandard, variants, features, generations, models, makes }, width: '560px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { variantId: number; featureIds: number[]; isStandard: boolean } | undefined) => {
       if (res){
         const originalFeatureId = it.featureId;
@@ -172,8 +168,7 @@ export class VariantFeaturesPage {
     if (!v) return '';
     const gen = this.generations$.value.find(g => g.id === v.generationId);
     if (!gen) return '';
-    const mb = this.modelBodies$.value.find(b => b.id === gen.modelBodyId);
-    const model = mb ? this.models$.value.find(m => m.id === mb.modelId) : undefined;
+    const model = this.models$.value.find(m => m.id === gen.modelId);
     return model?.name ?? '';
   }
 
@@ -182,8 +177,7 @@ export class VariantFeaturesPage {
     if (!v) return '';
     const gen = this.generations$.value.find(g => g.id === v.generationId);
     if (!gen) return '';
-    const mb = this.modelBodies$.value.find(b => b.id === gen.modelBodyId);
-    const model = mb ? this.models$.value.find(m => m.id === mb.modelId) : undefined;
+    const model = this.models$.value.find(m => m.id === gen.modelId);
     const make = model ? this.makes$.value.find(x => x.id === model.makeId) : undefined;
     return make?.name ?? '';
   }

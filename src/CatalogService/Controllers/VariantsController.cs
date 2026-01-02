@@ -52,8 +52,7 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
         var generationsQuery = context.Generations.AsQueryable();
         if (modelId.HasValue)
         {
-            var modelBodyIds = await context.ModelBodies.Where(b => b.ModelId == modelId.Value).Select(b => b.Id).ToListAsync();
-            generationsQuery = generationsQuery.Where(g => modelBodyIds.Contains(g.ModelBodyId));
+            generationsQuery = generationsQuery.Where(g => g.ModelId == modelId.Value);
         }
         var generations = await generationsQuery
             .OrderBy(x => x.Name)
@@ -74,15 +73,15 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
                 v.GenerationId))
             .ToListAsync();
 
-        // Include model bodies to enable client-side mapping from generation -> model
-        var modelBodiesQuery = context.ModelBodies.AsQueryable();
-        if (modelId.HasValue) modelBodiesQuery = modelBodiesQuery.Where(mb => mb.ModelId == modelId.Value);
-        var modelBodies = await modelBodiesQuery
+        // Include derivatives to enable client-side mapping from generation -> model
+        var derivativesQuery = context.Derivatives.AsQueryable();
+        if (modelId.HasValue) derivativesQuery = derivativesQuery.Where(d => d.ModelId == modelId.Value);
+        var derivatives = await derivativesQuery
             .OrderBy(x => x.ModelId).ThenBy(x => x.BodyTypeId)
-            .ProjectTo<ModelBodyDto>(mapper.ConfigurationProvider)
+            .ProjectTo<DerivativeDto>(mapper.ConfigurationProvider)
             .ToListAsync();
 
-        var payload = new VariantsContextDto(makes, models, modelBodies, generations, variants);
+        var payload = new VariantsContextDto(makes, models, derivatives, generations, variants);
         return Ok(payload);
     }
     [HttpGet]

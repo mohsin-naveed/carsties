@@ -7,8 +7,8 @@ public class Generation
     public short? StartYear { get; set; }
     public short? EndYear { get; set; }
 
-    public int ModelBodyId { get; set; }
-    public ModelBody? ModelBody { get; set; }
+    public int ModelId { get; set; }
+    public Model? Model { get; set; }
 
     public List<Variant> Variants { get; set; } = new();
 }

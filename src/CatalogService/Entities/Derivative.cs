@@ -1,11 +1,14 @@
 namespace CatalogService.Entities;
 
-public class ModelBody
+public class Derivative
 {
     public int Id { get; set; }
 
     public int ModelId { get; set; }
     public Model? Model { get; set; }
+
+    public int? GenerationId { get; set; }
+    public Generation? Generation { get; set; }
 
     public int BodyTypeId { get; set; }
     public BodyType? BodyTypeRef { get; set; }

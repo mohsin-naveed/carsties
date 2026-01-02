@@ -193,26 +193,27 @@ public class DbInitializer
 
         context.Makes.AddRange(makes);
         context.SaveChanges();
-        // Create a single default model body per model
+        // Create a single default derivative per model
         var saloonId = context.BodyTypes.Where(b => b.Name == "Saloon").Select(b => b.Id).First();
-        var modelBodies = new List<ModelBody>();
+        var derivatives = new List<Derivative>();
         var allModels = context.Models.Include(m => m.Make).ToList();
         foreach (var m in allModels)
         {
-            modelBodies.Add(new ModelBody
+            derivatives.Add(new Derivative
             {
                 ModelId = m.Id,
+                GenerationId = null,
                 BodyTypeId = saloonId,
                 Seats = 5,
                 Doors = 4
             });
         }
-        context.ModelBodies.AddRange(modelBodies);
+        context.Derivatives.AddRange(derivatives);
         context.SaveChanges();
 
-        // Build robust maps for model -> model body
+        // Build robust maps for model -> derivative
         var modelIdsByName = context.Models.ToDictionary(m => m.Name, m => m.Id);
-        var modelBodyByModelId = context.ModelBodies.ToDictionary(mb => mb.ModelId, mb => mb.Id);
+        var derivativeByModelId = context.Derivatives.ToDictionary(d => d.ModelId, d => d.Id);
 
         // Note: Generations and Variants are intentionally not seeded here to avoid FK issues.
         // They can be added via API once ModelBodies exist.
@@ -226,7 +227,7 @@ public class DbInitializer
         context.Generations.RemoveRange(context.Generations);
         context.Variants.RemoveRange(context.Variants);
         context.Generations.RemoveRange(context.Generations);
-        context.ModelBodies.RemoveRange(context.ModelBodies);
+        context.Derivatives.RemoveRange(context.Derivatives);
         context.Models.RemoveRange(context.Models);
         context.Makes.RemoveRange(context.Makes);
         context.SaveChanges();

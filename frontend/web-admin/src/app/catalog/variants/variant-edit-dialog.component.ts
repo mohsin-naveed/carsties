@@ -7,7 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { A11yModule } from '@angular/cdk/a11y';
-import { GenerationDto, MakeDto, ModelDto, OptionDto, ModelBodyDto } from '../catalog-api.service';
+import { GenerationDto, MakeDto, ModelDto, OptionDto } from '../catalog-api.service';
 
 @Component({
   selector: 'app-variant-edit-dialog',
@@ -73,7 +73,7 @@ import { GenerationDto, MakeDto, ModelDto, OptionDto, ModelBodyDto } from '../ca
 export class VariantEditDialogComponent implements AfterViewInit {
   private readonly fb = inject(FormBuilder);
   public ref: MatDialogRef<VariantEditDialogComponent, { name: string; generationId: number; engine?: string; transmissionId?: number; fuelTypeId?: number }> = inject(MatDialogRef);
-  public data: { title: string; name?: string; generationId?: number; engine?: string; transmissionId?: number; fuelTypeId?: number; generations: GenerationDto[]; modelBodies: ModelBodyDto[]; models: ModelDto[]; makes: MakeDto[]; transmissions: OptionDto[]; fuelTypes: OptionDto[] } = inject(MAT_DIALOG_DATA);
+  public data: { title: string; name?: string; generationId?: number; engine?: string; transmissionId?: number; fuelTypeId?: number; generations: GenerationDto[]; models: ModelDto[]; makes: MakeDto[]; transmissions: OptionDto[]; fuelTypes: OptionDto[] } = inject(MAT_DIALOG_DATA);
 
   @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
 
@@ -97,23 +97,20 @@ export class VariantEditDialogComponent implements AfterViewInit {
   filteredGenerations(): GenerationDto[] {
     const modelId = this.form.value.modelId as number | null;
     if (!modelId) return [];
-    const bodyIds = this.data.modelBodies.filter(b => b.modelId === modelId).map(b => b.id);
-    return this.data.generations.filter(g => bodyIds.includes(g.modelBodyId));
+    return this.data.generations.filter(g => g.modelId === modelId);
   }
   private deriveMakeId(generationId?: number){
     if (!generationId) return null;
     const gen = this.data.generations.find(g => g.id === generationId);
     if (!gen) return null;
-    const mb = this.data.modelBodies.find(b => b.id === gen.modelBodyId);
-    const model = mb ? this.data.models.find(m => m.id === mb.modelId) : undefined;
+    const model = this.data.models.find(m => m.id === gen.modelId);
     return model ? model.makeId : null;
   }
   private deriveModelId(generationId?: number){
     if (!generationId) return null;
     const gen = this.data.generations.find(g => g.id === generationId);
     if (!gen) return null;
-    const mb = this.data.modelBodies.find(b => b.id === gen.modelBodyId);
-    return mb ? mb.modelId : null;
+    return gen.modelId ?? null;
   }
 
   save(){

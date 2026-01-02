@@ -28,8 +28,7 @@ public class VariantFeaturesController(CatalogDbContext context, IMapper mapper)
         if (modelId.HasValue)
         {
             modelsQuery = modelsQuery.Where(m => m.Id == modelId);
-            var modelBodyIds = await context.ModelBodies.Where(b => b.ModelId == modelId).Select(b => b.Id).ToListAsync();
-            generationsQuery = generationsQuery.Where(g => modelBodyIds.Contains(g.ModelBodyId));
+            generationsQuery = generationsQuery.Where(g => g.ModelId == modelId);
         }
         if (generationId.HasValue)
         {

@@ -10,7 +10,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
-import { CatalogApiService, GenerationDto, ModelDto, MakeDto, ModelBodyDto } from '../catalog-api.service';
+import { CatalogApiService, GenerationDto, ModelDto, MakeDto } from '../catalog-api.service';
 import { NotificationService } from '../../core/notification.service';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
@@ -36,21 +36,18 @@ export class GenerationsPage {
 
   readonly makes$ = new BehaviorSubject<MakeDto[]>([]);
   readonly models$ = new BehaviorSubject<ModelDto[]>([]);
-  readonly modelBodies$ = new BehaviorSubject<ModelBodyDto[]>([]);
   readonly items$ = new BehaviorSubject<GenerationDto[]>([]);
 
   // editing handled via dialog
 
   readonly filter$ = new BehaviorSubject<string>('');
-  readonly filtered$ = combineLatest([this.items$, this.models$, this.modelBodies$, this.filter$]).pipe(
-    map(([items, models, modelBodies, q]) => {
+  readonly filtered$ = combineLatest([this.items$, this.models$, this.filter$]).pipe(
+    map(([items, models, q]) => {
       const query = q.toLowerCase().trim();
       if (!query) return items;
       const modelMap = models.reduce((acc, m) => { acc[m.id] = m; return acc; }, {} as Record<number, ModelDto>);
-      const modelBodyMap = modelBodies.reduce((acc, mb) => { acc[mb.id] = mb; return acc; }, {} as Record<number, ModelBodyDto>);
       return items.filter(it => {
-        const modelId = modelBodyMap[it.modelBodyId]?.modelId;
-        const modelName = modelId ? (modelMap[modelId]?.name ?? '') : '';
+        const modelName = modelMap[it.modelId]?.name ?? '';
         const years = `${it.startYear ?? ''} ${it.endYear ?? ''}`.toLowerCase();
         return (
           it.name.toLowerCase().includes(query) ||
@@ -73,7 +70,6 @@ export class GenerationsPage {
 
   private modelsCache: ModelDto[] = [];
   private makesCache: MakeDto[] = [];
-  private modelBodiesCache: ModelBodyDto[] = [];
 
   readonly makeGroups$ = combineLatest([this.makes$, this.models$]).pipe(
     map(([makes, models]) => makes.map(m => ({ name: m.name, models: models.filter(md => md.makeId === m.id) })))
@@ -85,21 +81,20 @@ export class GenerationsPage {
     this.loadContext();
     this.models$.subscribe(ms => { this.modelsCache = ms; });
     this.makes$.subscribe(ms => { this.makesCache = ms; });
-    this.modelBodies$.subscribe(mbs => { this.modelBodiesCache = mbs; });
   }
 
   load(){ this.loadContext(); }
   private loadContext(makeId?: number, modelId?: number){
     this.api.getGenerationsContext(makeId, modelId).subscribe({
-      next: (ctx) => { this.makes$.next(ctx.makes); this.models$.next(ctx.models); this.modelBodies$.next(ctx.modelBodies ?? []); this.items$.next(ctx.generations); },
+      next: (ctx) => { this.makes$.next(ctx.makes); this.models$.next(ctx.models); this.items$.next(ctx.generations); },
       error: () => this.notify.error('Failed to load generations')
     });
   }
 
   openCreate(){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(GenerationEditDialogComponent, { data: { title: 'Add Generation', models: this.modelsCache, makes: this.makesCache, modelBodies: this.modelBodiesCache }, width: '480px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { name: string; modelBodyId: number; startYear?: number; endYear?: number } | undefined) => {
+    const ref = this.dialog.open(GenerationEditDialogComponent, { data: { title: 'Add Generation', models: this.modelsCache, makes: this.makesCache }, width: '480px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; modelId: number; startYear?: number; endYear?: number } | undefined) => {
       if (res){
         this.api.createGeneration(res).subscribe({ next: () => { this.notify.success('Generation created'); this.loadContext(); } });
       }
@@ -108,12 +103,10 @@ export class GenerationsPage {
 
   openEdit(it: GenerationDto){
     (document.activeElement as HTMLElement | null)?.blur();
-    // derive model and make from the current modelBody
-    const modelBody = this.modelBodiesCache.find(mb => mb.id === it.modelBodyId);
-    const model = modelBody ? this.modelsCache.find(m => m.id === modelBody.modelId) : undefined;
+    const model = this.modelsCache.find(m => m.id === it.modelId);
     const makeId = model?.makeId;
-    const ref = this.dialog.open(GenerationEditDialogComponent, { data: { title: 'Edit Generation', name: it.name, makeId, modelBodyId: it.modelBodyId, startYear: it.startYear, endYear: it.endYear, models: this.modelsCache, makes: this.makesCache, modelBodies: this.modelBodiesCache }, width: '480px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { name: string; modelBodyId: number; startYear?: number; endYear?: number } | undefined) => {
+    const ref = this.dialog.open(GenerationEditDialogComponent, { data: { title: 'Edit Generation', name: it.name, makeId, modelId: it.modelId, startYear: it.startYear, endYear: it.endYear, models: this.modelsCache, makes: this.makesCache }, width: '480px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; modelId: number; startYear?: number; endYear?: number } | undefined) => {
       if (res){
         this.api.updateGeneration(it.id, res).subscribe({ next: () => { this.notify.success('Generation updated'); this.loadContext(); } });
       }
@@ -130,16 +123,14 @@ export class GenerationsPage {
   }
 
   getMakeNameByGeneration(it: GenerationDto){
-    const modelBody = this.modelBodiesCache.find(mb => mb.id === it.modelBodyId);
-    const model = modelBody ? this.modelsCache.find((m: ModelDto) => m.id === modelBody.modelId) : undefined;
+    const model = this.modelsCache.find((m: ModelDto) => m.id === it.modelId);
     if (!model) return '';
     const make = this.makesCache.find((x: MakeDto) => x.id === model.makeId);
     return make?.name ?? '';
   }
 
   getModelNameByGeneration(it: GenerationDto){
-    const modelBody = this.modelBodiesCache.find(mb => mb.id === it.modelBodyId);
-    const model = modelBody ? this.modelsCache.find((m: ModelDto) => m.id === modelBody.modelId) : undefined;
+    const model = this.modelsCache.find((m: ModelDto) => m.id === it.modelId);
     return model?.name ?? '';
   }
 

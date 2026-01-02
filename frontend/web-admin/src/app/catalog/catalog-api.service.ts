@@ -11,9 +11,9 @@ export interface ModelDto { id: number; name: string; makeId: number; }
 export interface CreateModelDto { name: string; makeId: number; }
 export interface UpdateModelDto { name?: string; makeId?: number; }
 
-export interface GenerationDto { id: number; name: string; startYear?: number; endYear?: number; modelBodyId: number; }
-export interface CreateGenerationDto { name: string; modelBodyId: number; startYear?: number; endYear?: number; }
-export interface UpdateGenerationDto { name?: string; modelBodyId?: number; startYear?: number; endYear?: number; }
+export interface GenerationDto { id: number; name: string; startYear?: number; endYear?: number; modelId: number; }
+export interface CreateGenerationDto { name: string; modelId: number; startYear?: number; endYear?: number; }
+export interface UpdateGenerationDto { name?: string; modelId?: number; startYear?: number; endYear?: number; }
 
 export interface VariantDto { id: number; name: string; engine?: string; transmissionId?: number; fuelTypeId?: number; generationId: number; }
 export interface CreateVariantDto { name: string; generationId: number; engine?: string; transmissionId?: number; fuelTypeId?: number; }
@@ -30,7 +30,7 @@ export interface UpdateVariantFeatureDto { isStandard?: boolean; }
 export interface VariantsContextDto {
   makes: MakeDto[];
   models: ModelDto[];
-  modelBodies: ModelBodyDto[];
+  derivatives: DerivativeDto[];
   generations: GenerationDto[];
   variants: VariantDto[];
 }
@@ -45,24 +45,23 @@ export interface ModelsContextDto {
 export interface GenerationsContextDto {
   makes: MakeDto[];
   models: ModelDto[];
-  modelBodies: ModelBodyDto[];
+  derivatives: DerivativeDto[];
   generations: GenerationDto[];
 }
 
 export interface VariantFeaturesContextDto {
   makes: MakeDto[];
   models: ModelDto[];
-  modelBodies: ModelBodyDto[];
   generations: GenerationDto[];
   variants: VariantDto[];
   features: FeatureDto[];
 }
 
-// Model Bodies
-export interface ModelBodyDto { id: number; modelId: number; bodyTypeId: number; bodyType?: string; seats: number; doors: number; }
-export interface CreateModelBodyDto { modelId: number; bodyTypeId: number; seats: number; doors: number; }
-export interface UpdateModelBodyDto { modelId?: number; bodyTypeId?: number; seats?: number; doors?: number; }
-export interface ModelBodiesContextDto { makes: MakeDto[]; models: ModelDto[]; modelBodies: ModelBodyDto[]; }
+// Derivatives
+export interface DerivativeDto { id: number; modelId: number; generationId?: number; bodyTypeId: number; bodyType?: string; seats: number; doors: number; }
+export interface CreateDerivativeDto { modelId: number; generationId?: number; bodyTypeId: number; seats: number; doors: number; }
+export interface UpdateDerivativeDto { modelId?: number; generationId?: number; bodyTypeId?: number; seats?: number; doors?: number; }
+export interface DerivativesContextDto { makes: MakeDto[]; models: ModelDto[]; derivatives: DerivativeDto[]; }
 
 @Injectable({ providedIn: 'root' })
 export class CatalogApiService {
@@ -127,11 +126,11 @@ export class CatalogApiService {
   updateVariantFeature(variantId: number, featureId: number, dto: UpdateVariantFeatureDto) { return this.http.put(`${this.baseUrl}/variantfeatures/${variantId}/${featureId}`, dto); }
   deleteVariantFeature(variantId: number, featureId: number) { return this.http.delete(`${this.baseUrl}/variantfeatures/${variantId}/${featureId}`); }
 
-  // ModelBodies
-  getModelBodies(modelId?: number): Observable<ModelBodyDto[]> { const params: any = {}; if (modelId) params.modelId = modelId; return this.http.get<ModelBodyDto[]>(`${this.baseUrl}/modelbodies`, { params }); }
-  getModelBodiesContext(makeId?: number, modelId?: number): Observable<ModelBodiesContextDto> { const params: any = {}; if (makeId) params.makeId = makeId; if (modelId) params.modelId = modelId; return this.http.get<ModelBodiesContextDto>(`${this.baseUrl}/modelbodies/context`, { params }); }
-  getBodyTypeOptions(): Observable<OptionDto[]> { return this.http.get<OptionDto[]>(`${this.baseUrl}/modelbodies/options`); }
-  createModelBody(dto: CreateModelBodyDto): Observable<ModelBodyDto> { return this.http.post<ModelBodyDto>(`${this.baseUrl}/modelbodies`, dto); }
-  updateModelBody(id: number, dto: UpdateModelBodyDto) { return this.http.put(`${this.baseUrl}/modelbodies/${id}`, dto); }
-  deleteModelBody(id: number) { return this.http.delete(`${this.baseUrl}/modelbodies/${id}`); }
+  // Derivatives
+  getDerivatives(modelId?: number): Observable<DerivativeDto[]> { const params: any = {}; if (modelId) params.modelId = modelId; return this.http.get<DerivativeDto[]>(`${this.baseUrl}/derivatives`, { params }); }
+  getDerivativesContext(makeId?: number, modelId?: number): Observable<DerivativesContextDto> { const params: any = {}; if (makeId) params.makeId = makeId; if (modelId) params.modelId = modelId; return this.http.get<DerivativesContextDto>(`${this.baseUrl}/derivatives/context`, { params }); }
+  getBodyTypeOptions(): Observable<OptionDto[]> { return this.http.get<OptionDto[]>(`${this.baseUrl}/derivatives/options`); }
+  createDerivative(dto: CreateDerivativeDto): Observable<DerivativeDto> { return this.http.post<DerivativeDto>(`${this.baseUrl}/derivatives`, dto); }
+  updateDerivative(id: number, dto: UpdateDerivativeDto) { return this.http.put(`${this.baseUrl}/derivatives/${id}`, dto); }
+  deleteDerivative(id: number) { return this.http.delete(`${this.baseUrl}/derivatives/${id}`); }
 }

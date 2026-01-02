@@ -9,9 +9,9 @@ public record ModelDto(int Id, string Name, int MakeId);
 public record CreateModelDto(string Name, int MakeId);
 public record UpdateModelDto(string? Name, int? MakeId);
 
-public record GenerationDto(int Id, string Name, short? StartYear, short? EndYear, int ModelBodyId);
-public record CreateGenerationDto(string Name, int ModelBodyId, short? StartYear, short? EndYear);
-public record UpdateGenerationDto(string? Name, int? ModelBodyId, short? StartYear, short? EndYear);
+public record GenerationDto(int Id, string Name, short? StartYear, short? EndYear, int ModelId);
+public record CreateGenerationDto(string Name, int ModelId, short? StartYear, short? EndYear);
+public record UpdateGenerationDto(string? Name, int? ModelId, short? StartYear, short? EndYear);
 
 public record VariantDto(int Id, string Name, string? Engine, int? TransmissionId, string? Transmission, int? FuelTypeId, string? FuelType, int GenerationId);
 public record CreateVariantDto(string Name, int GenerationId, string? Engine, int? TransmissionId, int? FuelTypeId);
@@ -29,7 +29,7 @@ public record UpdateVariantFeatureDto(bool? IsStandard);
 public record VariantsContextDto(
 	List<MakeDto> Makes,
 	List<ModelDto> Models,
-	List<ModelBodyDto> ModelBodies,
+	List<DerivativeDto> Derivatives,
 	List<GenerationDto> Generations,
 	List<VariantDto> Variants
 );
@@ -42,7 +42,7 @@ public record ModelsContextDto(
 public record GenerationsContextDto(
 	List<MakeDto> Makes,
 	List<ModelDto> Models,
-	List<ModelBodyDto> ModelBodies,
+	List<DerivativeDto> Derivatives,
 	List<GenerationDto> Generations
 );
 
@@ -55,12 +55,12 @@ public record VariantFeaturesContextDto(
 );
 
 // Model Bodies
-public record ModelBodyDto(int Id, int ModelId, int BodyTypeId, string? BodyType, short Seats, short Doors);
-public record CreateModelBodyDto(int ModelId, int BodyTypeId, short Seats, short Doors);
-public record UpdateModelBodyDto(int? ModelId, int? BodyTypeId, short? Seats, short? Doors);
+public record DerivativeDto(int Id, int ModelId, int? GenerationId, int BodyTypeId, string? BodyType, short Seats, short Doors);
+public record CreateDerivativeDto(int ModelId, int? GenerationId, int BodyTypeId, short Seats, short Doors);
+public record UpdateDerivativeDto(int? ModelId, int? GenerationId, int? BodyTypeId, short? Seats, short? Doors);
 
-public record ModelBodiesContextDto(
+public record DerivativesContextDto(
 	List<MakeDto> Makes,
 	List<ModelDto> Models,
-	List<ModelBodyDto> ModelBodies
+	List<DerivativeDto> Derivatives
 );

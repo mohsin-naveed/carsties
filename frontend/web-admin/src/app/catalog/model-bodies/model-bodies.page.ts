@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { CatalogApiService, ModelBodyDto, ModelDto, MakeDto, OptionDto } from '../catalog-api.service';
+import { CatalogApiService, DerivativeDto, ModelDto, MakeDto, OptionDto } from '../catalog-api.service';
 import { NotificationService } from '../../core/notification.service';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
@@ -32,7 +32,7 @@ export class ModelBodiesPage {
   private readonly dialog = inject(MatDialog);
   readonly displayedColumns = ['make','model','bodyType','seats','doors','actions'];
 
-  readonly items$ = new BehaviorSubject<ModelBodyDto[]>([]);
+  readonly items$ = new BehaviorSubject<DerivativeDto[]>([]);
   readonly models$ = new BehaviorSubject<ModelDto[]>([]);
   readonly makes$ = new BehaviorSubject<MakeDto[]>([]);
   readonly bodyTypeMap$ = new BehaviorSubject<Record<number, string>>({});
@@ -79,35 +79,35 @@ export class ModelBodiesPage {
   }
 
   private loadContext(){
-    this.api.getModelBodiesContext().subscribe({
-      next: (ctx) => { this.makes$.next(ctx.makes); this.models$.next(ctx.models); this.items$.next(ctx.modelBodies); },
-      error: () => this.notify.error('Failed to load model bodies')
+    this.api.getDerivativesContext().subscribe({
+      next: (ctx) => { this.makes$.next(ctx.makes); this.models$.next(ctx.models); this.items$.next(ctx.derivatives); },
+      error: () => this.notify.error('Failed to load derivatives')
     });
   }
 
   openCreate(){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(ModelBodyEditDialogComponent, { data: { title: 'Add Model Body', makes: this.makesCache, models: this.modelsCache }, width: '640px', autoFocus: true, restoreFocus: true });
+    const ref = this.dialog.open(ModelBodyEditDialogComponent, { data: { title: 'Add Derivative', makes: this.makesCache, models: this.modelsCache }, width: '640px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { modelId: number; bodyTypeId: number; seats: number; doors: number; code?: string } | undefined) => {
-      if (res){ this.api.createModelBody(res).subscribe({ next: () => { this.notify.success('Model body created'); this.loadContext(); } }); }
+      if (res){ this.api.createDerivative(res).subscribe({ next: () => { this.notify.success('Derivative created'); this.loadContext(); } }); }
     });
   }
 
-  openEdit(it: ModelBodyDto){
+  openEdit(it: DerivativeDto){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(ModelBodyEditDialogComponent, { data: { title: 'Edit Model Body', makes: this.makesCache, models: this.modelsCache, modelId: it.modelId, bodyTypeId: it.bodyTypeId, seats: it.seats, doors: it.doors }, width: '640px', autoFocus: true, restoreFocus: true });
+    const ref = this.dialog.open(ModelBodyEditDialogComponent, { data: { title: 'Edit Derivative', makes: this.makesCache, models: this.modelsCache, modelId: it.modelId, bodyTypeId: it.bodyTypeId, seats: it.seats, doors: it.doors }, width: '640px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { modelId: number; bodyTypeId: number; seats: number; doors: number; code?: string } | undefined) => {
-      if (res){ this.api.updateModelBody(it.id, res).subscribe({ next: () => { this.notify.success('Model body updated'); this.loadContext(); } }); }
+      if (res){ this.api.updateDerivative(it.id, res).subscribe({ next: () => { this.notify.success('Derivative updated'); this.loadContext(); } }); }
     });
   }
 
-  remove(it: ModelBodyDto){
-    if (!confirm(`Delete model body '${this.getBodyTypeName(it)}' for model '${this.getModelName(it)}'?`)) return;
-    this.api.deleteModelBody(it.id).subscribe({ next: () => { this.notify.success('Model body deleted'); this.loadContext(); } });
+  remove(it: DerivativeDto){
+    if (!confirm(`Delete derivative '${this.getBodyTypeName(it)}' for model '${this.getModelName(it)}'?`)) return;
+    this.api.deleteDerivative(it.id).subscribe({ next: () => { this.notify.success('Derivative deleted'); this.loadContext(); } });
   }
 
-  getModelName(it: ModelBodyDto){ const model = this.models$.value.find(m => m.id === it.modelId); return model?.name ?? ''; }
-  getMakeName(it: ModelBodyDto){ const model = this.models$.value.find(m => m.id === it.modelId); const make = model ? this.makes$.value.find(x => x.id === model.makeId) : undefined; return make?.name ?? ''; }
-  getBodyTypeName(it: ModelBodyDto){ return this.bodyTypeMap[it.bodyTypeId] ?? ''; }
+  getModelName(it: DerivativeDto){ const model = this.models$.value.find(m => m.id === it.modelId); return model?.name ?? ''; }
+  getMakeName(it: DerivativeDto){ const model = this.models$.value.find(m => m.id === it.modelId); const make = model ? this.makes$.value.find(x => x.id === model.makeId) : undefined; return make?.name ?? ''; }
+  getBodyTypeName(it: DerivativeDto){ return this.bodyTypeMap[it.bodyTypeId] ?? ''; }
   onFilterInput(val: string){ this.filter$.next(val); }
 }

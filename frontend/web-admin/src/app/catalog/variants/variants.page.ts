@@ -10,7 +10,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
-import { CatalogApiService, VariantDto, GenerationDto, ModelDto, MakeDto, OptionDto, ModelBodyDto } from '../catalog-api.service';
+import { CatalogApiService, VariantDto, GenerationDto, ModelDto, MakeDto, OptionDto, DerivativeDto } from '../catalog-api.service';
 import { NotificationService } from '../../core/notification.service';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
@@ -38,7 +38,7 @@ export class VariantsPage {
   readonly generations$ = new BehaviorSubject<GenerationDto[]>([]);
   readonly models$ = new BehaviorSubject<ModelDto[]>([]);
   readonly makes$ = new BehaviorSubject<MakeDto[]>([]);
-  readonly modelBodies$ = new BehaviorSubject<ModelBodyDto[]>([]);
+  readonly derivatives$ = new BehaviorSubject<DerivativeDto[]>([]);
   // editing handled via dialog
   readonly generationById$ = this.generations$.pipe(
     map(gs => gs.reduce((acc, g) => { acc[g.id] = g; return acc; }, {} as Record<number, GenerationDto>)), shareReplay(1)
@@ -49,12 +49,11 @@ export class VariantsPage {
   readonly makeById$ = this.makes$.pipe(
     map(ms => ms.reduce((acc, m) => { acc[m.id] = m; return acc; }, {} as Record<number, MakeDto>)), shareReplay(1)
   );
-  readonly generationGroups$ = combineLatest([this.generations$, this.models$, this.makes$, this.modelBodies$]).pipe(
-    map(([gens, models, makes, modelBodies]) => {
+  readonly generationGroups$ = combineLatest([this.generations$, this.models$, this.makes$]).pipe(
+    map(([gens, models, makes]) => {
       const groups: { label: string; generations: GenerationDto[] }[] = [];
       for (const gen of gens){
-        const mb = modelBodies.find(b => b.id === gen.modelBodyId);
-        const model = mb ? models.find(m => m.id === mb.modelId) : undefined;
+        const model = models.find(m => m.id === gen.modelId);
         const make = model ? makes.find(x => x.id === model.makeId) : undefined;
         groups.push({ label: `${make?.name ?? 'Unknown'} / ${model?.name ?? 'Model'} (${gen.name})`, generations: [gen] });
       }
@@ -89,7 +88,7 @@ export class VariantsPage {
   private makesCache: MakeDto[] = [];
   private modelsCache: ModelDto[] = [];
   private generationsCache: GenerationDto[] = [];
-  private modelBodiesCache: ModelBodyDto[] = [];
+  private derivativesCache: DerivativeDto[] = [];
   private variantOptions: { transmissions: OptionDto[]; fuelTypes: OptionDto[] } = { transmissions: [], fuelTypes: [] };
   private transMap: Record<number, string> = {};
   private fuelMap: Record<number, string> = {};
@@ -98,7 +97,7 @@ export class VariantsPage {
     this.makes$.subscribe(ms => this.makesCache = ms);
     this.models$.subscribe(ms => this.modelsCache = ms);
     this.generations$.subscribe(gs => this.generationsCache = gs);
-    this.modelBodies$.subscribe(bs => this.modelBodiesCache = bs);
+    this.derivatives$.subscribe(ds => this.derivativesCache = ds);
     this.loadContext();
   }
 
@@ -108,7 +107,7 @@ export class VariantsPage {
       next: (ctx) => {
         this.makes$.next(ctx.makes);
         this.models$.next(ctx.models);
-        this.modelBodies$.next(ctx.modelBodies);
+        this.derivatives$.next(ctx.derivatives);
         this.generations$.next(ctx.generations);
         this.items$.next(ctx.variants);
       },
@@ -120,7 +119,7 @@ export class VariantsPage {
 
   openCreate(){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Add Variant', generations: this.generationsCache, modelBodies: this.modelBodiesCache, models: this.modelsCache, makes: this.makesCache, transmissions: this.variantOptions.transmissions, fuelTypes: this.variantOptions.fuelTypes }, width: '600px', autoFocus: true, restoreFocus: true });
+    const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Add Variant', generations: this.generationsCache, models: this.modelsCache, makes: this.makesCache, transmissions: this.variantOptions.transmissions, fuelTypes: this.variantOptions.fuelTypes }, width: '600px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { name: string; generationId: number; engine?: string; transmissionId?: number; fuelTypeId?: number } | undefined) => {
       if (res){
         this.api.createVariant(res).subscribe({ next: () => { this.notify.success('Variant created'); this.loadContext(); } });
@@ -130,7 +129,7 @@ export class VariantsPage {
 
   openEdit(it: VariantDto){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Edit Variant', name: it.name, generationId: it.generationId, engine: it.engine, transmissionId: it.transmissionId, fuelTypeId: it.fuelTypeId, generations: this.generationsCache, modelBodies: this.modelBodiesCache, models: this.modelsCache, makes: this.makesCache, transmissions: this.variantOptions.transmissions, fuelTypes: this.variantOptions.fuelTypes }, width: '600px', autoFocus: true, restoreFocus: true });
+    const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Edit Variant', name: it.name, generationId: it.generationId, engine: it.engine, transmissionId: it.transmissionId, fuelTypeId: it.fuelTypeId, generations: this.generationsCache, models: this.modelsCache, makes: this.makesCache, transmissions: this.variantOptions.transmissions, fuelTypes: this.variantOptions.fuelTypes }, width: '600px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { name: string; generationId: number; engine?: string; transmissionId?: number; fuelTypeId?: number } | undefined) => {
       if (res){
         this.api.updateVariant(it.id, res).subscribe({ next: () => { this.notify.success('Variant updated'); this.loadContext(); } });
@@ -150,16 +149,14 @@ export class VariantsPage {
   getModelName(it: VariantDto){
     const gen = this.generations$.value.find(g => g.id === it.generationId);
     if (!gen) return '';
-    const mb = this.modelBodies$.value.find(b => b.id === gen.modelBodyId);
-    const model = mb ? this.models$.value.find(m => m.id === mb.modelId) : undefined;
+    const model = this.models$.value.find(m => m.id === gen.modelId);
     return model?.name ?? '';
   }
 
   getMakeName(it: VariantDto){
     const gen = this.generations$.value.find(g => g.id === it.generationId);
     if (!gen) return '';
-    const mb = this.modelBodies$.value.find(b => b.id === gen.modelBodyId);
-    const model = mb ? this.models$.value.find(m => m.id === mb.modelId) : undefined;
+    const model = this.models$.value.find(m => m.id === gen.modelId);
     const make = model ? this.makes$.value.find(x => x.id === model.makeId) : undefined;
     return make?.name ?? '';
   }

@@ -9,5 +9,5 @@ public class Model
     public Make? Make { get; set; }
 
     public List<Generation> Generations { get; set; } = new();
-    public List<ModelBody> ModelBodies { get; set; } = new();
+    public List<Derivative> Derivatives { get; set; } = new();
 }

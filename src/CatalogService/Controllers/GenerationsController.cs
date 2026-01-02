@@ -23,14 +23,12 @@ public class GenerationsController(CatalogDbContext context, IMapper mapper) : C
         {
             modelsQuery = modelsQuery.Where(m => m.MakeId == makeId);
             var modelIds = await modelsQuery.Select(m => m.Id).ToListAsync();
-            var modelBodyIds = await context.ModelBodies.Where(b => modelIds.Contains(b.ModelId)).Select(b => b.Id).ToListAsync();
-            generationsQuery = generationsQuery.Where(g => modelBodyIds.Contains(g.ModelBodyId));
+            generationsQuery = generationsQuery.Where(g => modelIds.Contains(g.ModelId));
         }
         if (modelId.HasValue)
         {
             modelsQuery = modelsQuery.Where(m => m.Id == modelId);
-            var modelBodyIds = await context.ModelBodies.Where(b => b.ModelId == modelId).Select(b => b.Id).ToListAsync();
-            generationsQuery = generationsQuery.Where(g => modelBodyIds.Contains(g.ModelBodyId));
+            generationsQuery = generationsQuery.Where(g => g.ModelId == modelId);
         }
 
         var makes = await makesQuery
@@ -46,30 +44,25 @@ public class GenerationsController(CatalogDbContext context, IMapper mapper) : C
             .ProjectTo<GenerationDto>(mapper.ConfigurationProvider)
             .ToListAsync();
 
-        var modelBodiesQuery = context.ModelBodies.AsQueryable();
-        if (modelId.HasValue) modelBodiesQuery = modelBodiesQuery.Where(mb => mb.ModelId == modelId.Value);
+        var derivativesQuery = context.Derivatives.AsQueryable();
+        if (modelId.HasValue) derivativesQuery = derivativesQuery.Where(d => d.ModelId == modelId.Value);
         if (makeId.HasValue)
         {
             var modelIdsForMake = await context.Models.Where(m => m.MakeId == makeId.Value).Select(m => m.Id).ToListAsync();
-            modelBodiesQuery = modelBodiesQuery.Where(mb => modelIdsForMake.Contains(mb.ModelId));
+            derivativesQuery = derivativesQuery.Where(d => modelIdsForMake.Contains(d.ModelId));
         }
-        var modelBodies = await modelBodiesQuery
+        var derivatives = await derivativesQuery
             .OrderBy(x => x.ModelId).ThenBy(x => x.BodyTypeId)
-            .ProjectTo<ModelBodyDto>(mapper.ConfigurationProvider)
+            .ProjectTo<DerivativeDto>(mapper.ConfigurationProvider)
             .ToListAsync();
 
-        return Ok(new GenerationsContextDto(makes, models, modelBodies, generations));
+        return Ok(new GenerationsContextDto(makes, models, derivatives, generations));
     }
     [HttpGet]
-    public async Task<ActionResult<List<GenerationDto>>> GetAll([FromQuery] int? modelId, [FromQuery] int? modelBodyId)
+    public async Task<ActionResult<List<GenerationDto>>> GetAll([FromQuery] int? modelId)
     {
         var query = context.Generations.AsQueryable();
-        if (modelBodyId.HasValue) query = query.Where(x => x.ModelBodyId == modelBodyId);
-        else if (modelId.HasValue)
-        {
-            var modelBodyIds = await context.ModelBodies.Where(b => b.ModelId == modelId).Select(b => b.Id).ToListAsync();
-            query = query.Where(x => modelBodyIds.Contains(x.ModelBodyId));
-        }
+        if (modelId.HasValue) query = query.Where(x => x.ModelId == modelId);
         return await query
             .OrderBy(x => x.Name)
             .ProjectTo<GenerationDto>(mapper.ConfigurationProvider)
@@ -86,8 +79,8 @@ public class GenerationsController(CatalogDbContext context, IMapper mapper) : C
     [HttpPost]
     public async Task<ActionResult<GenerationDto>> Create(CreateGenerationDto dto)
     {
-        if (!await context.ModelBodies.AnyAsync(x => x.Id == dto.ModelBodyId))
-            return BadRequest("Invalid ModelBodyId");
+        if (!await context.Models.AnyAsync(x => x.Id == dto.ModelId))
+            return BadRequest("Invalid ModelId");
         if (dto.StartYear.HasValue && dto.EndYear.HasValue && dto.StartYear > dto.EndYear)
             return BadRequest("StartYear cannot be greater than EndYear");
 
@@ -105,11 +98,11 @@ public class GenerationsController(CatalogDbContext context, IMapper mapper) : C
         var entity = await context.Generations.FindAsync(id);
         if (entity is null) return NotFound();
         if (!string.IsNullOrWhiteSpace(dto.Name)) entity.Name = dto.Name;
-        if (dto.ModelBodyId.HasValue)
+        if (dto.ModelId.HasValue)
         {
-            var exists = await context.ModelBodies.AnyAsync(x => x.Id == dto.ModelBodyId.Value);
-            if (!exists) return BadRequest("Invalid ModelBodyId");
-            entity.ModelBodyId = dto.ModelBodyId.Value;
+            var exists = await context.Models.AnyAsync(x => x.Id == dto.ModelId.Value);
+            if (!exists) return BadRequest("Invalid ModelId");
+            entity.ModelId = dto.ModelId.Value;
         }
         if (dto.StartYear.HasValue) entity.StartYear = dto.StartYear;
         if (dto.EndYear.HasValue) entity.EndYear = dto.EndYear;

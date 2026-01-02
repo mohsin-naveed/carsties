@@ -10,7 +10,7 @@ namespace CatalogService.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ModelBodiesController(CatalogDbContext context, IMapper mapper) : ControllerBase
+public class DerivativesController(CatalogDbContext context, IMapper mapper) : ControllerBase
 {
     [HttpGet("options")]
     public ActionResult<List<OptionDto>> GetOptions()
@@ -22,7 +22,6 @@ public class ModelBodiesController(CatalogDbContext context, IMapper mapper) : C
         return Ok(bodyTypes);
     }
 
-    // Legacy controller retained for compatibility; now serves Derivatives payloads
     [HttpGet("context")]
     public async Task<ActionResult<DerivativesContextDto>> GetContext([FromQuery] int? makeId, [FromQuery] int? modelId)
     {
@@ -39,7 +38,7 @@ public class ModelBodiesController(CatalogDbContext context, IMapper mapper) : C
             .ToListAsync();
 
         var dQuery = context.Derivatives.AsQueryable();
-        if (modelId.HasValue) dQuery = dQuery.Where(b => b.ModelId == modelId.Value);
+        if (modelId.HasValue) dQuery = dQuery.Where(d => d.ModelId == modelId.Value);
         var derivatives = await dQuery
             .OrderBy(x => x.ModelId).ThenBy(x => x.BodyTypeId)
             .ProjectTo<DerivativeDto>(mapper.ConfigurationProvider)
