@@ -12,7 +12,7 @@ Run `ng generate component component-name` to generate a new component. You can 
 
 # Carsties Admin (web-admin)
 
-Modern Angular 17 admin panel for managing Catalog data (Makes, Models, Generations, Variants, Features, VariantFeatures).
+Modern Angular 17 admin panel for managing Catalog data (Makes, Models, Generations, Variants, Features).
 
 ## Stack & Conventions
 
@@ -35,7 +35,6 @@ src/app/
 		generations/
 		variants/
 		features/
-		variant-features/
 		catalog-api.service.ts
 ```
 

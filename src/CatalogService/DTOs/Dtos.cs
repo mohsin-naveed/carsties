@@ -46,13 +46,6 @@ public record GenerationsContextDto(
 	List<GenerationDto> Generations
 );
 
-public record VariantFeaturesContextDto(
-	List<MakeDto> Makes,
-	List<ModelDto> Models,
-	List<GenerationDto> Generations,
-	List<VariantDto> Variants,
-	List<FeatureDto> Features
-);
 
 // Model Bodies
 public record DerivativeDto(int Id, string? Name, int ModelId, int? GenerationId, int BodyTypeId, string? BodyType, short Seats, short Doors, string? Engine, int? TransmissionId, string? Transmission, int? FuelTypeId, string? FuelType, decimal? BatteryCapacityKWh);

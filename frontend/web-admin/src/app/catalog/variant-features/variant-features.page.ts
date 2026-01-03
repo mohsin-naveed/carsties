@@ -100,16 +100,12 @@ export class VariantFeaturesPage {
 
   load(){ this.loadContext(); }
   private loadContext(makeId?: number, modelId?: number, generationId?: number){
-    this.api.getVariantFeaturesContext(makeId, modelId, generationId).subscribe({
-      next: (ctx) => {
-        this.makes$.next(ctx.makes);
-        this.models$.next(ctx.models);
-        this.generations$.next(ctx.generations);
-        this.variants$.next(ctx.variants);
-        this.features$.next(ctx.features);
-      },
-      error: () => this.notify.error('Failed to load mapping data')
-    });
+    // Context endpoint removed; load each collection separately
+    this.api.getMakes().subscribe({ next: data => this.makes$.next(data), error: () => this.notify.error('Failed to load makes') });
+    this.api.getModels().subscribe({ next: data => this.models$.next(data), error: () => this.notify.error('Failed to load models') });
+    this.api.getGenerations().subscribe({ next: data => this.generations$.next(data), error: () => this.notify.error('Failed to load generations') });
+    this.api.getVariants().subscribe({ next: data => this.variants$.next(data), error: () => this.notify.error('Failed to load variants') });
+    this.api.getFeatures().subscribe({ next: data => this.features$.next(data), error: () => this.notify.error('Failed to load features') });
     // Load derivatives to resolve generation/model/make from variant.derivativeId
     this.api.getDerivatives().subscribe({ next: data => this.derivatives$.next(data), error: () => this.notify.error('Failed to load derivatives') });
     this.api.getVariantFeatures().subscribe({ next: data => this.items$.next(data), error: () => this.notify.error('Failed to load mappings') });

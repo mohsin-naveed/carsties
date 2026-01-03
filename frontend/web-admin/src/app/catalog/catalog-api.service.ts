@@ -49,13 +49,7 @@ export interface GenerationsContextDto {
   generations: GenerationDto[];
 }
 
-export interface VariantFeaturesContextDto {
-  makes: MakeDto[];
-  models: ModelDto[];
-  generations: GenerationDto[];
-  variants: VariantDto[];
-  features: FeatureDto[];
-}
+// VariantFeatures page removed; context DTO no longer needed
 
 // Derivatives
 export interface DerivativeDto { id: number; name?: string; modelId: number; generationId?: number; bodyTypeId: number; bodyType?: string; seats: number; doors: number; engine?: string; transmissionId?: number; transmission?: string; fuelTypeId?: number; fuelType?: string; batteryCapacityKWh?: number; }
@@ -118,10 +112,7 @@ export class CatalogApiService {
     const params: any = {}; if (variantId) params.variantId = variantId; if (featureId) params.featureId = featureId;
   return this.http.get<VariantFeatureDto[]>(`${this.baseUrl}/variantfeatures`, { params });
   }
-  getVariantFeaturesContext(makeId?: number, modelId?: number, generationId?: number): Observable<VariantFeaturesContextDto> {
-    const params: any = {}; if (makeId) params.makeId = makeId; if (modelId) params.modelId = modelId; if (generationId) params.generationId = generationId;
-    return this.http.get<VariantFeaturesContextDto>(`${this.baseUrl}/variantfeatures/context`, { params });
-  }
+  // getVariantFeaturesContext removed as the Variant Features page was deleted
   createVariantFeature(dto: CreateVariantFeatureDto): Observable<VariantFeatureDto> { return this.http.post<VariantFeatureDto>(`${this.baseUrl}/variantfeatures`, dto); }
   updateVariantFeature(variantId: number, featureId: number, dto: UpdateVariantFeatureDto) { return this.http.put(`${this.baseUrl}/variantfeatures/${variantId}/${featureId}`, dto); }
   deleteVariantFeature(variantId: number, featureId: number) { return this.http.delete(`${this.baseUrl}/variantfeatures/${variantId}/${featureId}`); }

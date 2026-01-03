@@ -33,10 +33,7 @@ export const routes: Routes = [
 				path: 'features',
 				loadComponent: () => import('./catalog/features/features.page').then(m => m.FeaturesPage)
 			},
-			{
-				path: 'variant-features',
-				loadComponent: () => import('./catalog/variant-features/variant-features.page').then(m => m.VariantFeaturesPage)
-			}
+			// variant-features route removed
 		]
 	}
 ];
