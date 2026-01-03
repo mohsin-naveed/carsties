@@ -139,7 +139,7 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.HasOne(x => x.Generation)
                 .WithMany()
                 .HasForeignKey(x => x.GenerationId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(x => x.BodyTypeRef)
                 .WithMany(x => x.Derivatives)

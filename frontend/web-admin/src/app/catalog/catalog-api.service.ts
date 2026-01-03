@@ -59,7 +59,7 @@ export interface VariantFeaturesContextDto {
 
 // Derivatives
 export interface DerivativeDto { id: number; modelId: number; generationId?: number; bodyTypeId: number; bodyType?: string; seats: number; doors: number; }
-export interface CreateDerivativeDto { modelId: number; generationId?: number; bodyTypeId: number; seats: number; doors: number; }
+export interface CreateDerivativeDto { modelId: number; generationId: number; bodyTypeId: number; seats: number; doors: number; }
 export interface UpdateDerivativeDto { modelId?: number; generationId?: number; bodyTypeId?: number; seats?: number; doors?: number; }
 export interface DerivativesContextDto { makes: MakeDto[]; models: ModelDto[]; derivatives: DerivativeDto[]; }
 

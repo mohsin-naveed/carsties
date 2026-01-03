@@ -12,6 +12,7 @@ public class DbInitializer
         context.Database.Migrate();
 
         SeedIfEmpty(context);
+        EnsureGenerationRequired(context);
     }
 
     public static void SeedIfEmpty(CatalogDbContext context)
@@ -193,6 +194,28 @@ public class DbInitializer
 
         context.Makes.AddRange(makes);
         context.SaveChanges();
+
+        // Create a single default generation per model so derivatives can reference it
+        var modelsForGen = context.Models.ToList();
+        var generations = new List<Generation>();
+        foreach (var m in modelsForGen)
+        {
+            generations.Add(new Generation
+            {
+                Name = "Gen 1",
+                ModelId = m.Id,
+                StartYear = null,
+                EndYear = null
+            });
+        }
+        context.Generations.AddRange(generations);
+        context.SaveChanges();
+
+        var generationByModelId = context.Generations
+            .AsEnumerable()
+            .GroupBy(g => g.ModelId)
+            .ToDictionary(g => g.Key, g => g.First().Id);
+
         // Create a single default derivative per model
         var saloonId = context.BodyTypes.Where(b => b.Name == "Saloon").Select(b => b.Id).First();
         var derivatives = new List<Derivative>();
@@ -202,7 +225,7 @@ public class DbInitializer
             derivatives.Add(new Derivative
             {
                 ModelId = m.Id,
-                GenerationId = null,
+                GenerationId = generationByModelId[m.Id],
                 BodyTypeId = saloonId,
                 Seats = 5,
                 Doors = 4
@@ -217,6 +240,43 @@ public class DbInitializer
 
         // Note: Generations and Variants are intentionally not seeded here to avoid FK issues.
         // They can be added via API once ModelBodies exist.
+    }
+
+    private static void EnsureGenerationRequired(CatalogDbContext context)
+    {
+        // Assign a generation to any derivative missing one
+        var derivativesNeedingGen = context.Derivatives.Where(d => d.GenerationId == 0 || (EF.Property<int?>(d, nameof(d.GenerationId)) == null)).ToList();
+        if (derivativesNeedingGen.Count > 0)
+        {
+            var models = context.Models.ToList();
+            var gensByModel = context.Generations.AsEnumerable().GroupBy(g => g.ModelId).ToDictionary(g => g.Key, g => g.FirstOrDefault());
+            foreach (var d in derivativesNeedingGen)
+            {
+                if (!gensByModel.TryGetValue(d.ModelId, out var gen) || gen == null)
+                {
+                    gen = new Generation { Name = "Gen 1", ModelId = d.ModelId };
+                    context.Generations.Add(gen);
+                    context.SaveChanges();
+                }
+                d.GenerationId = gen.Id;
+            }
+            context.SaveChanges();
+        }
+
+        try
+        {
+            // Make column NOT NULL
+            context.Database.ExecuteSqlRaw("ALTER TABLE \"Derivatives\" ALTER COLUMN \"GenerationId\" SET NOT NULL;");
+        }
+        catch { /* ignore if already applied */ }
+
+        try
+        {
+            // Adjust FK to cascade delete (drop then add)
+            context.Database.ExecuteSqlRaw("ALTER TABLE \"Derivatives\" DROP CONSTRAINT IF EXISTS \"FK_Derivatives_Generations_GenerationId\";");
+            context.Database.ExecuteSqlRaw("ALTER TABLE \"Derivatives\" ADD CONSTRAINT \"FK_Derivatives_Generations_GenerationId\" FOREIGN KEY (\"GenerationId\") REFERENCES \"Generations\"(\"Id\") ON DELETE CASCADE;");
+        }
+        catch { /* ignore if already applied */ }
     }
 
     public static void ClearCatalogData(CatalogDbContext context)

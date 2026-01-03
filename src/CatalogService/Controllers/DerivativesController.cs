@@ -70,8 +70,11 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
     {
         if (!await context.Models.AnyAsync(x => x.Id == dto.ModelId))
             return BadRequest("Invalid ModelId");
-        if (dto.GenerationId.HasValue && !await context.Generations.AnyAsync(x => x.Id == dto.GenerationId.Value))
+        var generation = await context.Generations.FirstOrDefaultAsync(x => x.Id == dto.GenerationId);
+        if (generation is null)
             return BadRequest("Invalid GenerationId");
+        if (generation.ModelId != dto.ModelId)
+            return BadRequest("Generation must belong to the specified Model");
         if (!await context.BodyTypes.AnyAsync(x => x.Id == dto.BodyTypeId))
             return BadRequest("Invalid BodyTypeId");
         if (dto.Seats < 2 || dto.Seats > 9) return BadRequest("Seats must be between 2 and 9");
@@ -98,8 +101,10 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
         }
         if (dto.GenerationId.HasValue)
         {
-            var exists = await context.Generations.AnyAsync(x => x.Id == dto.GenerationId.Value);
-            if (!exists) return BadRequest("Invalid GenerationId");
+            var generation = await context.Generations.FirstOrDefaultAsync(x => x.Id == dto.GenerationId.Value);
+            if (generation is null) return BadRequest("Invalid GenerationId");
+            if (generation.ModelId != (dto.ModelId ?? entity.ModelId))
+                return BadRequest("Generation must belong to the specified Model");
             entity.GenerationId = dto.GenerationId.Value;
         }
         if (dto.BodyTypeId.HasValue)

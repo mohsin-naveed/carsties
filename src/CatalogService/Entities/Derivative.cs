@@ -7,8 +7,8 @@ public class Derivative
     public int ModelId { get; set; }
     public Model? Model { get; set; }
 
-    public int? GenerationId { get; set; }
-    public Generation? Generation { get; set; }
+    public int GenerationId { get; set; }
+    public Generation Generation { get; set; } = null!;
 
     public int BodyTypeId { get; set; }
     public BodyType? BodyTypeRef { get; set; }
