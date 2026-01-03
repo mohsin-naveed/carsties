@@ -9,29 +9,29 @@
   <input matInput (input)="onFilterInput($any($event.target).value)" placeholder="Filter by make/model/body" />
 </mat-form-field>
 
-<table mat-table [dataSource]="(filtered$ | async) ?? []" class="mat-elevation-z1">
+<table mat-table [dataSource]="(filtered$ | async) ?? []" matSort (matSortChange)="onSortChange($event)" class="mat-elevation-z1">
   <ng-container matColumnDef="make">
-    <th mat-header-cell *matHeaderCellDef>Make</th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="make">Make</th>
     <td mat-cell *matCellDef="let it">{{ getMakeName(it) }}</td>
   </ng-container>
   <ng-container matColumnDef="model">
-    <th mat-header-cell *matHeaderCellDef>Model</th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="model">Model</th>
     <td mat-cell *matCellDef="let it">{{ getModelName(it) }}</td>
   </ng-container>
   <ng-container matColumnDef="name">
-    <th mat-header-cell *matHeaderCellDef>Name</th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="name">Name</th>
     <td mat-cell *matCellDef="let it">{{ it.name || '—' }}</td>
   </ng-container>
   <ng-container matColumnDef="bodyType">
-    <th mat-header-cell *matHeaderCellDef>Body Type</th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="bodytype">Body Type</th>
     <td mat-cell *matCellDef="let it">{{ getBodyTypeName(it) }}</td>
   </ng-container>
   <ng-container matColumnDef="fuel">
-    <th mat-header-cell *matHeaderCellDef>Fuel</th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="fuel">Fuel</th>
     <td mat-cell *matCellDef="let it">{{ it.fuelType || '—' }}</td>
   </ng-container>
   <ng-container matColumnDef="transmission">
-    <th mat-header-cell *matHeaderCellDef>Transmission</th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="transmission">Transmission</th>
     <td mat-cell *matCellDef="let it">{{ it.transmission || '—' }}</td>
   </ng-container>
   <ng-container matColumnDef="power">
@@ -39,11 +39,11 @@
     <td mat-cell *matCellDef="let it">{{ powerLabel(it) }}</td>
   </ng-container>
   <ng-container matColumnDef="seats">
-    <th mat-header-cell *matHeaderCellDef>Seats</th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="seats">Seats</th>
     <td mat-cell *matCellDef="let it">{{ it.seats }}</td>
   </ng-container>
   <ng-container matColumnDef="doors">
-    <th mat-header-cell *matHeaderCellDef>Doors</th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="doors">Doors</th>
     <td mat-cell *matCellDef="let it">{{ it.doors }}</td>
   </ng-container>
   <ng-container matColumnDef="actions">
@@ -56,3 +56,11 @@
   <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
   <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
 </table>
+
+<mat-paginator
+  [length]="(total$ | async) ?? 0"
+  [pageIndex]="(page$ | async)! - 1"
+  [pageSize]="(pageSize$ | async)!"
+  [pageSizeOptions]="[5,10,25,50]"
+  (page)="onPageChange($event)">
+</mat-paginator>

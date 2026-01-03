@@ -56,6 +56,7 @@ export interface DerivativeDto { id: number; name?: string; modelId: number; gen
 export interface CreateDerivativeDto { name: string; modelId: number; generationId: number; bodyTypeId: number; seats: number; doors: number; engine?: string; transmissionId?: number; fuelTypeId?: number; batteryCapacityKWh?: number; }
 export interface UpdateDerivativeDto { name?: string; modelId?: number; generationId?: number; bodyTypeId?: number; seats?: number; doors?: number; engine?: string; transmissionId?: number; fuelTypeId?: number; batteryCapacityKWh?: number; }
 export interface DerivativesContextDto { makes: MakeDto[]; models: ModelDto[]; derivatives: DerivativeDto[]; }
+export interface PagedResult<T> { items: T[]; total: number; page: number; pageSize: number; }
 
 @Injectable({ providedIn: 'root' })
 export class CatalogApiService {
@@ -120,6 +121,16 @@ export class CatalogApiService {
   // Derivatives
   getDerivatives(modelId?: number): Observable<DerivativeDto[]> { const params: any = {}; if (modelId) params.modelId = modelId; return this.http.get<DerivativeDto[]>(`${this.baseUrl}/derivatives`, { params }); }
   getDerivativesContext(makeId?: number, modelId?: number): Observable<DerivativesContextDto> { const params: any = {}; if (makeId) params.makeId = makeId; if (modelId) params.modelId = modelId; return this.http.get<DerivativesContextDto>(`${this.baseUrl}/derivatives/context`, { params }); }
+  getDerivativesPaged(opts?: { page?: number; pageSize?: number; sort?: string; dir?: 'asc'|'desc'; makeId?: number; modelId?: number }): Observable<PagedResult<DerivativeDto>> {
+    const params: any = {};
+    if (opts?.page) params.page = opts.page;
+    if (opts?.pageSize) params.pageSize = opts.pageSize;
+    if (opts?.sort) params.sort = opts.sort;
+    if (opts?.dir) params.dir = opts.dir;
+    if (opts?.makeId) params.makeId = opts.makeId;
+    if (opts?.modelId) params.modelId = opts.modelId;
+    return this.http.get<PagedResult<DerivativeDto>>(`${this.baseUrl}/derivatives/paged`, { params });
+  }
   getBodyTypeOptions(): Observable<OptionDto[]> { return this.http.get<OptionDto[]>(`${this.baseUrl}/derivatives/options`); }
   createDerivative(dto: CreateDerivativeDto): Observable<DerivativeDto> { return this.http.post<DerivativeDto>(`${this.baseUrl}/derivatives`, dto); }
   updateDerivative(id: number, dto: UpdateDerivativeDto) { return this.http.put(`${this.baseUrl}/derivatives/${id}`, dto); }

@@ -8,6 +8,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatSortModule, Sort } from '@angular/material/sort';
 import { CatalogApiService, DerivativeDto, ModelDto, MakeDto, OptionDto } from '../catalog-api.service';
 import { NotificationService } from '../../core/notification.service';
 import { BehaviorSubject, combineLatest } from 'rxjs';
@@ -17,7 +19,7 @@ import { DerivativeEditDialogComponent } from './derivative-edit-dialog.componen
 @Component({
   selector: 'app-derivatives-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, MatDialogModule],
+  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, MatDialogModule, MatPaginatorModule, MatSortModule],
   templateUrl: './derivatives.page.html',
   styles:[`
     .header { display:flex; align-items:center; gap:1rem; justify-content:space-between; margin-bottom:1rem; }
@@ -33,6 +35,10 @@ export class DerivativesPage {
   readonly displayedColumns = ['make','model','name','bodyType','fuel','transmission','power','seats','doors','actions'];
 
   readonly items$ = new BehaviorSubject<DerivativeDto[]>([]);
+  readonly total$ = new BehaviorSubject<number>(0);
+  readonly page$ = new BehaviorSubject<number>(1);
+  readonly pageSize$ = new BehaviorSubject<number>(10);
+  readonly sort$ = new BehaviorSubject<{ active: string; direction: 'asc'|'desc' }>({ active: 'make', direction: 'asc' });
   readonly models$ = new BehaviorSubject<ModelDto[]>([]);
   readonly makes$ = new BehaviorSubject<MakeDto[]>([]);
   readonly bodyTypeMap$ = new BehaviorSubject<Record<number, string>>({});
@@ -77,6 +83,7 @@ export class DerivativesPage {
     this.models$.subscribe(ms => this.modelsCache = ms);
     this.makes$.subscribe(ms => this.makesCache = ms);
     this.loadContext();
+    this.loadPage();
     this.api.getBodyTypeOptions().subscribe({ next: (opts) => { this.bodyTypes = opts; this.bodyTypeMap = Object.fromEntries(opts.map(o => [o.id, o.name])); this.bodyTypeMap$.next(this.bodyTypeMap); } });
   }
 
@@ -86,6 +93,19 @@ export class DerivativesPage {
       error: () => this.notify.error('Failed to load derivatives')
     });
   }
+
+  private loadPage(){
+    const sort = this.sort$.value;
+    const page = this.page$.value;
+    const pageSize = this.pageSize$.value;
+    this.api.getDerivativesPaged({ page, pageSize, sort: sort.active, dir: sort.direction }).subscribe({
+      next: (res) => { this.items$.next(res.items); this.total$.next(res.total); },
+      error: () => this.notify.error('Failed to load derivatives')
+    });
+  }
+
+  onPageChange(ev: PageEvent){ this.page$.next(ev.pageIndex + 1); this.pageSize$.next(ev.pageSize); this.loadPage(); }
+  onSortChange(ev: Sort){ const dir = (ev.direction || 'asc') as 'asc'|'desc'; const active = ev.active || 'make'; this.sort$.next({ active, direction: dir }); this.page$.next(1); this.loadPage(); }
 
   openCreate(){
     (document.activeElement as HTMLElement | null)?.blur();

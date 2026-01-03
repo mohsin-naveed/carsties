@@ -57,3 +57,6 @@ public record DerivativesContextDto(
 	List<ModelDto> Models,
 	List<DerivativeDto> Derivatives
 );
+
+// Generic paged result for server-side pagination
+public record PagedResult<T>(List<T> Items, int Total, int Page, int PageSize);

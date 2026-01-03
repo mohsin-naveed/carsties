@@ -58,6 +58,82 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
             .ToListAsync();
     }
 
+
+    // Server-side pagination and sorting
+    [HttpGet("paged")]
+    public async Task<ActionResult<PagedResult<DerivativeDto>>> GetPaged(
+        [FromQuery] int? makeId,
+        [FromQuery] int? modelId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? sort = null,
+        [FromQuery] string? dir = "asc")
+    {
+        if (page < 1) page = 1;
+        if (pageSize < 1 || pageSize > 200) pageSize = 10;
+
+        var baseQuery = from d in context.Derivatives
+                        join m in context.Models on d.ModelId equals m.Id
+                        join mk in context.Makes on m.MakeId equals mk.Id
+                        select new { d, m, mk };
+
+        if (makeId.HasValue)
+            baseQuery = baseQuery.Where(x => x.mk.Id == makeId.Value);
+        if (modelId.HasValue)
+            baseQuery = baseQuery.Where(x => x.m.Id == modelId.Value);
+
+        var total = await baseQuery.CountAsync();
+
+        // Default multi-sort: Make, Model, Name
+        bool desc = string.Equals(dir, "desc", StringComparison.OrdinalIgnoreCase);
+        var ordered = baseQuery;
+        if (string.IsNullOrWhiteSpace(sort))
+        {
+            ordered = desc
+                ? baseQuery.OrderByDescending(x => x.mk.Name).ThenByDescending(x => x.m.Name).ThenByDescending(x => x.d.Name)
+                : baseQuery.OrderBy(x => x.mk.Name).ThenBy(x => x.m.Name).ThenBy(x => x.d.Name);
+        }
+        else
+        {
+            switch (sort.ToLowerInvariant())
+            {
+                case "make":
+                    ordered = desc ? baseQuery.OrderByDescending(x => x.mk.Name) : baseQuery.OrderBy(x => x.mk.Name);
+                    break;
+                case "model":
+                    ordered = desc ? baseQuery.OrderByDescending(x => x.m.Name) : baseQuery.OrderBy(x => x.m.Name);
+                    break;
+                case "name":
+                    ordered = desc ? baseQuery.OrderByDescending(x => x.d.Name) : baseQuery.OrderBy(x => x.d.Name);
+                    break;
+                case "bodytype":
+                    ordered = desc ? baseQuery.OrderByDescending(x => x.d.BodyTypeId) : baseQuery.OrderBy(x => x.d.BodyTypeId);
+                    break;
+                case "fuel":
+                    ordered = desc ? baseQuery.OrderByDescending(x => x.d.FuelTypeId) : baseQuery.OrderBy(x => x.d.FuelTypeId);
+                    break;
+                case "transmission":
+                    ordered = desc ? baseQuery.OrderByDescending(x => x.d.TransmissionId) : baseQuery.OrderBy(x => x.d.TransmissionId);
+                    break;
+                case "seats":
+                    ordered = desc ? baseQuery.OrderByDescending(x => x.d.Seats) : baseQuery.OrderBy(x => x.d.Seats);
+                    break;
+                case "doors":
+                    ordered = desc ? baseQuery.OrderByDescending(x => x.d.Doors) : baseQuery.OrderBy(x => x.d.Doors);
+                    break;
+                default:
+                    ordered = desc ? baseQuery.OrderByDescending(x => x.mk.Name).ThenByDescending(x => x.m.Name) : baseQuery.OrderBy(x => x.mk.Name).ThenBy(x => x.m.Name);
+                    break;
+            }
+        }
+
+        var pageItemsQuery = ordered.Skip((page - 1) * pageSize).Take(pageSize).Select(x => x.d);
+        var items = await pageItemsQuery
+            .ProjectTo<DerivativeDto>(mapper.ConfigurationProvider)
+            .ToListAsync();
+
+        return Ok(new PagedResult<DerivativeDto>(items, total, page, pageSize));
+    }
     [HttpGet("{id:int}")]
     public async Task<ActionResult<DerivativeDto>> Get(int id)
     {
