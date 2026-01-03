@@ -33,14 +33,14 @@ import { CatalogApiService, MakeDto, ModelDto, OptionDto, GenerationDto } from '
         </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>Name</mat-label>
-        <input matInput type="text" formControlName="name" required />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
         <mat-label>Generation</mat-label>
         <mat-select formControlName="generationId" required [disabled]="!form.value.modelId">
           <mat-option *ngFor="let g of generations" [value]="g.id">{{ g.name }}</mat-option>
         </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput type="text" formControlName="name" required />
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Body Type</mat-label>
