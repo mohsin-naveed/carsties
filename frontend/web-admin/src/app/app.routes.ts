@@ -4,7 +4,7 @@ export const routes: Routes = [
 	{
 		path: '',
 		pathMatch: 'full',
-		redirectTo: 'catalog/makes'
+		redirectTo: 'catalog/models'
 	},
 	{
 		path: 'catalog',

@@ -15,8 +15,8 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
       <span class="spacer"></span>
   <button mat-button routerLink="/catalog/makes" routerLinkActive="active">Makes</button>
   <button mat-button routerLink="/catalog/models" routerLinkActive="active">Models</button>
-  <button mat-button routerLink="/catalog/derivatives" routerLinkActive="active">Derivatives</button>
   <button mat-button routerLink="/catalog/generations" routerLinkActive="active">Generations</button>
+  <button mat-button routerLink="/catalog/derivatives" routerLinkActive="active">Derivatives</button>
   <button mat-button routerLink="/catalog/variants" routerLinkActive="active">Variants</button>
   <button mat-button routerLink="/catalog/features" routerLinkActive="active">Features</button>
   
