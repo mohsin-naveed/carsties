@@ -130,6 +130,7 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(x => x.Doors).IsRequired();
             entity.HasCheckConstraint("CK_Derivatives_Seats", "\"Seats\" BETWEEN 2 AND 9");
             entity.HasCheckConstraint("CK_Derivatives_Doors", "\"Doors\" BETWEEN 2 AND 5");
+            entity.Property(x => x.Engine).HasMaxLength(100);
 
             entity.HasOne(x => x.Model)
                 .WithMany(x => x.Derivatives)
@@ -144,6 +145,15 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.HasOne(x => x.BodyTypeRef)
                 .WithMany(x => x.Derivatives)
                 .HasForeignKey(x => x.BodyTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.TransmissionRef)
+                .WithMany()
+                .HasForeignKey(x => x.TransmissionId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.FuelTypeRef)
+                .WithMany()
+                .HasForeignKey(x => x.FuelTypeId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

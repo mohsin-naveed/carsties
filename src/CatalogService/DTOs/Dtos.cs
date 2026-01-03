@@ -13,9 +13,9 @@ public record GenerationDto(int Id, string Name, short? StartYear, short? EndYea
 public record CreateGenerationDto(string Name, int ModelId, short? StartYear, short? EndYear);
 public record UpdateGenerationDto(string? Name, int? ModelId, short? StartYear, short? EndYear);
 
-public record VariantDto(int Id, string Name, string? Engine, int? TransmissionId, string? Transmission, int? FuelTypeId, string? FuelType, int GenerationId);
-public record CreateVariantDto(string Name, int GenerationId, string? Engine, int? TransmissionId, int? FuelTypeId);
-public record UpdateVariantDto(string? Name, int? GenerationId, string? Engine, int? TransmissionId, int? FuelTypeId);
+public record VariantDto(int Id, string Name, int GenerationId);
+public record CreateVariantDto(string Name, int GenerationId);
+public record UpdateVariantDto(string? Name, int? GenerationId);
 
 public record FeatureDto(int Id, string Name, string? Description);
 public record CreateFeatureDto(string Name, string? Description);
@@ -55,9 +55,9 @@ public record VariantFeaturesContextDto(
 );
 
 // Model Bodies
-public record DerivativeDto(int Id, int ModelId, int? GenerationId, int BodyTypeId, string? BodyType, short Seats, short Doors);
-public record CreateDerivativeDto(int ModelId, int GenerationId, int BodyTypeId, short Seats, short Doors);
-public record UpdateDerivativeDto(int? ModelId, int? GenerationId, int? BodyTypeId, short? Seats, short? Doors);
+public record DerivativeDto(int Id, int ModelId, int? GenerationId, int BodyTypeId, string? BodyType, short Seats, short Doors, string? Engine, int? TransmissionId, string? Transmission, int? FuelTypeId, string? FuelType);
+public record CreateDerivativeDto(int ModelId, int GenerationId, int BodyTypeId, short Seats, short Doors, string? Engine, int? TransmissionId, int? FuelTypeId);
+public record UpdateDerivativeDto(int? ModelId, int? GenerationId, int? BodyTypeId, short? Seats, short? Doors, string? Engine, int? TransmissionId, int? FuelTypeId);
 
 public record DerivativesContextDto(
 	List<MakeDto> Makes,

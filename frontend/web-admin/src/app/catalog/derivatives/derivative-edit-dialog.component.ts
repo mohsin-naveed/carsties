@@ -44,6 +44,24 @@ import { CatalogApiService, MakeDto, ModelDto, OptionDto, GenerationDto } from '
           <mat-option *ngFor="let bt of bodyTypes" [value]="bt.id">{{ bt.name }}</mat-option>
         </mat-select>
       </mat-form-field>
+      <div class="grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Engine</mat-label>
+          <input matInput type="text" formControlName="engine" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Transmission</mat-label>
+          <mat-select formControlName="transmissionId">
+            <mat-option *ngFor="let t of transmissions" [value]="t.id">{{ t.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Fuel</mat-label>
+          <mat-select formControlName="fuelTypeId">
+            <mat-option *ngFor="let f of fuelTypes" [value]="f.id">{{ f.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
       <mat-form-field appearance="outline">
         <mat-label>Body Code</mat-label>
         <input matInput type="text" formControlName="code" placeholder="e.g. E90" />
@@ -71,19 +89,25 @@ export class DerivativeEditDialogComponent {
   bodyTypes: OptionDto[] = [];
   filteredModels: ModelDto[] = [];
   generations: GenerationDto[] = [];
+  transmissions: OptionDto[] = [];
+  fuelTypes: OptionDto[] = [];
 
   form = this.fb.group({
     makeId: [null as number | null, Validators.required],
     modelId: [null as number | null, Validators.required],
     generationId: [null as number | null, Validators.required],
     bodyTypeId: [null as number | null, Validators.required],
+    engine: ['' as string | null],
+    transmissionId: [null as number | null],
+    fuelTypeId: [null as number | null],
     code: ['' as string | null],
     seats: [this.data.seats ?? 5, [Validators.required, Validators.min(2), Validators.max(9)]],
     doors: [this.data.doors ?? 4, [Validators.required, Validators.min(2), Validators.max(5)]]
   });
 
-  constructor(@Inject(MAT_DIALOG_DATA) public data: { title: string; makes: MakeDto[]; models: ModelDto[]; modelId?: number; generationId?: number | null; bodyTypeId?: number; seats?: number; doors?: number; code?: string }){
+  constructor(@Inject(MAT_DIALOG_DATA) public data: { title: string; makes: MakeDto[]; models: ModelDto[]; modelId?: number; generationId?: number | null; bodyTypeId?: number; seats?: number; doors?: number; code?: string; engine?: string; transmissionId?: number | null; fuelTypeId?: number | null }){
     this.api.getBodyTypeOptions().subscribe({ next: (opts) => this.bodyTypes = opts });
+    this.api.getVariantOptions().subscribe({ next: (opts) => { this.transmissions = opts.transmissions; this.fuelTypes = opts.fuelTypes; } });
     this.updateFilteredModels();
     if (this.data.modelId){
       this.form.patchValue({ modelId: this.data.modelId });
@@ -92,6 +116,9 @@ export class DerivativeEditDialogComponent {
         this.form.patchValue({ generationId: this.data.generationId ?? null });
       }
     }
+    if (this.data.engine !== undefined) this.form.patchValue({ engine: this.data.engine ?? '' });
+    if (this.data.transmissionId !== undefined) this.form.patchValue({ transmissionId: this.data.transmissionId ?? null });
+    if (this.data.fuelTypeId !== undefined) this.form.patchValue({ fuelTypeId: this.data.fuelTypeId ?? null });
   }
 
   onMakeChange(){

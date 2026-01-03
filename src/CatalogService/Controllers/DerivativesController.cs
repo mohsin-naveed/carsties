@@ -75,6 +75,10 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
             return BadRequest("Invalid GenerationId");
         if (generation.ModelId != dto.ModelId)
             return BadRequest("Generation must belong to the specified Model");
+        if (dto.TransmissionId.HasValue && !await context.Transmissions.AnyAsync(x => x.Id == dto.TransmissionId.Value))
+            return BadRequest("Invalid TransmissionId");
+        if (dto.FuelTypeId.HasValue && !await context.FuelTypes.AnyAsync(x => x.Id == dto.FuelTypeId.Value))
+            return BadRequest("Invalid FuelTypeId");
         if (!await context.BodyTypes.AnyAsync(x => x.Id == dto.BodyTypeId))
             return BadRequest("Invalid BodyTypeId");
         if (dto.Seats < 2 || dto.Seats > 9) return BadRequest("Seats must be between 2 and 9");
@@ -112,6 +116,19 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
             var exists = await context.BodyTypes.AnyAsync(x => x.Id == dto.BodyTypeId.Value);
             if (!exists) return BadRequest("Invalid BodyTypeId");
             entity.BodyTypeId = dto.BodyTypeId.Value;
+        }
+        if (dto.Engine is not null) entity.Engine = dto.Engine;
+        if (dto.TransmissionId.HasValue)
+        {
+            var exists = await context.Transmissions.AnyAsync(x => x.Id == dto.TransmissionId.Value);
+            if (!exists) return BadRequest("Invalid TransmissionId");
+            entity.TransmissionId = dto.TransmissionId.Value;
+        }
+        if (dto.FuelTypeId.HasValue)
+        {
+            var exists = await context.FuelTypes.AnyAsync(x => x.Id == dto.FuelTypeId.Value);
+            if (!exists) return BadRequest("Invalid FuelTypeId");
+            entity.FuelTypeId = dto.FuelTypeId.Value;
         }
         if (dto.Seats.HasValue)
         {

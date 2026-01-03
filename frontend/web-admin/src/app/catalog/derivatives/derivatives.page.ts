@@ -88,7 +88,7 @@ export class DerivativesPage {
   openCreate(){
     (document.activeElement as HTMLElement | null)?.blur();
     const ref = this.dialog.open(DerivativeEditDialogComponent, { data: { title: 'Add Derivative', makes: this.makesCache, models: this.modelsCache }, width: '640px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { modelId: number; generationId: number; bodyTypeId: number; seats: number; doors: number; code?: string } | undefined) => {
+    ref.afterClosed().subscribe((res: { modelId: number; generationId: number; bodyTypeId: number; seats: number; doors: number; code?: string; engine?: string; transmissionId?: number; fuelTypeId?: number } | undefined) => {
       if (res){
         this.api.createDerivative(res).subscribe({ next: () => { this.notify.success('Derivative created'); this.loadContext(); } });
       }
@@ -97,8 +97,8 @@ export class DerivativesPage {
 
   openEdit(it: DerivativeDto){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(DerivativeEditDialogComponent, { data: { title: 'Edit Derivative', makes: this.makesCache, models: this.modelsCache, modelId: it.modelId, generationId: it.generationId ?? null, bodyTypeId: it.bodyTypeId, seats: it.seats, doors: it.doors }, width: '640px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { modelId: number; generationId: number; bodyTypeId: number; seats: number; doors: number; code?: string } | undefined) => {
+    const ref = this.dialog.open(DerivativeEditDialogComponent, { data: { title: 'Edit Derivative', makes: this.makesCache, models: this.modelsCache, modelId: it.modelId, generationId: it.generationId ?? null, bodyTypeId: it.bodyTypeId, seats: it.seats, doors: it.doors, engine: it.engine, transmissionId: it.transmissionId ?? null, fuelTypeId: it.fuelTypeId ?? null }, width: '640px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { modelId: number; generationId: number; bodyTypeId: number; seats: number; doors: number; code?: string; engine?: string; transmissionId?: number; fuelTypeId?: number } | undefined) => {
       if (res){
         this.api.updateDerivative(it.id, res).subscribe({ next: () => { this.notify.success('Derivative updated'); this.loadContext(); } });
       }

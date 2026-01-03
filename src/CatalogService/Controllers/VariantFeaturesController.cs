@@ -43,11 +43,6 @@ public class VariantFeaturesController(CatalogDbContext context, IMapper mapper)
             .Select(v => new VariantDto(
                 v.Id,
                 v.Name,
-                v.Engine,
-                v.TransmissionId,
-                v.TransmissionRef != null ? v.TransmissionRef.Name : null,
-                v.FuelTypeId,
-                v.FuelTypeRef != null ? v.FuelTypeRef.Name : null,
                 v.GenerationId))
             .ToListAsync();
         var features = await featuresQuery.OrderBy(x => x.Name).ProjectTo<FeatureDto>(mapper.ConfigurationProvider).ToListAsync();

@@ -1,5 +1,6 @@
 using CatalogService.Entities;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace CatalogService.Data;
 
@@ -9,11 +10,37 @@ public class DbInitializer
     {
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
-        context.Database.Migrate();
+        // Development: Drop and recreate database for a clean state
+        ResetDatabase(context);
+        // Create schema from current EF model (don't use migrations in fresh dev DB)
+        context.Database.EnsureCreated();
 
         SeedIfEmpty(context);
-        EnsureGenerationRequired(context);
+        // Fresh schema created from model; extra ALTERs not needed in dev
     }
+    private static void ResetDatabase(CatalogDbContext context)
+    {
+        var cs = context.Database.GetConnectionString();
+        if (string.IsNullOrEmpty(cs)) return;
+        var builder = new NpgsqlConnectionStringBuilder(cs);
+        var targetDb = builder.Database;
+        // Connect to the default 'postgres' database to perform drop/create
+        builder.Database = "postgres";
+        using var conn = new NpgsqlConnection(builder.ConnectionString);
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        // terminate active connections to target database
+        cmd.CommandText = $"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '{targetDb}' AND pid <> pg_backend_pid();";
+        cmd.ExecuteNonQuery();
+        // drop database
+        cmd.CommandText = $"DROP DATABASE IF EXISTS \"{targetDb}\";";
+        cmd.ExecuteNonQuery();
+        // create database
+        cmd.CommandText = $"CREATE DATABASE \"{targetDb}\";";
+        cmd.ExecuteNonQuery();
+        conn.Close();
+    }
+
 
     public static void SeedIfEmpty(CatalogDbContext context)
     {
@@ -277,6 +304,18 @@ public class DbInitializer
             context.Database.ExecuteSqlRaw("ALTER TABLE \"Derivatives\" ADD CONSTRAINT \"FK_Derivatives_Generations_GenerationId\" FOREIGN KEY (\"GenerationId\") REFERENCES \"Generations\"(\"Id\") ON DELETE CASCADE;");
         }
         catch { /* ignore if already applied */ }
+    }
+
+    private static void EnsureDerivativeEngineTransmissionFuel(CatalogDbContext context)
+    {
+        // Add new columns to Derivatives if they do not exist
+        try { context.Database.ExecuteSqlRaw("ALTER TABLE \"Derivatives\" ADD COLUMN IF NOT EXISTS \"Engine\" character varying(100);"); } catch {}
+        try { context.Database.ExecuteSqlRaw("ALTER TABLE \"Derivatives\" ADD COLUMN IF NOT EXISTS \"TransmissionId\" integer;"); } catch {}
+        try { context.Database.ExecuteSqlRaw("ALTER TABLE \"Derivatives\" ADD COLUMN IF NOT EXISTS \"FuelTypeId\" integer;"); } catch {}
+
+        // Add FKs if not present
+        try { context.Database.ExecuteSqlRaw("ALTER TABLE \"Derivatives\" ADD CONSTRAINT IF NOT EXISTS \"FK_Derivatives_Transmissions_TransmissionId\" FOREIGN KEY (\"TransmissionId\") REFERENCES \"Transmissions\"(\"Id\") ON DELETE RESTRICT;"); } catch {}
+        try { context.Database.ExecuteSqlRaw("ALTER TABLE \"Derivatives\" ADD CONSTRAINT IF NOT EXISTS \"FK_Derivatives_FuelTypes_FuelTypeId\" FOREIGN KEY (\"FuelTypeId\") REFERENCES \"FuelTypes\"(\"Id\") ON DELETE RESTRICT;"); } catch {}
     }
 
     public static void ClearCatalogData(CatalogDbContext context)

@@ -21,9 +21,7 @@
   <ng-container matColumnDef="id"><th mat-header-cell *matHeaderCellDef>#</th><td mat-cell *matCellDef="let it">{{ it.id }}</td></ng-container>
   <ng-container matColumnDef="name"><th mat-header-cell *matHeaderCellDef>Name</th><td mat-cell *matCellDef="let it">{{ it.name }}</td></ng-container>
   <ng-container matColumnDef="generation"><th mat-header-cell *matHeaderCellDef>Generation</th><td mat-cell *matCellDef="let it">{{ (generationById$ | async)?.[it.generationId]?.name }}</td></ng-container>
-  <ng-container matColumnDef="engine"><th mat-header-cell *matHeaderCellDef>Engine</th><td mat-cell *matCellDef="let it">{{ it.engine }}</td></ng-container>
-  <ng-container matColumnDef="transmission"><th mat-header-cell *matHeaderCellDef>Trans</th><td mat-cell *matCellDef="let it">{{ getTransmissionName(it) }}</td></ng-container>
-  <ng-container matColumnDef="fuelType"><th mat-header-cell *matHeaderCellDef>Fuel</th><td mat-cell *matCellDef="let it">{{ getFuelTypeName(it) }}</td></ng-container>
+  
   <ng-container matColumnDef="actions">
     <th mat-header-cell *matHeaderCellDef>Actions</th>
     <td mat-cell *matCellDef="let it">

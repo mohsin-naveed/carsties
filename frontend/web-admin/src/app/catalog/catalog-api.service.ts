@@ -15,9 +15,9 @@ export interface GenerationDto { id: number; name: string; startYear?: number; e
 export interface CreateGenerationDto { name: string; modelId: number; startYear?: number; endYear?: number; }
 export interface UpdateGenerationDto { name?: string; modelId?: number; startYear?: number; endYear?: number; }
 
-export interface VariantDto { id: number; name: string; engine?: string; transmissionId?: number; fuelTypeId?: number; generationId: number; }
-export interface CreateVariantDto { name: string; generationId: number; engine?: string; transmissionId?: number; fuelTypeId?: number; }
-export interface UpdateVariantDto { name?: string; generationId?: number; engine?: string; transmissionId?: number; fuelTypeId?: number; }
+export interface VariantDto { id: number; name: string; generationId: number; }
+export interface CreateVariantDto { name: string; generationId: number; }
+export interface UpdateVariantDto { name?: string; generationId?: number; }
 
 export interface FeatureDto { id: number; name: string; description?: string; }
 export interface CreateFeatureDto { name: string; description?: string; }
@@ -58,9 +58,9 @@ export interface VariantFeaturesContextDto {
 }
 
 // Derivatives
-export interface DerivativeDto { id: number; modelId: number; generationId?: number; bodyTypeId: number; bodyType?: string; seats: number; doors: number; }
-export interface CreateDerivativeDto { modelId: number; generationId: number; bodyTypeId: number; seats: number; doors: number; }
-export interface UpdateDerivativeDto { modelId?: number; generationId?: number; bodyTypeId?: number; seats?: number; doors?: number; }
+export interface DerivativeDto { id: number; modelId: number; generationId?: number; bodyTypeId: number; bodyType?: string; seats: number; doors: number; engine?: string; transmissionId?: number; transmission?: string; fuelTypeId?: number; fuelType?: string; }
+export interface CreateDerivativeDto { modelId: number; generationId: number; bodyTypeId: number; seats: number; doors: number; engine?: string; transmissionId?: number; fuelTypeId?: number; }
+export interface UpdateDerivativeDto { modelId?: number; generationId?: number; bodyTypeId?: number; seats?: number; doors?: number; engine?: string; transmissionId?: number; fuelTypeId?: number; }
 export interface DerivativesContextDto { makes: MakeDto[]; models: ModelDto[]; derivatives: DerivativeDto[]; }
 
 @Injectable({ providedIn: 'root' })

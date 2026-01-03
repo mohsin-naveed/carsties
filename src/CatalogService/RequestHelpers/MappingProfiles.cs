@@ -14,9 +14,7 @@ public class MappingProfiles : Profile
         CreateMap<CreateModelDto, Model>().ForMember(d => d.Id, o => o.Ignore());
         CreateMap<Generation, GenerationDto>();
         CreateMap<CreateGenerationDto, Generation>().ForMember(d => d.Id, o => o.Ignore());
-        CreateMap<Variant, VariantDto>()
-            .ForMember(d => d.Transmission, o => o.MapFrom(s => s.TransmissionRef != null ? s.TransmissionRef.Name : null))
-            .ForMember(d => d.FuelType, o => o.MapFrom(s => s.FuelTypeRef != null ? s.FuelTypeRef.Name : null));
+        CreateMap<Variant, VariantDto>();
         CreateMap<CreateVariantDto, Variant>()
             .ForMember(d => d.Id, o => o.Ignore());
         CreateMap<Feature, FeatureDto>();
@@ -25,7 +23,9 @@ public class MappingProfiles : Profile
 
         // Derivative - map via constructor parameters for ProjectTo support
         CreateMap<Derivative, DerivativeDto>()
-            .ForCtorParam("BodyType", o => o.MapFrom(s => s.BodyTypeRef != null ? s.BodyTypeRef.Name : null));
+            .ForCtorParam("BodyType", o => o.MapFrom(s => s.BodyTypeRef != null ? s.BodyTypeRef.Name : null))
+            .ForCtorParam("Transmission", o => o.MapFrom(s => s.TransmissionRef != null ? s.TransmissionRef.Name : null))
+            .ForCtorParam("FuelType", o => o.MapFrom(s => s.FuelTypeRef != null ? s.FuelTypeRef.Name : null));
         CreateMap<CreateDerivativeDto, Derivative>()
             .ForMember(d => d.Id, o => o.Ignore());
     }

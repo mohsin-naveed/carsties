@@ -32,7 +32,7 @@ export class VariantsPage {
   private readonly notify = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
-  readonly displayedColumns = ['make','model','name','generation','engine','transmission','fuelType','actions'];
+  readonly displayedColumns = ['make','model','name','generation','actions'];
 
   readonly items$ = new BehaviorSubject<VariantDto[]>([]);
   readonly generations$ = new BehaviorSubject<GenerationDto[]>([]);
@@ -71,27 +71,20 @@ export class VariantsPage {
       const genMap = generations.reduce((acc, g) => { acc[g.id] = g; return acc; }, {} as Record<number, GenerationDto>);
       return items.filter(it => {
         const genName = genMap[it.generationId]?.name ?? '';
-        const transName = this.getTransmissionName(it).toLowerCase();
-        const fuelName = this.getFuelTypeName(it).toLowerCase();
         return (
           it.name.toLowerCase().includes(query) ||
           genName.toLowerCase().includes(query) ||
-          (it.engine ?? '').toLowerCase().includes(query) ||
-          transName.includes(query) ||
-          fuelName.includes(query) ||
           String(it.id).includes(query)
         );
       });
     })
   );
-
+  
   private makesCache: MakeDto[] = [];
   private modelsCache: ModelDto[] = [];
   private generationsCache: GenerationDto[] = [];
   private derivativesCache: DerivativeDto[] = [];
-  private variantOptions: { transmissions: OptionDto[]; fuelTypes: OptionDto[] } = { transmissions: [], fuelTypes: [] };
-  private transMap: Record<number, string> = {};
-  private fuelMap: Record<number, string> = {};
+  
 
   constructor(){
     this.makes$.subscribe(ms => this.makesCache = ms);
@@ -113,14 +106,14 @@ export class VariantsPage {
       },
       error: () => this.notify.error('Failed to load variants data')
     });
-    this.api.getVariantOptions().subscribe({ next: (opts) => { this.variantOptions = opts; this.transMap = Object.fromEntries(opts.transmissions.map(o => [o.id, o.name])); this.fuelMap = Object.fromEntries(opts.fuelTypes.map(o => [o.id, o.name])); }, error: () => {} });
+    
   }
   lookupGeneration(id: number){ return undefined; }
 
   openCreate(){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Add Variant', generations: this.generationsCache, models: this.modelsCache, makes: this.makesCache, transmissions: this.variantOptions.transmissions, fuelTypes: this.variantOptions.fuelTypes }, width: '600px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { name: string; generationId: number; engine?: string; transmissionId?: number; fuelTypeId?: number } | undefined) => {
+    const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Add Variant', generations: this.generationsCache, models: this.modelsCache, makes: this.makesCache }, width: '600px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; generationId: number } | undefined) => {
       if (res){
         this.api.createVariant(res).subscribe({ next: () => { this.notify.success('Variant created'); this.loadContext(); } });
       }
@@ -129,8 +122,8 @@ export class VariantsPage {
 
   openEdit(it: VariantDto){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Edit Variant', name: it.name, generationId: it.generationId, engine: it.engine, transmissionId: it.transmissionId, fuelTypeId: it.fuelTypeId, generations: this.generationsCache, models: this.modelsCache, makes: this.makesCache, transmissions: this.variantOptions.transmissions, fuelTypes: this.variantOptions.fuelTypes }, width: '600px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { name: string; generationId: number; engine?: string; transmissionId?: number; fuelTypeId?: number } | undefined) => {
+    const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Edit Variant', name: it.name, generationId: it.generationId, generations: this.generationsCache, models: this.modelsCache, makes: this.makesCache }, width: '600px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; generationId: number } | undefined) => {
       if (res){
         this.api.updateVariant(it.id, res).subscribe({ next: () => { this.notify.success('Variant updated'); this.loadContext(); } });
       }
@@ -161,8 +154,7 @@ export class VariantsPage {
     return make?.name ?? '';
   }
 
-  getTransmissionName(it: VariantDto){ return it.transmissionId ? (this.transMap[it.transmissionId] ?? '') : ''; }
-  getFuelTypeName(it: VariantDto){ return it.fuelTypeId ? (this.fuelMap[it.fuelTypeId] ?? '') : ''; }
+  
 
   onFilterInput(val: string){ this.filter$.next(val); }
 }

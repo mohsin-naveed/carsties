@@ -39,24 +39,7 @@ import { GenerationDto, MakeDto, ModelDto, OptionDto } from '../catalog-api.serv
           <mat-label>Name</mat-label>
           <input #nameInput matInput formControlName="name" placeholder="e.g. 2.0 TDI" cdkFocusInitial />
         </mat-form-field>
-        <div class="grid">
-          <mat-form-field appearance="outline">
-            <mat-label>Engine</mat-label>
-            <input matInput formControlName="engine" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Transmission</mat-label>
-            <mat-select formControlName="transmissionId">
-              <mat-option *ngFor="let t of data.transmissions" [value]="t.id">{{ t.name }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Fuel</mat-label>
-            <mat-select formControlName="fuelTypeId">
-              <mat-option *ngFor="let f of data.fuelTypes" [value]="f.id">{{ f.name }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
+        
       </form>
     </div>
     <div mat-dialog-actions align="end">
@@ -72,8 +55,8 @@ import { GenerationDto, MakeDto, ModelDto, OptionDto } from '../catalog-api.serv
 })
 export class VariantEditDialogComponent implements AfterViewInit {
   private readonly fb = inject(FormBuilder);
-  public ref: MatDialogRef<VariantEditDialogComponent, { name: string; generationId: number; engine?: string; transmissionId?: number; fuelTypeId?: number }> = inject(MatDialogRef);
-  public data: { title: string; name?: string; generationId?: number; engine?: string; transmissionId?: number; fuelTypeId?: number; generations: GenerationDto[]; models: ModelDto[]; makes: MakeDto[]; transmissions: OptionDto[]; fuelTypes: OptionDto[] } = inject(MAT_DIALOG_DATA);
+  public ref: MatDialogRef<VariantEditDialogComponent, { name: string; generationId: number }> = inject(MatDialogRef);
+  public data: { title: string; name?: string; generationId?: number; generations: GenerationDto[]; models: ModelDto[]; makes: MakeDto[] } = inject(MAT_DIALOG_DATA);
 
   @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
 
@@ -82,9 +65,7 @@ export class VariantEditDialogComponent implements AfterViewInit {
     makeId: [this.deriveMakeId(this.data.generationId) ?? null as number | null, [Validators.required]],
     modelId: [this.deriveModelId(this.data.generationId) ?? null as number | null, [Validators.required]],
     generationId: [this.data.generationId ?? null as number | null, [Validators.required]],
-    engine: [this.data.engine ?? ''],
-    transmissionId: [this.data.transmissionId ?? null as number | null],
-    fuelTypeId: [this.data.fuelTypeId ?? null as number | null]
+    
   });
 
   ngAfterViewInit(){ setTimeout(() => this.nameInput?.nativeElement.focus(), 0); }
@@ -115,12 +96,6 @@ export class VariantEditDialogComponent implements AfterViewInit {
 
   save(){
     const raw = this.form.getRawValue();
-    this.ref.close({
-      name: raw.name!,
-      generationId: raw.generationId!,
-      engine: raw.engine || undefined,
-      transmissionId: (raw as any).transmissionId ?? undefined,
-      fuelTypeId: (raw as any).fuelTypeId ?? undefined
-    });
+    this.ref.close({ name: raw.name!, generationId: raw.generationId! });
   }
 }
