@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, inject, ViewChild } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -18,14 +18,14 @@ import { MakeDto } from '../catalog-api.service';
     <div mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" style="width:100%">
-          <mat-label>Name</mat-label>
-          <input #nameInput matInput formControlName="name" placeholder="e.g. 3 Series" cdkFocusInitial />
-        </mat-form-field>
-        <mat-form-field appearance="outline" style="width:100%">
           <mat-label>Make</mat-label>
-          <mat-select formControlName="makeId">
+          <mat-select formControlName="makeId" cdkFocusInitial>
             <mat-option *ngFor="let m of data.makes" [value]="m.id">{{ m.name }}</mat-option>
           </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" style="width:100%">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" placeholder="e.g. 3 Series" />
         </mat-form-field>
       </form>
     </div>
@@ -38,19 +38,16 @@ import { MakeDto } from '../catalog-api.service';
     .form { display:flex; flex-direction:column; gap:1rem; }
   `]
 })
-export class ModelEditDialogComponent implements AfterViewInit {
+export class ModelEditDialogComponent {
   private readonly fb = inject(FormBuilder);
   public ref: MatDialogRef<ModelEditDialogComponent, { name: string; makeId: number }> = inject(MatDialogRef);
   public data: { title: string; name?: string; makeId?: number; makes: MakeDto[] } = inject(MAT_DIALOG_DATA);
 
-  @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
 
   readonly form = this.fb.group({
     name: [this.data.name ?? '', [Validators.required, Validators.maxLength(100)]],
     makeId: [this.data.makeId ?? null as number | null, [Validators.required]]
   });
-
-  ngAfterViewInit(){ setTimeout(() => this.nameInput?.nativeElement.focus(), 0); }
 
   save(){
     const raw = this.form.getRawValue();
