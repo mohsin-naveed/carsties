@@ -10,7 +10,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
-import { CatalogApiService, VariantFeatureDto, VariantDto, FeatureDto, GenerationDto, ModelDto, MakeDto } from '../catalog-api.service';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatSortModule } from '@angular/material/sort';
+import { CatalogApiService, VariantFeatureDto, VariantDto, FeatureDto, GenerationDto, ModelDto, MakeDto, DerivativeDto } from '../catalog-api.service';
 import { NotificationService } from '../../core/notification.service';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
@@ -18,7 +20,7 @@ import { map, shareReplay } from 'rxjs/operators';
 @Component({
   selector: 'app-variant-features-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatDialogModule],
+  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatDialogModule, MatChipsModule, MatSortModule],
   templateUrl: './variant-features.page.html',
   styles:[`
     .header { display:flex; align-items:center; gap:1rem; justify-content:space-between; margin-bottom:1rem; }
@@ -37,16 +39,19 @@ export class VariantFeaturesPage {
 
   readonly items$ = new BehaviorSubject<VariantFeatureDto[]>([]);
   readonly variants$ = new BehaviorSubject<VariantDto[]>([]);
+  readonly derivatives$ = new BehaviorSubject<DerivativeDto[]>([]);
   readonly generations$ = new BehaviorSubject<GenerationDto[]>([]);
   readonly models$ = new BehaviorSubject<ModelDto[]>([]);
   readonly makes$ = new BehaviorSubject<MakeDto[]>([]);
   readonly features$ = new BehaviorSubject<FeatureDto[]>([]);
   readonly filter$ = new BehaviorSubject<string>('');
-  readonly variantGroups$ = combineLatest([this.variants$, this.generations$, this.models$, this.makes$]).pipe(
-    map(([variants, generations, models, makes]) => {
+  readonly sort$ = new BehaviorSubject<{ active: string; direction: 'asc' | 'desc' | '' }>({ active: '', direction: '' });
+  readonly variantGroups$ = combineLatest([this.variants$, this.derivatives$, this.generations$, this.models$, this.makes$]).pipe(
+    map(([variants, derivatives, generations, models, makes]) => {
       const groups: { label: string; variants: VariantDto[] }[] = [];
       for (const v of variants){
-        const gen = generations.find(g => g.id === v.generationId);
+        const derivative = derivatives.find(d => d.id === v.derivativeId);
+        const gen = derivative ? generations.find(g => g.id === (derivative.generationId ?? -1)) : undefined;
         const model = gen ? models.find(m => m.id === gen.modelId) : undefined;
         const make = model ? makes.find(x => x.id === model.makeId) : undefined;
         const label = `${make?.name ?? 'Make'} / ${model?.name ?? 'Model'} / ${gen?.name ?? 'Gen'}`;
@@ -56,13 +61,14 @@ export class VariantFeaturesPage {
     })
   );
 
-  readonly filtered$ = combineLatest([this.items$, this.variants$, this.features$, this.generations$, this.models$, this.makes$, this.filter$]).pipe(
-    map(([items, variants, features, generations, models, makes, q]) => {
+  readonly filtered$ = combineLatest([this.items$, this.variants$, this.features$, this.derivatives$, this.generations$, this.models$, this.makes$, this.filter$]).pipe(
+    map(([items, variants, features, derivatives, generations, models, makes, q]) => {
       const query = q.toLowerCase().trim();
       if (!query) return items;
       return items.filter(it => {
         const variant = variants.find(v => v.id === it.variantId);
-        const gen = variant ? generations.find(g => g.id === variant.generationId) : undefined;
+        const derivative = variant ? derivatives.find(d => d.id === variant.derivativeId) : undefined;
+        const gen = derivative ? generations.find(g => g.id === (derivative.generationId ?? -1)) : undefined;
         const model = gen ? models.find(m => m.id === gen.modelId) : undefined;
         const make = model ? makes.find(x => x.id === model.makeId) : undefined;
         const makeName = make?.name ?? '';
@@ -104,6 +110,8 @@ export class VariantFeaturesPage {
       },
       error: () => this.notify.error('Failed to load mapping data')
     });
+    // Load derivatives to resolve generation/model/make from variant.derivativeId
+    this.api.getDerivatives().subscribe({ next: data => this.derivatives$.next(data), error: () => this.notify.error('Failed to load derivatives') });
     this.api.getVariantFeatures().subscribe({ next: data => this.items$.next(data), error: () => this.notify.error('Failed to load mappings') });
   }
 
@@ -114,7 +122,7 @@ export class VariantFeaturesPage {
 
   openCreate(variants: VariantDto[], features: FeatureDto[], generations: GenerationDto[], models: ModelDto[], makes: MakeDto[]){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Add Variant Feature', variants, features, generations, models, makes }, width: '560px', autoFocus: true, restoreFocus: true });
+    const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Add Variant Feature', variants, features, generations, models, makes, derivatives: this.derivatives$.value }, width: '560px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { variantId: number; featureIds: number[]; isStandard: boolean } | undefined) => {
       if (res){
         const ops = res.featureIds.map(fid => this.api.createVariantFeature({ variantId: res.variantId, featureId: fid, isStandard: res.isStandard }));
@@ -127,7 +135,7 @@ export class VariantFeaturesPage {
 
   openEdit(it: VariantFeatureDto, variants: VariantDto[], features: FeatureDto[], generations: GenerationDto[], models: ModelDto[], makes: MakeDto[]){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Edit Variant Feature', variantId: it.variantId, featureId: it.featureId, isStandard: it.isStandard, variants, features, generations, models, makes }, width: '560px', autoFocus: true, restoreFocus: true });
+    const ref = this.dialog.open(VariantFeatureEditDialogComponent, { data: { title: 'Edit Variant Feature', variantId: it.variantId, featureId: it.featureId, isStandard: it.isStandard, variants, features, generations, models, makes, derivatives: this.derivatives$.value }, width: '560px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { variantId: number; featureIds: number[]; isStandard: boolean } | undefined) => {
       if (res){
         const originalFeatureId = it.featureId;
@@ -166,7 +174,9 @@ export class VariantFeaturesPage {
   getModelName(variantId: number){
     const v = this.variants$.value.find(x => x.id === variantId);
     if (!v) return '';
-    const gen = this.generations$.value.find(g => g.id === v.generationId);
+    const d = this.derivatives$.value.find(dd => dd.id === v.derivativeId);
+    if (!d) return '';
+    const gen = this.generations$.value.find(g => g.id === (d.generationId ?? -1));
     if (!gen) return '';
     const model = this.models$.value.find(m => m.id === gen.modelId);
     return model?.name ?? '';
@@ -175,10 +185,50 @@ export class VariantFeaturesPage {
   getMakeName(variantId: number){
     const v = this.variants$.value.find(x => x.id === variantId);
     if (!v) return '';
-    const gen = this.generations$.value.find(g => g.id === v.generationId);
+    const d = this.derivatives$.value.find(dd => dd.id === v.derivativeId);
+    if (!d) return '';
+    const gen = this.generations$.value.find(g => g.id === (d.generationId ?? -1));
     if (!gen) return '';
     const model = this.models$.value.find(m => m.id === gen.modelId);
     const make = model ? this.makes$.value.find(x => x.id === model.makeId) : undefined;
     return make?.name ?? '';
   }
+
+  readonly sorted$ = combineLatest([
+    this.filtered$,
+    this.variants$,
+    this.features$,
+    this.derivatives$,
+    this.generations$,
+    this.models$,
+    this.makes$,
+    this.sort$
+  ]).pipe(
+    map(([items, variants, features, derivatives, generations, models, makes, sort]) => {
+      if (!sort.direction) return items;
+      const dir = sort.direction === 'asc' ? 1 : -1;
+      const getMake = (it: VariantFeatureDto) => this.getMakeName(it.variantId);
+      const getModel = (it: VariantFeatureDto) => this.getModelName(it.variantId);
+      const getVariant = (it: VariantFeatureDto) => variants.find(v => v.id === it.variantId)?.name ?? '';
+      const getFeature = (it: VariantFeatureDto) => features.find(f => f.id === it.featureId)?.name ?? '';
+      const getBool = (it: VariantFeatureDto) => it.isStandard;
+      const cmp = (a: VariantFeatureDto, b: VariantFeatureDto) => {
+        let av: string | boolean = '';
+        let bv: string | boolean = '';
+        switch (sort.active){
+          case 'make': av = getMake(a); bv = getMake(b); break;
+          case 'model': av = getModel(a); bv = getModel(b); break;
+          case 'variant': av = getVariant(a); bv = getVariant(b); break;
+          case 'feature': av = getFeature(a); bv = getFeature(b); break;
+          case 'isStandard': av = getBool(a); bv = getBool(b); break;
+          default: av = ''; bv = ''; break;
+        }
+        if (typeof av === 'boolean' && typeof bv === 'boolean'){
+          return ((av === bv) ? 0 : (av ? 1 : -1)) * dir;
+        }
+        return String(av).localeCompare(String(bv)) * dir;
+      };
+      return items.slice().sort(cmp);
+    })
+  );
 }

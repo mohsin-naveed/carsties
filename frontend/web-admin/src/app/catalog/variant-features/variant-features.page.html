@@ -21,25 +21,25 @@
   
 </mat-form-field>
 
-<table mat-table [dataSource]="(filtered$ | async) ?? []" class="mat-elevation-z1">
+<table mat-table [dataSource]="(sorted$ | async) ?? []" class="mat-elevation-z1" matSort (matSortChange)="sort$.next($event)">
   <ng-container matColumnDef="make">
-    <th mat-header-cell *matHeaderCellDef>Make</th>
-    <td mat-cell *matCellDef="let it">{{ getMakeName(it.variantId) }}</td>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="make">Make</th>
+    <td mat-cell *matCellDef="let it"><mat-chip-set><mat-chip color="primary" selected>{{ getMakeName(it.variantId) }}</mat-chip></mat-chip-set></td>
   </ng-container>
   <ng-container matColumnDef="model">
-    <th mat-header-cell *matHeaderCellDef>Model</th>
-    <td mat-cell *matCellDef="let it">{{ getModelName(it.variantId) }}</td>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="model">Model</th>
+    <td mat-cell *matCellDef="let it"><mat-chip-set><mat-chip color="primary" selected>{{ getModelName(it.variantId) }}</mat-chip></mat-chip-set></td>
   </ng-container>
   <ng-container matColumnDef="variant">
-    <th mat-header-cell *matHeaderCellDef>Variant</th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="variant">Variant</th>
     <td mat-cell *matCellDef="let it">{{ lookupVariantName(it.variantId, (variants$ | async) ?? []) }}</td>
   </ng-container>
   <ng-container matColumnDef="feature">
-    <th mat-header-cell *matHeaderCellDef>Feature</th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="feature">Feature</th>
     <td mat-cell *matCellDef="let it">{{ lookupFeatureName(it.featureId, (features$ | async) ?? []) }}</td>
   </ng-container>
   <ng-container matColumnDef="isStandard">
-    <th mat-header-cell *matHeaderCellDef>Standard</th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="isStandard">Standard</th>
     <td mat-cell *matCellDef="let it">{{ it.isStandard ? 'Yes' : 'Optional' }}</td>
   </ng-container>
   <ng-container matColumnDef="actions">

@@ -7,7 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { A11yModule } from '@angular/cdk/a11y';
-import { GenerationDto, MakeDto, ModelDto, OptionDto } from '../catalog-api.service';
+import { DerivativeDto, FeatureDto, GenerationDto, MakeDto, ModelDto, OptionDto, CatalogApiService } from '../catalog-api.service';
 
 @Component({
   selector: 'app-variant-edit-dialog',
@@ -30,14 +30,20 @@ import { GenerationDto, MakeDto, ModelDto, OptionDto } from '../catalog-api.serv
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline" style="width:100%">
-          <mat-label>Generation</mat-label>
-          <mat-select formControlName="generationId" [disabled]="!form.value.modelId">
-            <mat-option *ngFor="let gen of filteredGenerations()" [value]="gen.id">{{ gen.name }}</mat-option>
+          <mat-label>Derivative</mat-label>
+          <mat-select formControlName="derivativeId" [disabled]="!form.value.modelId">
+            <mat-option *ngFor="let d of filteredDerivatives()" [value]="d.id">{{ d.name || d.bodyType || 'Derivative' }}</mat-option>
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline" style="width:100%">
           <mat-label>Name</mat-label>
           <input #nameInput matInput formControlName="name" placeholder="e.g. 2.0 TDI" cdkFocusInitial />
+        </mat-form-field>
+        <mat-form-field appearance="outline" style="width:100%">
+          <mat-label>Features</mat-label>
+          <mat-select formControlName="featureIds" multiple>
+            <mat-option *ngFor="let f of features" [value]="f.id">{{ f.name }}</mat-option>
+          </mat-select>
         </mat-form-field>
         
       </form>
@@ -55,17 +61,18 @@ import { GenerationDto, MakeDto, ModelDto, OptionDto } from '../catalog-api.serv
 })
 export class VariantEditDialogComponent implements AfterViewInit {
   private readonly fb = inject(FormBuilder);
-  public ref: MatDialogRef<VariantEditDialogComponent, { name: string; generationId: number }> = inject(MatDialogRef);
-  public data: { title: string; name?: string; generationId?: number; generations: GenerationDto[]; models: ModelDto[]; makes: MakeDto[] } = inject(MAT_DIALOG_DATA);
+  private readonly api = inject(CatalogApiService);
+  public ref: MatDialogRef<VariantEditDialogComponent, { name: string; derivativeId: number; featureIds: number[] }> = inject(MatDialogRef);
+  public data: { title: string; name?: string; derivativeId?: number; generations: GenerationDto[]; derivatives: DerivativeDto[]; models: ModelDto[]; makes: MakeDto[]; featureIds?: number[] } = inject(MAT_DIALOG_DATA);
 
   @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
 
   readonly form = this.fb.group({
     name: [this.data.name ?? '', [Validators.required, Validators.maxLength(100)]],
-    makeId: [this.deriveMakeId(this.data.generationId) ?? null as number | null, [Validators.required]],
-    modelId: [this.deriveModelId(this.data.generationId) ?? null as number | null, [Validators.required]],
-    generationId: [this.data.generationId ?? null as number | null, [Validators.required]],
-    
+    makeId: [this.deriveMakeIdFromDerivative(this.data.derivativeId) ?? null as number | null, [Validators.required]],
+    modelId: [this.deriveModelIdFromDerivative(this.data.derivativeId) ?? null as number | null, [Validators.required]],
+    derivativeId: [this.data.derivativeId ?? null as number | null, [Validators.required]],
+    featureIds: [this.data.featureIds ?? [] as number[]]
   });
 
   ngAfterViewInit(){ setTimeout(() => this.nameInput?.nativeElement.focus(), 0); }
@@ -75,27 +82,31 @@ export class VariantEditDialogComponent implements AfterViewInit {
     if (!makeId) return [];
     return this.data.models.filter(m => m.makeId === makeId);
   }
-  filteredGenerations(): GenerationDto[] {
+  filteredDerivatives(): DerivativeDto[] {
     const modelId = this.form.value.modelId as number | null;
     if (!modelId) return [];
-    return this.data.generations.filter(g => g.modelId === modelId);
+    return this.data.derivatives.filter(d => d.modelId === modelId);
   }
-  private deriveMakeId(generationId?: number){
-    if (!generationId) return null;
-    const gen = this.data.generations.find(g => g.id === generationId);
-    if (!gen) return null;
-    const model = this.data.models.find(m => m.id === gen.modelId);
+  private deriveMakeIdFromDerivative(derivativeId?: number){
+    if (!derivativeId) return null;
+    const d = this.data.derivatives.find(x => x.id === derivativeId);
+    if (!d) return null;
+    const model = this.data.models.find(m => m.id === d.modelId);
     return model ? model.makeId : null;
   }
-  private deriveModelId(generationId?: number){
-    if (!generationId) return null;
-    const gen = this.data.generations.find(g => g.id === generationId);
-    if (!gen) return null;
-    return gen.modelId ?? null;
+  private deriveModelIdFromDerivative(derivativeId?: number){
+    if (!derivativeId) return null;
+    const d = this.data.derivatives.find(x => x.id === derivativeId);
+    return d ? d.modelId : null;
+  }
+
+  features: FeatureDto[] = [];
+  constructor(){
+    this.api.getFeatures().subscribe({ next: (fs) => this.features = fs });
   }
 
   save(){
     const raw = this.form.getRawValue();
-    this.ref.close({ name: raw.name!, generationId: raw.generationId! });
+    this.ref.close({ name: raw.name!, derivativeId: raw.derivativeId!, featureIds: raw.featureIds ?? [] });
   }
 }

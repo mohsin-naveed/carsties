@@ -15,9 +15,9 @@ export interface GenerationDto { id: number; name: string; startYear?: number; e
 export interface CreateGenerationDto { name: string; modelId: number; startYear?: number; endYear?: number; }
 export interface UpdateGenerationDto { name?: string; modelId?: number; startYear?: number; endYear?: number; }
 
-export interface VariantDto { id: number; name: string; generationId: number; }
-export interface CreateVariantDto { name: string; generationId: number; }
-export interface UpdateVariantDto { name?: string; generationId?: number; }
+export interface VariantDto { id: number; name: string; derivativeId: number; }
+export interface CreateVariantDto { name: string; derivativeId: number; }
+export interface UpdateVariantDto { name?: string; derivativeId?: number; }
 
 export interface FeatureDto { id: number; name: string; description?: string; }
 export interface CreateFeatureDto { name: string; description?: string; }

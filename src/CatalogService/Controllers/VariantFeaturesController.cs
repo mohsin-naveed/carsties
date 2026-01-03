@@ -32,7 +32,10 @@ public class VariantFeaturesController(CatalogDbContext context, IMapper mapper)
         }
         if (generationId.HasValue)
         {
-            variantsQuery = variantsQuery.Where(v => v.GenerationId == generationId);
+            variantsQuery = variantsQuery
+                .Join(context.Derivatives, v => v.DerivativeId, d => d.Id, (v, d) => new { v, d })
+                .Where(x => x.d.GenerationId == generationId)
+                .Select(x => x.v);
         }
 
         var makes = await makesQuery.OrderBy(x => x.Name).ProjectTo<MakeDto>(mapper.ConfigurationProvider).ToListAsync();
@@ -43,7 +46,7 @@ public class VariantFeaturesController(CatalogDbContext context, IMapper mapper)
             .Select(v => new VariantDto(
                 v.Id,
                 v.Name,
-                v.GenerationId))
+                v.DerivativeId))
             .ToListAsync();
         var features = await featuresQuery.OrderBy(x => x.Name).ProjectTo<FeatureDto>(mapper.ConfigurationProvider).ToListAsync();
 

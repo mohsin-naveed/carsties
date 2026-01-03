@@ -13,9 +13,9 @@ public record GenerationDto(int Id, string Name, short? StartYear, short? EndYea
 public record CreateGenerationDto(string Name, int ModelId, short? StartYear, short? EndYear);
 public record UpdateGenerationDto(string? Name, int? ModelId, short? StartYear, short? EndYear);
 
-public record VariantDto(int Id, string Name, int GenerationId);
-public record CreateVariantDto(string Name, int GenerationId);
-public record UpdateVariantDto(string? Name, int? GenerationId);
+public record VariantDto(int Id, string Name, int DerivativeId);
+public record CreateVariantDto(string Name, int DerivativeId);
+public record UpdateVariantDto(string? Name, int? DerivativeId);
 
 public record FeatureDto(int Id, string Name, string? Description);
 public record CreateFeatureDto(string Name, string? Description);

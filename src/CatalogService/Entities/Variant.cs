@@ -11,8 +11,8 @@ public class Variant
     public int? FuelTypeId { get; set; }
     public FuelType? FuelTypeRef { get; set; }
 
-    public int GenerationId { get; set; }
-    public Generation? Generation { get; set; }
+    public int DerivativeId { get; set; }
+    public Derivative? Derivative { get; set; }
 
     public List<VariantFeature> VariantFeatures { get; set; } = new();
 }

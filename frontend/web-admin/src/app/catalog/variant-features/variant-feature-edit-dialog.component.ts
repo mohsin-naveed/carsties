@@ -6,7 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { A11yModule } from '@angular/cdk/a11y';
-import { VariantDto, FeatureDto, GenerationDto, ModelDto, MakeDto } from '../catalog-api.service';
+import { VariantDto, FeatureDto, GenerationDto, ModelDto, MakeDto, DerivativeDto } from '../catalog-api.service';
 
 @Component({
   selector: 'app-variant-feature-edit-dialog',
@@ -62,7 +62,7 @@ import { VariantDto, FeatureDto, GenerationDto, ModelDto, MakeDto } from '../cat
 export class VariantFeatureEditDialogComponent implements AfterViewInit {
   private readonly fb = inject(FormBuilder);
   public ref: MatDialogRef<VariantFeatureEditDialogComponent, { variantId: number; featureIds: number[]; isStandard: boolean }> = inject(MatDialogRef);
-  public data: { title: string; variantId?: number; featureId?: number; isStandard?: boolean; variants: VariantDto[]; features: FeatureDto[]; generations: GenerationDto[]; models: ModelDto[]; makes: MakeDto[] } = inject(MAT_DIALOG_DATA);
+  public data: { title: string; variantId?: number; featureId?: number; isStandard?: boolean; variants: VariantDto[]; features: FeatureDto[]; generations: GenerationDto[]; models: ModelDto[]; makes: MakeDto[]; derivatives: DerivativeDto[] } = inject(MAT_DIALOG_DATA);
 
   get isEdit(){ return this.data.variantId != null && this.data.featureId != null; }
 
@@ -96,12 +96,18 @@ export class VariantFeatureEditDialogComponent implements AfterViewInit {
     const modelId = this.form.value.modelId as number | null;
     if (!modelId) return [];
     const gensForModel = this.data.generations.filter(g => g.modelId === modelId).map(g => g.id);
-    return this.data.variants.filter(v => gensForModel.includes(v.generationId));
+    return this.data.variants.filter(v => {
+      const d = this.data.derivatives.find(dd => dd.id === v.derivativeId);
+      const genId = d?.generationId ?? -1;
+      return gensForModel.includes(genId);
+    });
   }
 
   private deriveMakeId(variantId?: number){
     if (!variantId) return null;
-    const gen = this.data.generations.find(g => g.id === this.data.variants.find(v => v.id === variantId)?.generationId);
+    const v = this.data.variants.find(x => x.id === variantId);
+    const d = v ? this.data.derivatives.find(dd => dd.id === v.derivativeId) : undefined;
+    const gen = d ? this.data.generations.find(g => g.id === (d.generationId ?? -1)) : undefined;
     if (!gen) return null;
     const model = this.data.models.find(m => m.id === gen.modelId);
     return model ? model.makeId : null;
@@ -109,7 +115,9 @@ export class VariantFeatureEditDialogComponent implements AfterViewInit {
 
   private deriveModelId(variantId?: number){
     if (!variantId) return null;
-    const gen = this.data.generations.find(g => g.id === this.data.variants.find(v => v.id === variantId)?.generationId);
+    const v = this.data.variants.find(x => x.id === variantId);
+    const d = v ? this.data.derivatives.find(dd => dd.id === v.derivativeId) : undefined;
+    const gen = d ? this.data.generations.find(g => g.id === (d.generationId ?? -1)) : undefined;
     if (!gen) return null;
     return gen.modelId ?? null;
   }

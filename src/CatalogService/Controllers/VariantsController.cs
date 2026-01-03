@@ -59,13 +59,19 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
             .ProjectTo<GenerationDto>(mapper.ConfigurationProvider)
             .ToListAsync();
         var variantsQuery = context.Variants.AsQueryable();
-        if (generationId.HasValue) variantsQuery = variantsQuery.Where(v => v.GenerationId == generationId.Value);
+        if (generationId.HasValue)
+        {
+            variantsQuery = variantsQuery
+                .Join(context.Derivatives, v => v.DerivativeId, d => d.Id, (v, d) => new { v, d })
+                .Where(x => x.d.GenerationId == generationId.Value)
+                .Select(x => x.v);
+        }
         var variants = await variantsQuery
             .OrderBy(x => x.Name)
             .Select(v => new VariantDto(
                 v.Id,
                 v.Name,
-                v.GenerationId))
+                v.DerivativeId))
             .ToListAsync();
 
         // Include derivatives to enable client-side mapping from generation -> model
@@ -83,13 +89,19 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
     public async Task<ActionResult<List<VariantDto>>> GetAll([FromQuery] int? generationId)
     {
         var query = context.Variants.AsQueryable();
-        if (generationId.HasValue) query = query.Where(x => x.GenerationId == generationId);
+        if (generationId.HasValue)
+        {
+            query = query
+                .Join(context.Derivatives, v => v.DerivativeId, d => d.Id, (v, d) => new { v, d })
+                .Where(x => x.d.GenerationId == generationId)
+                .Select(x => x.v);
+        }
         return await query
             .OrderBy(x => x.Name)
             .Select(v => new VariantDto(
                 v.Id,
                 v.Name,
-                v.GenerationId))
+                v.DerivativeId))
             .ToListAsync();
     }
 
@@ -103,8 +115,8 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
     [HttpPost]
     public async Task<ActionResult<VariantDto>> Create(CreateVariantDto dto)
     {
-        if (!await context.Generations.AnyAsync(x => x.Id == dto.GenerationId))
-            return BadRequest("Invalid GenerationId");
+        if (!await context.Derivatives.AnyAsync(x => x.Id == dto.DerivativeId))
+            return BadRequest("Invalid DerivativeId");
         var entity = mapper.Map<Variant>(dto);
         context.Variants.Add(entity);
         var ok = await context.SaveChangesAsync() > 0;
@@ -119,11 +131,11 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
         var entity = await context.Variants.FindAsync(id);
         if (entity is null) return NotFound();
         if (!string.IsNullOrWhiteSpace(dto.Name)) entity.Name = dto.Name;
-        if (dto.GenerationId.HasValue)
+        if (dto.DerivativeId.HasValue)
         {
-            var exists = await context.Generations.AnyAsync(x => x.Id == dto.GenerationId.Value);
-            if (!exists) return BadRequest("Invalid GenerationId");
-            entity.GenerationId = dto.GenerationId.Value;
+            var exists = await context.Derivatives.AnyAsync(x => x.Id == dto.DerivativeId.Value);
+            if (!exists) return BadRequest("Invalid DerivativeId");
+            entity.DerivativeId = dto.DerivativeId.Value;
         }
         // Engine/Transmission/Fuel removed from Variants
         var ok = await context.SaveChangesAsync() > 0;

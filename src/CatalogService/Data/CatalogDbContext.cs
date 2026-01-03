@@ -56,9 +56,9 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
             entity.Property(x => x.Engine).HasMaxLength(100);
-            entity.HasOne(x => x.Generation)
-                .WithMany(x => x.Variants)
-                .HasForeignKey(x => x.GenerationId)
+            entity.HasOne(x => x.Derivative)
+                .WithMany()
+                .HasForeignKey(x => x.DerivativeId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(x => x.TransmissionRef)
