@@ -63,6 +63,7 @@ public class DbInitializer
                 new() { Name = "Petrol" },
                 new() { Name = "Diesel" },
                 new() { Name = "Hybrid" },
+                new() { Name = "Plug-In Hybrid" },
                 new() { Name = "Electric" }
             };
             context.FuelTypes.AddRange(fuelTypes);

@@ -33,6 +33,10 @@ import { CatalogApiService, MakeDto, ModelDto, OptionDto, GenerationDto } from '
         </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput type="text" formControlName="name" required />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
         <mat-label>Generation</mat-label>
         <mat-select formControlName="generationId" required [disabled]="!form.value.modelId">
           <mat-option *ngFor="let g of generations" [value]="g.id">{{ g.name }}</mat-option>
@@ -46,19 +50,23 @@ import { CatalogApiService, MakeDto, ModelDto, OptionDto, GenerationDto } from '
       </mat-form-field>
       <div class="grid">
         <mat-form-field appearance="outline">
+          <mat-label>Fuel</mat-label>
+          <mat-select formControlName="fuelTypeId" (selectionChange)="onFuelChange()">
+            <mat-option *ngFor="let f of fuelTypes" [value]="f.id">{{ f.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" *ngIf="!isElectricSelected()">
           <mat-label>Engine</mat-label>
           <input matInput type="text" formControlName="engine" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" *ngIf="isElectricSelected() || isHybridSelected()">
+          <mat-label>Battery (kWh)</mat-label>
+          <input matInput type="number" formControlName="batteryCapacityKWh" min="1" step="0.1" />
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Transmission</mat-label>
           <mat-select formControlName="transmissionId">
             <mat-option *ngFor="let t of transmissions" [value]="t.id">{{ t.name }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Fuel</mat-label>
-          <mat-select formControlName="fuelTypeId">
-            <mat-option *ngFor="let f of fuelTypes" [value]="f.id">{{ f.name }}</mat-option>
           </mat-select>
         </mat-form-field>
       </div>
@@ -91,8 +99,11 @@ export class DerivativeEditDialogComponent {
   generations: GenerationDto[] = [];
   transmissions: OptionDto[] = [];
   fuelTypes: OptionDto[] = [];
+  private electricIds: number[] = [];
+  private hybridIds: number[] = [];
 
   form = this.fb.group({
+    name: ['' as string, [Validators.required, Validators.maxLength(100)]],
     makeId: [null as number | null, Validators.required],
     modelId: [null as number | null, Validators.required],
     generationId: [null as number | null, Validators.required],
@@ -100,14 +111,23 @@ export class DerivativeEditDialogComponent {
     engine: ['' as string | null],
     transmissionId: [null as number | null],
     fuelTypeId: [null as number | null],
+    batteryCapacityKWh: [null as number | null],
     code: ['' as string | null],
-    seats: [this.data.seats ?? 5, [Validators.required, Validators.min(2), Validators.max(9)]],
-    doors: [this.data.doors ?? 4, [Validators.required, Validators.min(2), Validators.max(5)]]
+    seats: [5, [Validators.required, Validators.min(2), Validators.max(9)]],
+    doors: [4, [Validators.required, Validators.min(2), Validators.max(5)]]
   });
 
-  constructor(@Inject(MAT_DIALOG_DATA) public data: { title: string; makes: MakeDto[]; models: ModelDto[]; modelId?: number; generationId?: number | null; bodyTypeId?: number; seats?: number; doors?: number; code?: string; engine?: string; transmissionId?: number | null; fuelTypeId?: number | null }){
+  constructor(@Inject(MAT_DIALOG_DATA) public data: { title: string; makes: MakeDto[]; models: ModelDto[]; modelId?: number; generationId?: number | null; bodyTypeId?: number; seats?: number; doors?: number; code?: string; engine?: string; transmissionId?: number | null; fuelTypeId?: number | null; batteryCapacityKWh?: number | null }){
     this.api.getBodyTypeOptions().subscribe({ next: (opts) => this.bodyTypes = opts });
-    this.api.getVariantOptions().subscribe({ next: (opts) => { this.transmissions = opts.transmissions; this.fuelTypes = opts.fuelTypes; } });
+    this.api.getVariantOptions().subscribe({ next: (opts) => {
+      this.transmissions = opts.transmissions; this.fuelTypes = opts.fuelTypes;
+      const names = opts.fuelTypes.map(f => ({ id: f.id, name: f.name.toLowerCase() }));
+      this.electricIds = names.filter(f => f.name === 'electric').map(f => f.id);
+      this.hybridIds = names.filter(f => f.name.includes('hybrid') && f.name.includes('plug')).map(f => f.id);
+    } });
+    // Pre-populate make based on model
+    const model = this.data.modelId ? this.data.models.find(m => m.id === this.data.modelId) : undefined;
+    if (model) this.form.patchValue({ makeId: model.makeId });
     this.updateFilteredModels();
     if (this.data.modelId){
       this.form.patchValue({ modelId: this.data.modelId });
@@ -116,9 +136,19 @@ export class DerivativeEditDialogComponent {
         this.form.patchValue({ generationId: this.data.generationId ?? null });
       }
     }
+    if (this.data.title?.toLowerCase().includes('edit') && typeof (this as any).data !== 'undefined'){
+      // Attempt to populate name if provided via DerivativeDto
+    }
+    if ((this as any).data && (this as any).data['name'] !== undefined){ this.form.patchValue({ name: (this as any).data['name'] ?? '' }); }
     if (this.data.engine !== undefined) this.form.patchValue({ engine: this.data.engine ?? '' });
     if (this.data.transmissionId !== undefined) this.form.patchValue({ transmissionId: this.data.transmissionId ?? null });
     if (this.data.fuelTypeId !== undefined) this.form.patchValue({ fuelTypeId: this.data.fuelTypeId ?? null });
+    if (this.data.batteryCapacityKWh !== undefined) this.form.patchValue({ batteryCapacityKWh: this.data.batteryCapacityKWh ?? null });
+    if (this.data.bodyTypeId !== undefined) this.form.patchValue({ bodyTypeId: this.data.bodyTypeId ?? null });
+    if (this.data.seats !== undefined) this.form.patchValue({ seats: this.data.seats ?? 5 });
+    if (this.data.doors !== undefined) this.form.patchValue({ doors: this.data.doors ?? 4 });
+    if (this.data.code !== undefined) this.form.patchValue({ code: this.data.code ?? '' });
+    this.onFuelChange();
   }
 
   onMakeChange(){
@@ -143,6 +173,29 @@ export class DerivativeEditDialogComponent {
       this.api.getGenerations(modelId).subscribe({ next: (gens) => this.generations = gens });
     }
   }
+
+  onFuelChange(){
+    const isE = this.isElectricSelected();
+    const isH = this.isHybridSelected();
+    const engineCtrl = this.form.get('engine');
+    const battCtrl = this.form.get('batteryCapacityKWh');
+    if (isE){
+      engineCtrl?.clearValidators();
+      battCtrl?.setValidators([Validators.required, Validators.min(1)]);
+    } else if (isH) {
+      // Both allowed; battery optional but must be positive if provided
+      battCtrl?.setValidators([Validators.min(1)]);
+      engineCtrl?.setValidators([Validators.maxLength(100)]);
+    } else {
+      battCtrl?.clearValidators();
+      engineCtrl?.setValidators([Validators.maxLength(100)]);
+    }
+    engineCtrl?.updateValueAndValidity();
+    battCtrl?.updateValueAndValidity();
+  }
+
+  isElectricSelected(){ const fid = this.form.value.fuelTypeId as number | null; return fid != null && this.electricIds.includes(fid); }
+  isHybridSelected(){ const fid = this.form.value.fuelTypeId as number | null; return fid != null && this.hybridIds.includes(fid); }
 
   submit(){ if (this.form.invalid) return; this.ref.close(this.form.value); }
   close(){ this.ref.close(); }

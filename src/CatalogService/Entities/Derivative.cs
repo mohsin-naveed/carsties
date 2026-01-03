@@ -4,6 +4,8 @@ public class Derivative
 {
     public int Id { get; set; }
 
+    public string Name { get; set; } = string.Empty;
+
     public int ModelId { get; set; }
     public Model? Model { get; set; }
 
@@ -21,4 +23,5 @@ public class Derivative
     public Transmission? TransmissionRef { get; set; }
     public int? FuelTypeId { get; set; }
     public FuelType? FuelTypeRef { get; set; }
+    public decimal? BatteryCapacityKWh { get; set; }
 }

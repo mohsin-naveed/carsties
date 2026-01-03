@@ -55,9 +55,9 @@ public record VariantFeaturesContextDto(
 );
 
 // Model Bodies
-public record DerivativeDto(int Id, int ModelId, int? GenerationId, int BodyTypeId, string? BodyType, short Seats, short Doors, string? Engine, int? TransmissionId, string? Transmission, int? FuelTypeId, string? FuelType);
-public record CreateDerivativeDto(int ModelId, int GenerationId, int BodyTypeId, short Seats, short Doors, string? Engine, int? TransmissionId, int? FuelTypeId);
-public record UpdateDerivativeDto(int? ModelId, int? GenerationId, int? BodyTypeId, short? Seats, short? Doors, string? Engine, int? TransmissionId, int? FuelTypeId);
+public record DerivativeDto(int Id, string? Name, int ModelId, int? GenerationId, int BodyTypeId, string? BodyType, short Seats, short Doors, string? Engine, int? TransmissionId, string? Transmission, int? FuelTypeId, string? FuelType, decimal? BatteryCapacityKWh);
+public record CreateDerivativeDto(string Name, int ModelId, int GenerationId, int BodyTypeId, short Seats, short Doors, string? Engine, int? TransmissionId, int? FuelTypeId, decimal? BatteryCapacityKWh);
+public record UpdateDerivativeDto(string? Name, int? ModelId, int? GenerationId, int? BodyTypeId, short? Seats, short? Doors, string? Engine, int? TransmissionId, int? FuelTypeId, decimal? BatteryCapacityKWh);
 
 public record DerivativesContextDto(
 	List<MakeDto> Makes,

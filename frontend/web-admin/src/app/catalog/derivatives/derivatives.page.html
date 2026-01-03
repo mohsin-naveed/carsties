@@ -18,9 +18,25 @@
     <th mat-header-cell *matHeaderCellDef>Model</th>
     <td mat-cell *matCellDef="let it">{{ getModelName(it) }}</td>
   </ng-container>
+  <ng-container matColumnDef="name">
+    <th mat-header-cell *matHeaderCellDef>Name</th>
+    <td mat-cell *matCellDef="let it">{{ it.name || '—' }}</td>
+  </ng-container>
   <ng-container matColumnDef="bodyType">
     <th mat-header-cell *matHeaderCellDef>Body Type</th>
     <td mat-cell *matCellDef="let it">{{ getBodyTypeName(it) }}</td>
+  </ng-container>
+  <ng-container matColumnDef="fuel">
+    <th mat-header-cell *matHeaderCellDef>Fuel</th>
+    <td mat-cell *matCellDef="let it">{{ it.fuelType || '—' }}</td>
+  </ng-container>
+  <ng-container matColumnDef="transmission">
+    <th mat-header-cell *matHeaderCellDef>Transmission</th>
+    <td mat-cell *matCellDef="let it">{{ it.transmission || '—' }}</td>
+  </ng-container>
+  <ng-container matColumnDef="power">
+    <th mat-header-cell *matHeaderCellDef>Power</th>
+    <td mat-cell *matCellDef="let it">{{ powerLabel(it) }}</td>
   </ng-container>
   <ng-container matColumnDef="seats">
     <th mat-header-cell *matHeaderCellDef>Seats</th>

@@ -68,6 +68,8 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
     [HttpPost]
     public async Task<ActionResult<DerivativeDto>> Create(CreateDerivativeDto dto)
     {
+        if (string.IsNullOrWhiteSpace(dto.Name) || dto.Name.Length > 100)
+            return BadRequest("Name is required and must be <= 100 characters");
         if (!await context.Models.AnyAsync(x => x.Id == dto.ModelId))
             return BadRequest("Invalid ModelId");
         var generation = await context.Generations.FirstOrDefaultAsync(x => x.Id == dto.GenerationId);
@@ -77,14 +79,30 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
             return BadRequest("Generation must belong to the specified Model");
         if (dto.TransmissionId.HasValue && !await context.Transmissions.AnyAsync(x => x.Id == dto.TransmissionId.Value))
             return BadRequest("Invalid TransmissionId");
-        if (dto.FuelTypeId.HasValue && !await context.FuelTypes.AnyAsync(x => x.Id == dto.FuelTypeId.Value))
-            return BadRequest("Invalid FuelTypeId");
+        FuelType? fuel = null;
+        if (dto.FuelTypeId.HasValue)
+        {
+            fuel = await context.FuelTypes.FirstOrDefaultAsync(x => x.Id == dto.FuelTypeId.Value);
+            if (fuel is null) return BadRequest("Invalid FuelTypeId");
+        }
         if (!await context.BodyTypes.AnyAsync(x => x.Id == dto.BodyTypeId))
             return BadRequest("Invalid BodyTypeId");
         if (dto.Seats < 2 || dto.Seats > 9) return BadRequest("Seats must be between 2 and 9");
         if (dto.Doors < 2 || dto.Doors > 5) return BadRequest("Doors must be between 2 and 5");
 
+        // Validation: if fuel is Electric, require battery; else engine stays optional
+        if (fuel != null && string.Equals(fuel.Name, "Electric", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!dto.BatteryCapacityKWh.HasValue || dto.BatteryCapacityKWh.Value <= 0)
+                return BadRequest("BatteryCapacityKWh must be provided for Electric vehicles");
+            // Do not mutate init-only DTO; enforce on entity after mapping
+        }
+
         var entity = mapper.Map<Derivative>(dto);
+        if (fuel != null && string.Equals(fuel.Name, "Electric", StringComparison.OrdinalIgnoreCase))
+        {
+            entity.Engine = null;
+        }
         context.Derivatives.Add(entity);
         var ok = await context.SaveChangesAsync() > 0;
         if (!ok) return BadRequest("Failed to create derivative");
@@ -97,6 +115,12 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
     {
         var entity = await context.Derivatives.FindAsync(id);
         if (entity is null) return NotFound();
+        if (dto.Name is not null)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Name) || dto.Name.Length > 100)
+                return BadRequest("Name must be <= 100 characters");
+            entity.Name = dto.Name;
+        }
         if (dto.ModelId.HasValue)
         {
             var exists = await context.Models.AnyAsync(x => x.Id == dto.ModelId.Value);
@@ -126,10 +150,19 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
         }
         if (dto.FuelTypeId.HasValue)
         {
-            var exists = await context.FuelTypes.AnyAsync(x => x.Id == dto.FuelTypeId.Value);
-            if (!exists) return BadRequest("Invalid FuelTypeId");
+            var fuel = await context.FuelTypes.FirstOrDefaultAsync(x => x.Id == dto.FuelTypeId.Value);
+            if (fuel is null) return BadRequest("Invalid FuelTypeId");
             entity.FuelTypeId = dto.FuelTypeId.Value;
+            // Apply electric-specific rule
+            if (string.Equals(fuel.Name, "Electric", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!dto.BatteryCapacityKWh.HasValue || dto.BatteryCapacityKWh.Value <= 0)
+                    return BadRequest("BatteryCapacityKWh must be provided for Electric vehicles");
+                entity.BatteryCapacityKWh = dto.BatteryCapacityKWh;
+                entity.Engine = null;
+            }
         }
+        if (dto.BatteryCapacityKWh.HasValue) entity.BatteryCapacityKWh = dto.BatteryCapacityKWh.Value;
         if (dto.Seats.HasValue)
         {
             if (dto.Seats.Value < 2 || dto.Seats.Value > 9) return BadRequest("Seats must be between 2 and 9");

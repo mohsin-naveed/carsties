@@ -126,11 +126,13 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
         {
             entity.ToTable("Derivatives");
             entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
             entity.Property(x => x.Seats).IsRequired();
             entity.Property(x => x.Doors).IsRequired();
             entity.HasCheckConstraint("CK_Derivatives_Seats", "\"Seats\" BETWEEN 2 AND 9");
             entity.HasCheckConstraint("CK_Derivatives_Doors", "\"Doors\" BETWEEN 2 AND 5");
             entity.Property(x => x.Engine).HasMaxLength(100);
+            entity.Property(x => x.BatteryCapacityKWh);
 
             entity.HasOne(x => x.Model)
                 .WithMany(x => x.Derivatives)
