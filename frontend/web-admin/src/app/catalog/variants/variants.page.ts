@@ -10,6 +10,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatSortModule, Sort } from '@angular/material/sort';
 import { CatalogApiService, VariantDto, GenerationDto, ModelDto, MakeDto, OptionDto, DerivativeDto, FeatureDto, CreateVariantFeatureDto, UpdateVariantDto } from '../catalog-api.service';
 import { NotificationService } from '../../core/notification.service';
 import { BehaviorSubject, combineLatest } from 'rxjs';
@@ -18,11 +20,15 @@ import { map, shareReplay } from 'rxjs/operators';
 @Component({
   selector: 'app-variants-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, MatDialogModule],
+  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, MatDialogModule, MatPaginatorModule, MatSortModule],
   templateUrl: './variants.page.html',
   styles:[`
-    .header { display:flex; align-items:center; gap:1rem; justify-content:space-between; margin-bottom:1rem; }
-    .form { display:flex; align-items:end; gap:.75rem; flex-wrap:wrap; }
+    .header { display:flex; align-items:center; gap:.75rem; margin-bottom:.5rem; }
+    .spacer { flex:1 1 auto; }
+    .controls { display:flex; align-items:end; justify-content:space-between; gap:.75rem; margin-bottom:.75rem; }
+    .controls-left { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:.75rem; align-items:end; }
+    .controls-right { display:flex; align-items:end; }
+    .search { width:320px; max-width:40vw; }
     table { width:100%; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -39,6 +45,13 @@ export class VariantsPage {
   readonly models$ = new BehaviorSubject<ModelDto[]>([]);
   readonly makes$ = new BehaviorSubject<MakeDto[]>([]);
   readonly derivatives$ = new BehaviorSubject<DerivativeDto[]>([]);
+  readonly total$ = new BehaviorSubject<number>(0);
+  readonly page$ = new BehaviorSubject<number>(1);
+  readonly pageSize$ = new BehaviorSubject<number>(10);
+  readonly sort$ = new BehaviorSubject<{ active: string; direction: 'asc'|'desc' }>({ active: 'make', direction: 'asc' });
+  readonly selectedMakeId$ = new BehaviorSubject<number | null>(null);
+  readonly selectedModelId$ = new BehaviorSubject<number | null>(null);
+  readonly selectedDerivativeId$ = new BehaviorSubject<number | null>(null);
   // editing handled via dialog
   readonly generationById$ = this.generations$.pipe(
     map(gs => gs.reduce((acc, g) => { acc[g.id] = g; return acc; }, {} as Record<number, GenerationDto>)), shareReplay(1)
@@ -80,6 +93,12 @@ export class VariantsPage {
       });
     })
   );
+  readonly modelsForMake$ = combineLatest([this.models$, this.selectedMakeId$]).pipe(
+    map(([models, makeId]) => makeId ? models.filter(m => m.makeId === makeId) : models)
+  );
+  readonly derivativesForModel$ = combineLatest([this.derivatives$, this.selectedModelId$]).pipe(
+    map(([ders, modelId]) => modelId ? ders.filter(d => d.modelId === modelId) : ders)
+  );
   
   private makesCache: MakeDto[] = [];
   private modelsCache: ModelDto[] = [];
@@ -93,6 +112,10 @@ export class VariantsPage {
     this.generations$.subscribe(gs => this.generationsCache = gs);
     this.derivatives$.subscribe(ds => this.derivativesCache = ds);
     this.loadContext();
+    this.loadPage();
+    combineLatest([this.selectedMakeId$, this.selectedModelId$, this.selectedDerivativeId$]).subscribe(() => { this.page$.next(1); this.loadPage(); });
+    this.selectedMakeId$.subscribe(() => { this.selectedModelId$.next(null); this.selectedDerivativeId$.next(null); });
+    this.selectedModelId$.subscribe(() => { this.selectedDerivativeId$.next(null); });
   }
 
   load(){ this.loadContext(); }
@@ -103,7 +126,7 @@ export class VariantsPage {
         this.models$.next(ctx.models);
         this.derivatives$.next(ctx.derivatives);
         this.generations$.next(ctx.generations);
-        this.items$.next(ctx.variants);
+        // initial data can come from paged call
       },
       error: () => this.notify.error('Failed to load variants data')
     });
@@ -186,7 +209,7 @@ export class VariantsPage {
     const ref = this.dialog.open(ConfirmDialogComponent, { data: { message: `Delete variant '${it.name}'?` } });
     ref.afterClosed().subscribe((ok: boolean) => {
       if (ok){
-        this.api.deleteVariant(it.id).subscribe({ next: () => { this.notify.success('Variant deleted'); this.loadContext(); } });
+        this.api.deleteVariant(it.id).subscribe({ next: () => { this.notify.success('Variant deleted'); this.loadContext(); this.loadPage(); } });
       }
     });
   }
@@ -219,4 +242,22 @@ export class VariantsPage {
   
 
   onFilterInput(val: string){ this.filter$.next(val); }
+  onPageChange(ev: PageEvent){ this.page$.next(ev.pageIndex + 1); this.pageSize$.next(ev.pageSize); this.loadPage(); }
+  onSortChange(ev: Sort){ const dir = (ev.direction || 'asc') as 'asc'|'desc'; const active = ev.active || 'make'; this.sort$.next({ active, direction: dir }); this.page$.next(1); this.loadPage(); }
+  onMakeChange(id: number | null){ this.selectedMakeId$.next(id ?? null); }
+  onModelChange(id: number | null){ this.selectedModelId$.next(id ?? null); }
+  onDerivativeChange(id: number | null){ this.selectedDerivativeId$.next(id ?? null); }
+
+  private loadPage(){
+    const sort = this.sort$.value;
+    const page = this.page$.value;
+    const pageSize = this.pageSize$.value;
+    const makeId = this.selectedMakeId$.value ?? undefined;
+    const modelId = this.selectedModelId$.value ?? undefined;
+    const derivativeId = this.selectedDerivativeId$.value ?? undefined;
+    this.api.getVariantsPaged({ page, pageSize, sort: sort.active, dir: sort.direction, makeId, modelId, derivativeId }).subscribe({
+      next: (res) => { this.items$.next(res.items); this.total$.next(res.total); },
+      error: () => this.notify.error('Failed to load variants')
+    });
+  }
 }

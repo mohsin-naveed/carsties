@@ -116,6 +116,17 @@ export class CatalogApiService {
     if (generationId) params.generationId = generationId;
     return this.http.get<VariantsContextDto>(`${this.baseUrl}/variants/context`, { params });
   }
+  getVariantsPaged(opts?: { page?: number; pageSize?: number; sort?: string; dir?: 'asc'|'desc'; makeId?: number; modelId?: number; derivativeId?: number }): Observable<PagedResult<VariantDto>> {
+    const params: any = {};
+    if (opts?.page) params.page = opts.page;
+    if (opts?.pageSize) params.pageSize = opts.pageSize;
+    if (opts?.sort) params.sort = opts.sort;
+    if (opts?.dir) params.dir = opts.dir;
+    if (opts?.makeId) params.makeId = opts.makeId;
+    if (opts?.modelId) params.modelId = opts.modelId;
+    if (opts?.derivativeId) params.derivativeId = opts.derivativeId;
+    return this.http.get<PagedResult<VariantDto>>(`${this.baseUrl}/variants/paged`, { params });
+  }
   getVariantOptions(): Observable<VariantOptionsDto> { return this.http.get<VariantOptionsDto>(`${this.baseUrl}/variants/options`); }
   createVariant(dto: CreateVariantDto): Observable<VariantDto> { return this.http.post<VariantDto>(`${this.baseUrl}/variants`, dto); }
   updateVariant(id: number, dto: UpdateVariantDto) { return this.http.put(`${this.baseUrl}/variants/${id}`, dto); }

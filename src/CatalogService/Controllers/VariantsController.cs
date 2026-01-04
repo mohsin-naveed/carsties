@@ -13,6 +13,74 @@ namespace CatalogService.Controllers;
 [Route("api/[controller]")]
 public class VariantsController(CatalogDbContext context, IMapper mapper) : ControllerBase
 {
+    [HttpGet("paged")]
+    public async Task<ActionResult<PagedResult<VariantDto>>> GetPaged([FromQuery] int? makeId, [FromQuery] int? modelId, [FromQuery] int? derivativeId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? sort = null, [FromQuery] string? dir = null)
+    {
+        if (page <= 0) page = 1;
+        if (pageSize <= 0 || pageSize > 200) pageSize = 10;
+
+        var baseQuery = context.Variants.AsQueryable();
+        if (derivativeId.HasValue) baseQuery = baseQuery.Where(v => v.DerivativeId == derivativeId.Value);
+        if (modelId.HasValue)
+        {
+            baseQuery = from v in baseQuery
+                        join d in context.Derivatives on v.DerivativeId equals d.Id
+                        where d.ModelId == modelId.Value
+                        select v;
+        }
+        if (makeId.HasValue)
+        {
+            baseQuery = from v in baseQuery
+                        join d in context.Derivatives on v.DerivativeId equals d.Id
+                        join m in context.Models on d.ModelId equals m.Id
+                        where m.MakeId == makeId.Value
+                        select v;
+        }
+
+        var total = await baseQuery.CountAsync();
+        var direction = (dir?.ToLowerInvariant() == "desc") ? "desc" : "asc";
+
+        var query = from v in baseQuery
+                    join d in context.Derivatives on v.DerivativeId equals d.Id
+                    join m in context.Models on d.ModelId equals m.Id
+                    join mk in context.Makes on m.MakeId equals mk.Id
+                    join g in context.Generations on d.GenerationId equals g.Id into gj
+                    from g in gj.DefaultIfEmpty()
+                    select new { v, Derivative = d, ModelName = m.Name, MakeName = mk.Name, GenerationName = g != null ? g.Name : string.Empty };
+
+        var ordered = (direction == "desc")
+            ? query.OrderByDescending(x => x.MakeName).ThenByDescending(x => x.ModelName).ThenByDescending(x => x.v.Name)
+            : query.OrderBy(x => x.MakeName).ThenBy(x => x.ModelName).ThenBy(x => x.v.Name);
+
+        if (!string.IsNullOrWhiteSpace(sort))
+        {
+            switch (sort.ToLowerInvariant())
+            {
+                case "make":
+                    ordered = (direction == "desc") ? query.OrderByDescending(x => x.MakeName) : query.OrderBy(x => x.MakeName);
+                    break;
+                case "model":
+                    ordered = (direction == "desc") ? query.OrderByDescending(x => x.ModelName) : query.OrderBy(x => x.ModelName);
+                    break;
+                case "name":
+                    ordered = (direction == "desc") ? query.OrderByDescending(x => x.v.Name) : query.OrderBy(x => x.v.Name);
+                    break;
+                case "generation":
+                    ordered = (direction == "desc") ? query.OrderByDescending(x => x.GenerationName) : query.OrderBy(x => x.GenerationName);
+                    break;
+            }
+        }
+
+        var pageItems = await ordered
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => x.v)
+            .Select(v => new VariantDto(v.Id, v.Name, v.DerivativeId))
+            .ToListAsync();
+
+        var result = new PagedResult<VariantDto>(pageItems, total, page, pageSize);
+        return Ok(result);
+    }
     [HttpGet("options")]
     public ActionResult<VariantOptionsDto> GetOptions()
     {
