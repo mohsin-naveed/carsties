@@ -19,9 +19,11 @@ import { map } from 'rxjs/operators';
   imports: [CommonModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatDialogModule],
   templateUrl: './makes.page.html',
   styles: [`
-    .header { display:flex; align-items:center; gap:1rem; justify-content:space-between; margin-bottom:1rem; }
+    .header { display:flex; align-items:center; gap:.75rem; margin-bottom:.5rem; }
     .spacer { flex:1 1 auto; }
-    .filter-field { margin-bottom:1rem; width:300px; display:block; }
+    .controls { display:flex; align-items:end; justify-content:space-between; gap:.75rem; margin-bottom:.75rem; }
+    .controls-right { display:flex; align-items:end; }
+    .search { width:320px; max-width:40vw; }
     table { width:100%; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush

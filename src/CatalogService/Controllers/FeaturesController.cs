@@ -12,6 +12,42 @@ namespace CatalogService.Controllers;
 [Route("api/[controller]")]
 public class FeaturesController(CatalogDbContext context, IMapper mapper) : ControllerBase
 {
+    [HttpGet("paged")]
+    public async Task<ActionResult<PagedResult<FeatureDto>>> GetPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? sort = null, [FromQuery] string? dir = null)
+    {
+        if (page <= 0) page = 1;
+        if (pageSize <= 0 || pageSize > 200) pageSize = 10;
+
+        var baseQuery = context.Features.AsQueryable();
+        var total = await baseQuery.CountAsync();
+        var direction = (dir?.ToLowerInvariant() == "desc") ? "desc" : "asc";
+
+        IOrderedQueryable<Feature> ordered = (direction == "desc")
+            ? baseQuery.OrderByDescending(x => x.Name)
+            : baseQuery.OrderBy(x => x.Name);
+
+        if (!string.IsNullOrWhiteSpace(sort))
+        {
+            switch (sort.ToLowerInvariant())
+            {
+                case "name":
+                    ordered = (direction == "desc") ? baseQuery.OrderByDescending(x => x.Name) : baseQuery.OrderBy(x => x.Name);
+                    break;
+                case "description":
+                    ordered = (direction == "desc") ? baseQuery.OrderByDescending(x => x.Description) : baseQuery.OrderBy(x => x.Description);
+                    break;
+            }
+        }
+
+        var items = await ordered
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ProjectTo<FeatureDto>(mapper.ConfigurationProvider)
+            .ToListAsync();
+
+        var result = new PagedResult<FeatureDto>(items, total, page, pageSize);
+        return Ok(result);
+    }
     [HttpGet]
     public async Task<ActionResult<List<FeatureDto>>> GetAll()
     {

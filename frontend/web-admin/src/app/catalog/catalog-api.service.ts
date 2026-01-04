@@ -134,6 +134,14 @@ export class CatalogApiService {
 
   // Features
   getFeatures(): Observable<FeatureDto[]> { return this.http.get<FeatureDto[]>(`${this.baseUrl}/features`); }
+  getFeaturesPaged(opts?: { page?: number; pageSize?: number; sort?: string; dir?: 'asc'|'desc' }): Observable<PagedResult<FeatureDto>> {
+    const params: any = {};
+    if (opts?.page) params.page = opts.page;
+    if (opts?.pageSize) params.pageSize = opts.pageSize;
+    if (opts?.sort) params.sort = opts.sort;
+    if (opts?.dir) params.dir = opts.dir;
+    return this.http.get<PagedResult<FeatureDto>>(`${this.baseUrl}/features/paged`, { params });
+  }
   createFeature(dto: CreateFeatureDto): Observable<FeatureDto> { return this.http.post<FeatureDto>(`${this.baseUrl}/features`, dto); }
   updateFeature(id: number, dto: UpdateFeatureDto) { return this.http.put(`${this.baseUrl}/features/${id}`, dto); }
   deleteFeature(id: number) { return this.http.delete(`${this.baseUrl}/features/${id}`); }
