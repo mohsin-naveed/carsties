@@ -4,10 +4,30 @@
   <button mat-flat-button color="primary" (click)="openCreate()">Add Derivative</button>
 </section>
 
-<mat-form-field appearance="outline" class="filter-field">
-  <mat-label>Search</mat-label>
-  <input matInput (input)="onFilterInput($any($event.target).value)" placeholder="Filter by make/model/body" />
-</mat-form-field>
+<section class="controls">
+  <div class="controls-left">
+    <mat-form-field appearance="outline">
+    <mat-label>Make</mat-label>
+    <mat-select [value]="(selectedMakeId$ | async)" (selectionChange)="onMakeChange($event.value)" placeholder="Select Make">
+      <mat-option [value]="null">All Makes</mat-option>
+      <mat-option *ngFor="let mk of (makes$ | async) ?? []" [value]="mk.id">{{ mk.name }}</mat-option>
+    </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+    <mat-label>Model</mat-label>
+    <mat-select [value]="(selectedModelId$ | async)" (selectionChange)="onModelChange($event.value)" placeholder="Select Model">
+      <mat-option [value]="null">All Models</mat-option>
+      <mat-option *ngFor="let m of (modelsForMake$ | async) ?? []" [value]="m.id">{{ m.name }}</mat-option>
+    </mat-select>
+    </mat-form-field>
+  </div>
+  <div class="controls-right">
+    <mat-form-field appearance="outline" class="search">
+      <mat-label>Search</mat-label>
+      <input matInput (input)="onFilterInput($any($event.target).value)" placeholder="Filter by make/model/body" />
+    </mat-form-field>
+  </div>
+</section>
 
 <table mat-table [dataSource]="(filtered$ | async) ?? []" matSort (matSortChange)="onSortChange($event)" class="mat-elevation-z1">
   <ng-container matColumnDef="make">

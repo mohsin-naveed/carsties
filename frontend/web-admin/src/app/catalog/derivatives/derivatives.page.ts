@@ -22,8 +22,12 @@ import { DerivativeEditDialogComponent } from './derivative-edit-dialog.componen
   imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, MatDialogModule, MatPaginatorModule, MatSortModule],
   templateUrl: './derivatives.page.html',
   styles:[`
-    .header { display:flex; align-items:center; gap:1rem; justify-content:space-between; margin-bottom:1rem; }
-    .form { display:flex; align-items:end; gap:.75rem; flex-wrap:wrap; }
+    .header { display:flex; align-items:center; gap:.75rem; margin-bottom:.5rem; }
+    .spacer { flex:1 1 auto; }
+    .controls { display:flex; align-items:end; justify-content:space-between; gap:.75rem; margin-bottom:.75rem; }
+    .controls-left { display:grid; grid-template-columns: 1fr 1fr; gap:.75rem; align-items:end; }
+    .controls-right { display:flex; align-items:end; }
+    .search { width:320px; max-width:40vw; }
     table { width:100%; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -42,12 +46,17 @@ export class DerivativesPage {
   readonly models$ = new BehaviorSubject<ModelDto[]>([]);
   readonly makes$ = new BehaviorSubject<MakeDto[]>([]);
   readonly bodyTypeMap$ = new BehaviorSubject<Record<number, string>>({});
+  readonly selectedMakeId$ = new BehaviorSubject<number | null>(null);
+  readonly selectedModelId$ = new BehaviorSubject<number | null>(null);
 
   readonly modelById$ = this.models$.pipe(
     map(ms => ms.reduce((acc, m) => { acc[m.id] = m; return acc; }, {} as Record<number, ModelDto>)), shareReplay(1)
   );
   readonly makeById$ = this.makes$.pipe(
     map(ms => ms.reduce((acc, m) => { acc[m.id] = m; return acc; }, {} as Record<number, MakeDto>)), shareReplay(1)
+  );
+  readonly modelsForMake$ = combineLatest([this.models$, this.selectedMakeId$]).pipe(
+    map(([models, makeId]) => makeId ? models.filter(m => m.makeId === makeId) : models)
   );
 
   readonly filter$ = new BehaviorSubject<string>('');
@@ -85,6 +94,10 @@ export class DerivativesPage {
     this.loadContext();
     this.loadPage();
     this.api.getBodyTypeOptions().subscribe({ next: (opts) => { this.bodyTypes = opts; this.bodyTypeMap = Object.fromEntries(opts.map(o => [o.id, o.name])); this.bodyTypeMap$.next(this.bodyTypeMap); } });
+    // When filters change, reset to first page and reload
+    combineLatest([this.selectedMakeId$, this.selectedModelId$]).subscribe(() => { this.page$.next(1); this.loadPage(); });
+    // Reset model when make changes
+    this.selectedMakeId$.subscribe(() => { this.selectedModelId$.next(null); });
   }
 
   private loadContext(){
@@ -98,7 +111,9 @@ export class DerivativesPage {
     const sort = this.sort$.value;
     const page = this.page$.value;
     const pageSize = this.pageSize$.value;
-    this.api.getDerivativesPaged({ page, pageSize, sort: sort.active, dir: sort.direction }).subscribe({
+    const makeId = this.selectedMakeId$.value ?? undefined;
+    const modelId = this.selectedModelId$.value ?? undefined;
+    this.api.getDerivativesPaged({ page, pageSize, sort: sort.active, dir: sort.direction, makeId, modelId }).subscribe({
       next: (res) => { this.items$.next(res.items); this.total$.next(res.total); },
       error: () => this.notify.error('Failed to load derivatives')
     });
@@ -144,4 +159,7 @@ export class DerivativesPage {
     if (this.isHybrid(it)) return [it.engine || '—', it.batteryCapacityKWh ? `${it.batteryCapacityKWh} kWh` : undefined].filter(Boolean).join(' + ');
     return it.engine || '—';
   }
+
+  onMakeChange(id: number | null){ this.selectedMakeId$.next(id ?? null); }
+  onModelChange(id: number | null){ this.selectedModelId$.next(id ?? null); }
 }
