@@ -10,13 +10,18 @@ public class DbInitializer
     {
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
-        // Development: Drop and recreate database for a clean state
-        ResetDatabase(context);
-        // Create schema from current EF model (don't use migrations in fresh dev DB)
-        context.Database.EnsureCreated();
+        // Development: Drop DB, apply migrations, then seed
+        if (app.Environment.IsDevelopment())
+        {
+            ResetDatabase(context);
+        }
+        context.Database.Migrate();
 
-        SeedIfEmpty(context);
-        // Fresh schema created from model; extra ALTERs not needed in dev
+        // Only seed if migrations have been applied and schema exists
+        if (context.Database.GetAppliedMigrations().Any())
+        {
+            SeedPakistanMarket(context);
+        }
     }
     private static void ResetDatabase(CatalogDbContext context)
     {
@@ -42,7 +47,7 @@ public class DbInitializer
     }
 
 
-    public static void SeedIfEmpty(CatalogDbContext context)
+    public static void SeedPakistanMarket(CatalogDbContext context)
     {
         // Ensure reference data exists regardless of other data
         if (!context.Transmissions.Any())
@@ -97,7 +102,6 @@ public class DbInitializer
         context.SaveChanges();
         var transMap = context.Transmissions.ToDictionary(t => t.Name, t => t.Id);
         var fuelMap = context.FuelTypes.ToDictionary(f => f.Name, f => f.Id);
-
         // If there are already makes, we only needed to ensure reference data exists
         if (context.Makes.Any()) return;
         // At this point, features/transmissions/fuel types exist; get features for seeding variants
@@ -139,53 +143,35 @@ public class DbInitializer
             addFeatures(v, feats);
             return v;
         }
-
-        // Seed makes/models first (without generations) so we can attach model bodies explicitly
+        // Seed Pakistan market makes/models
         var makes = new List<Make>
         {
-            new()
-            {
-                Name = "BMW",
-                Models =
-                {
-                    new Model
-                    {
-                        Name = "3 Series"
-                    },
-                    new Model
-                    {
-                        Name = "5 Series"
-                    }
-                }
-            },
-            new()
-            {
-                Name = "Audi",
-                Models =
-                {
-                    new Model
-                    {
-                        Name = "A4"
-                    },
-                    new Model
-                    {
-                        Name = "A6"
-                    }
-                }
-            },
             new()
             {
                 Name = "Toyota",
                 Models =
                 {
-                    new Model
-                    {
-                        Name = "Corolla"
-                    },
-                    new Model
-                    {
-                        Name = "Camry"
-                    }
+                    new Model { Name = "Corolla" },
+                    new Model { Name = "Yaris" },
+                    new Model { Name = "Fortuner" }
+                }
+            },
+            new()
+            {
+                Name = "Honda",
+                Models =
+                {
+                    new Model { Name = "Civic" },
+                    new Model { Name = "City" }
+                }
+            },
+            new()
+            {
+                Name = "Suzuki",
+                Models =
+                {
+                    new Model { Name = "Alto" },
+                    new Model { Name = "Swift" }
                 }
             },
             new()
@@ -193,29 +179,24 @@ public class DbInitializer
                 Name = "Kia",
                 Models =
                 {
-                    new Model
-                    {
-                        Name = "Sportage"
-                    },
-                    new Model
-                    {
-                        Name = "Sorento"
-                    }
+                    new Model { Name = "Sportage" },
+                    new Model { Name = "Stonic" }
                 }
             },
             new()
             {
-                Name = "Ford",
+                Name = "BMW",
                 Models =
                 {
-                    new Model
-                    {
-                        Name = "Focus"
-                    },
-                    new Model
-                    {
-                        Name = "Mustang"
-                    }
+                    new Model { Name = "3 Series" }
+                }
+            },
+            new()
+            {
+                Name = "Audi",
+                Models =
+                {
+                    new Model { Name = "A4" }
                 }
             }
         };
@@ -223,51 +204,113 @@ public class DbInitializer
         context.Makes.AddRange(makes);
         context.SaveChanges();
 
-        // Create a single default generation per model so derivatives can reference it
+        // Create two generations per model
         var modelsForGen = context.Models.ToList();
         var generations = new List<Generation>();
         foreach (var m in modelsForGen)
         {
-            generations.Add(new Generation
-            {
-                Name = "Gen 1",
-                ModelId = m.Id,
-                StartYear = null,
-                EndYear = null
-            });
+            generations.Add(new Generation { Name = "Gen 1", ModelId = m.Id, StartYear = 2016, EndYear = 2020 });
+            generations.Add(new Generation { Name = "Gen 2", ModelId = m.Id, StartYear = 2021, EndYear = null });
         }
         context.Generations.AddRange(generations);
         context.SaveChanges();
 
-        var generationByModelId = context.Generations
-            .AsEnumerable()
+        var gen2ByModelId = context.Generations
+            .Where(g => g.Name == "Gen 2")
             .GroupBy(g => g.ModelId)
             .ToDictionary(g => g.Key, g => g.First().Id);
 
-        // Create a single default derivative per model
+        // Derivatives per model (Pakistan-specific popular body types)
         var saloonId = context.BodyTypes.Where(b => b.Name == "Saloon").Select(b => b.Id).First();
+        var hatchId = context.BodyTypes.Where(b => b.Name == "Hatchback").Select(b => b.Id).First();
+        var suvId = context.BodyTypes.Where(b => b.Name == "SUV").Select(b => b.Id).First();
+
         var derivatives = new List<Derivative>();
         var allModels = context.Models.Include(m => m.Make).ToList();
         foreach (var m in allModels)
         {
+            var bodyId = m.Name is "Alto" or "Swift" or "Yaris" ? hatchId : (m.Name is "Fortuner" or "Sportage" or "Stonic" ? suvId : saloonId);
             derivatives.Add(new Derivative
             {
+                Name = m.Name + " Standard",
                 ModelId = m.Id,
-                GenerationId = generationByModelId[m.Id],
-                BodyTypeId = saloonId,
+                GenerationId = gen2ByModelId[m.Id],
+                BodyTypeId = bodyId,
                 Seats = 5,
-                Doors = 4
+                Doors = bodyId == suvId ? (short)5 : (short)4,
+                Engine = m.Name switch
+                {
+                    "Alto" => "0.66L",
+                    "Swift" => "1.2L",
+                    "Yaris" => "1.3L",
+                    "Corolla" => "1.6L",
+                    "Civic" => "1.5L Turbo",
+                    "City" => "1.5L",
+                    "Fortuner" => "2.7L",
+                    "Sportage" => "2.0L",
+                    "Stonic" => "1.4L",
+                    "3 Series" => "2.0L",
+                    "A4" => "2.0L",
+                    _ => "1.6L"
+                },
+                TransmissionId = transMap["Automatic"],
+                FuelTypeId = fuelMap["Petrol"],
+                BatteryCapacityKWh = null
             });
+
+            // Optional hybrid derivative for select models
+            if (m.Name is "Corolla" or "Civic" or "Yaris")
+            {
+                derivatives.Add(new Derivative
+                {
+                    Name = m.Name + " Hybrid",
+                    ModelId = m.Id,
+                    GenerationId = gen2ByModelId[m.Id],
+                    BodyTypeId = bodyId,
+                    Seats = 5,
+                    Doors = bodyId == suvId ? (short)5 : (short)4,
+                    Engine = m.Name == "Civic" ? "2.0L" : "1.8L",
+                    TransmissionId = transMap["CVT"],
+                    FuelTypeId = fuelMap["Hybrid"],
+                    BatteryCapacityKWh = 1.2m
+                });
+            }
         }
         context.Derivatives.AddRange(derivatives);
         context.SaveChanges();
 
-        // Build robust maps for model -> derivative
-        var modelIdsByName = context.Models.ToDictionary(m => m.Name, m => m.Id);
-        var derivativeByModelId = context.Derivatives.ToDictionary(d => d.ModelId, d => d.Id);
+        // Variants under each derivative
+        var allDerivatives = context.Derivatives.Include(d => d.Model).ToList();
+        var variants = new List<Variant>();
+        foreach (var d in allDerivatives)
+        {
+            var baseVariant = BuildVariant(
+                name: "Base",
+                engine: d.Engine ?? "",
+                transmission: context.Transmissions.First(t => t.Id == d.TransmissionId!).Name,
+                fuelType: context.FuelTypes.First(f => f.Id == d.FuelTypeId!).Name,
+                featureFinder: F,
+                addFeatures: AddFeatures,
+                featureNames: new[] { "Air Conditioning", "ABS", "Bluetooth" }
+            );
+            baseVariant.DerivativeId = d.Id;
 
-        // Note: Generations and Variants are intentionally not seeded here to avoid FK issues.
-        // They can be added via API once ModelBodies exist.
+            var premiumVariant = BuildVariant(
+                name: "Premium",
+                engine: d.Engine ?? "",
+                transmission: context.Transmissions.First(t => t.Id == d.TransmissionId!).Name,
+                fuelType: context.FuelTypes.First(f => f.Id == d.FuelTypeId!).Name,
+                featureFinder: F,
+                addFeatures: AddFeatures,
+                featureNames: new[] { "Air Conditioning", "ABS", "Bluetooth", "Cruise Control", "Sunroof" }
+            );
+            premiumVariant.DerivativeId = d.Id;
+
+            variants.Add(baseVariant);
+            variants.Add(premiumVariant);
+        }
+        context.Variants.AddRange(variants);
+        context.SaveChanges();
     }
 
     private static void EnsureGenerationRequired(CatalogDbContext context)

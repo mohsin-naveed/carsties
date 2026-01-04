@@ -51,28 +51,50 @@ namespace CatalogService.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<decimal?>("BatteryCapacityKWh")
+                        .HasColumnType("numeric");
+
                     b.Property<int>("BodyTypeId")
                         .HasColumnType("integer");
 
                     b.Property<short>("Doors")
                         .HasColumnType("smallint");
 
-                    b.Property<int?>("GenerationId")
+                    b.Property<string>("Engine")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int?>("FuelTypeId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GenerationId")
                         .HasColumnType("integer");
 
                     b.Property<int>("ModelId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<short>("Seats")
                         .HasColumnType("smallint");
+
+                    b.Property<int?>("TransmissionId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("BodyTypeId");
 
+                    b.HasIndex("FuelTypeId");
+
                     b.HasIndex("GenerationId");
 
                     b.HasIndex("ModelId");
+
+                    b.HasIndex("TransmissionId");
 
                     b.ToTable("Derivatives", null, t =>
                         {
@@ -230,6 +252,9 @@ namespace CatalogService.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("DerivativeId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Engine")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -237,7 +262,7 @@ namespace CatalogService.Migrations
                     b.Property<int?>("FuelTypeId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("GenerationId")
+                    b.Property<int?>("GenerationId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
@@ -249,6 +274,8 @@ namespace CatalogService.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DerivativeId");
 
                     b.HasIndex("FuelTypeId");
 
@@ -292,10 +319,16 @@ namespace CatalogService.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("CatalogService.Entities.FuelType", "FuelTypeRef")
+                        .WithMany()
+                        .HasForeignKey("FuelTypeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("CatalogService.Entities.Generation", "Generation")
                         .WithMany()
                         .HasForeignKey("GenerationId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("CatalogService.Entities.Model", "Model")
                         .WithMany("Derivatives")
@@ -303,11 +336,20 @@ namespace CatalogService.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("CatalogService.Entities.Transmission", "TransmissionRef")
+                        .WithMany()
+                        .HasForeignKey("TransmissionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("BodyTypeRef");
+
+                    b.Navigation("FuelTypeRef");
 
                     b.Navigation("Generation");
 
                     b.Navigation("Model");
+
+                    b.Navigation("TransmissionRef");
                 });
 
             modelBuilder.Entity("CatalogService.Entities.Generation", b =>
@@ -334,25 +376,29 @@ namespace CatalogService.Migrations
 
             modelBuilder.Entity("CatalogService.Entities.Variant", b =>
                 {
+                    b.HasOne("CatalogService.Entities.Derivative", "Derivative")
+                        .WithMany()
+                        .HasForeignKey("DerivativeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("CatalogService.Entities.FuelType", "FuelTypeRef")
                         .WithMany()
                         .HasForeignKey("FuelTypeId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("CatalogService.Entities.Generation", "Generation")
+                    b.HasOne("CatalogService.Entities.Generation", null)
                         .WithMany("Variants")
-                        .HasForeignKey("GenerationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("GenerationId");
 
                     b.HasOne("CatalogService.Entities.Transmission", "TransmissionRef")
                         .WithMany()
                         .HasForeignKey("TransmissionId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("FuelTypeRef");
+                    b.Navigation("Derivative");
 
-                    b.Navigation("Generation");
+                    b.Navigation("FuelTypeRef");
 
                     b.Navigation("TransmissionRef");
                 });

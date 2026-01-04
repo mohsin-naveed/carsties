@@ -101,7 +101,7 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
     {
         if (!env.IsDevelopment()) return Forbid();
         DbInitializer.ClearCatalogData(context);
-        DbInitializer.SeedIfEmpty(context);
+        DbInitializer.SeedPakistanMarket(context);
         return Ok(new { status = "reseeded" });
     }
     [HttpGet("context")]
