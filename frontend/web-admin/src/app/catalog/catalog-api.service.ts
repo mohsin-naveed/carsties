@@ -93,6 +93,16 @@ export class CatalogApiService {
     const params: any = {}; if (makeId) params.makeId = makeId; if (modelId) params.modelId = modelId;
     return this.http.get<GenerationsContextDto>(`${this.baseUrl}/generations/context`, { params });
   }
+  getGenerationsPaged(opts?: { page?: number; pageSize?: number; sort?: string; dir?: 'asc'|'desc'; makeId?: number; modelId?: number }): Observable<PagedResult<GenerationDto>> {
+    const params: any = {};
+    if (opts?.page) params.page = opts.page;
+    if (opts?.pageSize) params.pageSize = opts.pageSize;
+    if (opts?.sort) params.sort = opts.sort;
+    if (opts?.dir) params.dir = opts.dir;
+    if (opts?.makeId) params.makeId = opts.makeId;
+    if (opts?.modelId) params.modelId = opts.modelId;
+    return this.http.get<PagedResult<GenerationDto>>(`${this.baseUrl}/generations/paged`, { params });
+  }
   createGeneration(dto: CreateGenerationDto): Observable<GenerationDto> { return this.http.post<GenerationDto>(`${this.baseUrl}/generations`, dto); }
   updateGeneration(id: number, dto: UpdateGenerationDto) { return this.http.put(`${this.baseUrl}/generations/${id}`, dto); }
   deleteGeneration(id: number) { return this.http.delete(`${this.baseUrl}/generations/${id}`); }

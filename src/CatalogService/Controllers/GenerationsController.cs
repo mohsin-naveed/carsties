@@ -12,6 +12,64 @@ namespace CatalogService.Controllers;
 [Route("api/[controller]")]
 public class GenerationsController(CatalogDbContext context, IMapper mapper) : ControllerBase
 {
+    [HttpGet("paged")]
+    public async Task<ActionResult<PagedResult<GenerationDto>>> GetPaged([FromQuery] int? makeId, [FromQuery] int? modelId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? sort = null, [FromQuery] string? dir = null)
+    {
+        if (page <= 0) page = 1;
+        if (pageSize <= 0 || pageSize > 200) pageSize = 10;
+
+        var baseQuery = context.Generations.AsQueryable();
+        if (modelId.HasValue) baseQuery = baseQuery.Where(g => g.ModelId == modelId.Value);
+        if (makeId.HasValue)
+        {
+            var modelIdsForMake = await context.Models
+                .Where(m => m.MakeId == makeId.Value)
+                .Select(m => m.Id)
+                .ToListAsync();
+            baseQuery = baseQuery.Where(g => modelIdsForMake.Contains(g.ModelId));
+        }
+
+        var total = await baseQuery.CountAsync();
+        var direction = (dir?.ToLowerInvariant() == "desc") ? "desc" : "asc";
+
+        var query = from g in baseQuery
+                    join m in context.Models on g.ModelId equals m.Id
+                    join mk in context.Makes on m.MakeId equals mk.Id
+                    select new { Gen = g, ModelName = m.Name, MakeName = mk.Name };
+
+        var ordered = (direction == "desc")
+            ? query.OrderByDescending(x => x.MakeName).ThenByDescending(x => x.ModelName).ThenByDescending(x => x.Gen.Name)
+            : query.OrderBy(x => x.MakeName).ThenBy(x => x.ModelName).ThenBy(x => x.Gen.Name);
+
+        if (!string.IsNullOrWhiteSpace(sort))
+        {
+            switch (sort.ToLowerInvariant())
+            {
+                case "make":
+                    ordered = (direction == "desc") ? query.OrderByDescending(x => x.MakeName) : query.OrderBy(x => x.MakeName);
+                    break;
+                case "model":
+                    ordered = (direction == "desc") ? query.OrderByDescending(x => x.ModelName) : query.OrderBy(x => x.ModelName);
+                    break;
+                case "name":
+                    ordered = (direction == "desc") ? query.OrderByDescending(x => x.Gen.Name) : query.OrderBy(x => x.Gen.Name);
+                    break;
+                case "years":
+                    ordered = (direction == "desc") ? query.OrderByDescending(x => x.Gen.StartYear).ThenByDescending(x => x.Gen.EndYear) : query.OrderBy(x => x.Gen.StartYear).ThenBy(x => x.Gen.EndYear);
+                    break;
+            }
+        }
+
+        var pageItems = await ordered
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => x.Gen)
+            .ProjectTo<GenerationDto>(mapper.ConfigurationProvider)
+            .ToListAsync();
+
+        var result = new PagedResult<GenerationDto>(pageItems, total, page, pageSize);
+        return Ok(result);
+    }
     [HttpGet("context")]
     public async Task<ActionResult<GenerationsContextDto>> GetContext([FromQuery] int? makeId, [FromQuery] int? modelId)
     {
