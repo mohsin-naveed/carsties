@@ -4,18 +4,32 @@
   <button mat-flat-button color="primary" (click)="openCreate()">Add Model</button>
 </section>
 
-<mat-form-field appearance="outline" class="filter-field">
-  <mat-label>Search</mat-label>
-  <input matInput (input)="onFilterInput($any($event.target).value)" placeholder="Filter models" />
-</mat-form-field>
+<section class="controls">
+  <div class="controls-left">
+    <mat-form-field appearance="outline">
+      <mat-label>Make</mat-label>
+      <mat-select (selectionChange)="onMakeChange($event.value)" [value]="(selectedMakeId$ | async)" placeholder="Select Make">
+        <mat-option [value]="null">All Makes</mat-option>
+        <mat-option *ngFor="let mk of (makes$ | async) ?? []" [value]="mk.id">{{ mk.name }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <span></span>
+  </div>
+  <div class="controls-right">
+    <mat-form-field appearance="outline" class="search">
+      <mat-label>Search</mat-label>
+      <input matInput (input)="onFilterInput($any($event.target).value)" placeholder="Filter models" />
+    </mat-form-field>
+  </div>
+</section>
 
-<table mat-table [dataSource]="(filtered$ | async) ?? []" class="mat-elevation-z1">
+<table mat-table [dataSource]="(filtered$ | async) ?? []" matSort (matSortChange)="onSortChange($event)" class="mat-elevation-z1">
   <ng-container matColumnDef="make">
-    <th mat-header-cell *matHeaderCellDef>Make</th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="make">Make</th>
     <td mat-cell *matCellDef="let it">{{ (makeById$ | async)?.[it.makeId]?.name }}</td>
   </ng-container>
   <ng-container matColumnDef="model">
-    <th mat-header-cell *matHeaderCellDef>Model</th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="model">Model</th>
     <td mat-cell *matCellDef="let it">{{ it.name }}</td>
   </ng-container>
   <ng-container matColumnDef="actions">
@@ -28,3 +42,11 @@
   <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
   <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
 </table>
+
+<mat-paginator
+  [length]="(total$ | async) ?? 0"
+  [pageIndex]="(page$ | async)! - 1"
+  [pageSize]="(pageSize$ | async)!"
+  [pageSizeOptions]="[5,10,25,50]"
+  (page)="onPageChange($event)">
+</mat-paginator>

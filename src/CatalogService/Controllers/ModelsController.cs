@@ -12,6 +12,53 @@ namespace CatalogService.Controllers;
 [Route("api/[controller]")]
 public class ModelsController(CatalogDbContext context, IMapper mapper) : ControllerBase
 {
+    [HttpGet("paged")]
+    public async Task<ActionResult<PagedResult<ModelDto>>> GetPaged([FromQuery] int? makeId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? sort = null, [FromQuery] string? dir = null)
+    {
+        if (page <= 0) page = 1;
+        if (pageSize <= 0 || pageSize > 200) pageSize = 10;
+
+        var baseQuery = context.Models.AsQueryable();
+        if (makeId.HasValue) baseQuery = baseQuery.Where(x => x.MakeId == makeId);
+
+        var total = await baseQuery.CountAsync();
+
+        var direction = (dir?.ToLowerInvariant() == "desc") ? "desc" : "asc";
+
+        // join makes for sorting by make name
+        var query = from m in baseQuery
+                    join mk in context.Makes on m.MakeId equals mk.Id
+                    select new { Model = m, MakeName = mk.Name };
+
+        // default sort: Make then Model name
+        var ordered = (direction == "desc")
+            ? query.OrderByDescending(x => x.MakeName).ThenByDescending(x => x.Model.Name)
+            : query.OrderBy(x => x.MakeName).ThenBy(x => x.Model.Name);
+
+        if (!string.IsNullOrWhiteSpace(sort))
+        {
+            switch (sort.ToLowerInvariant())
+            {
+                case "make":
+                    ordered = (direction == "desc") ? query.OrderByDescending(x => x.MakeName) : query.OrderBy(x => x.MakeName);
+                    break;
+                case "model":
+                case "name":
+                    ordered = (direction == "desc") ? query.OrderByDescending(x => x.Model.Name) : query.OrderBy(x => x.Model.Name);
+                    break;
+            }
+        }
+
+        var pageItems = await ordered
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => x.Model)
+            .ProjectTo<ModelDto>(mapper.ConfigurationProvider)
+            .ToListAsync();
+
+        var result = new PagedResult<ModelDto>(pageItems, total, page, pageSize);
+        return Ok(result);
+    }
     [HttpGet("context")]
     public async Task<ActionResult<ModelsContextDto>> GetContext([FromQuery] int? makeId)
     {

@@ -74,6 +74,15 @@ export class CatalogApiService {
   // Models
   getModels(makeId?: number): Observable<ModelDto[]> { const params: any = {}; if (makeId) params.makeId = makeId; return this.http.get<ModelDto[]>(`${this.baseUrl}/models`, { params }); }
   getModelsContext(makeId?: number): Observable<ModelsContextDto> { const params: any = {}; if (makeId) params.makeId = makeId; return this.http.get<ModelsContextDto>(`${this.baseUrl}/models/context`, { params }); }
+  getModelsPaged(opts?: { page?: number; pageSize?: number; sort?: string; dir?: 'asc'|'desc'; makeId?: number }): Observable<PagedResult<ModelDto>> {
+    const params: any = {};
+    if (opts?.page) params.page = opts.page;
+    if (opts?.pageSize) params.pageSize = opts.pageSize;
+    if (opts?.sort) params.sort = opts.sort;
+    if (opts?.dir) params.dir = opts.dir;
+    if (opts?.makeId) params.makeId = opts.makeId;
+    return this.http.get<PagedResult<ModelDto>>(`${this.baseUrl}/models/paged`, { params });
+  }
   createModel(dto: CreateModelDto): Observable<ModelDto> { return this.http.post<ModelDto>(`${this.baseUrl}/models`, dto); }
   updateModel(id: number, dto: UpdateModelDto) { return this.http.put(`${this.baseUrl}/models/${id}`, dto); }
   deleteModel(id: number) { return this.http.delete(`${this.baseUrl}/models/${id}`); }
