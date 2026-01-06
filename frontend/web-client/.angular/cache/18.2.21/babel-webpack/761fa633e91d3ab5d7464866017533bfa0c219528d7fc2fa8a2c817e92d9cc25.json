@@ -1,0 +1,1 @@
+{"ast":null,"code":"export const errorInterceptor = (req, next) => {\n  return next(req).pipe();\n};","map":null,"metadata":{},"sourceType":"module","externalDependencies":[]}
