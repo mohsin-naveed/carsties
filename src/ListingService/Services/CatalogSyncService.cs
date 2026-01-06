@@ -23,6 +23,7 @@ public class CatalogSyncService
         var generations = await _http.GetFromJsonAsync<List<GenerationDto>>("generations") ?? new();
         var derivatives = await _http.GetFromJsonAsync<List<DerivativeDto>>("derivatives") ?? new();
         var variants = await _http.GetFromJsonAsync<List<VariantDto>>("variants") ?? new();
+        var features = await _http.GetFromJsonAsync<List<FeatureDto>>("features") ?? new();
 
         // Fetch transmissions and fuel types from /api/variants/options
         var variantOptions = await _http.GetFromJsonAsync<VariantOptionsDto>("variants/options") ?? new();
@@ -46,6 +47,7 @@ public class CatalogSyncService
         db.Generations.AddRange(generations.Select(g => new Generation { Id = g.id, Name = g.name, ModelId = g.modelId, StartYear = (short?)g.startYear, EndYear = (short?)g.endYear }));
         db.Derivatives.AddRange(derivatives.Select(d => new Derivative { Id = d.id, Name = d.name ?? "", ModelId = d.modelId, GenerationId = d.generationId ?? 0, BodyTypeId = d.bodyTypeId, Seats = d.seats, Doors = d.doors, Engine = d.engine, TransmissionId = d.transmissionId, FuelTypeId = d.fuelTypeId, BatteryCapacityKWh = d.batteryCapacityKWh }));
         db.Variants.AddRange(variants.Select(v => new Variant { Id = v.id, Name = v.name, DerivativeId = v.derivativeId }));
+        db.Features.AddRange(features.Select(f => new Feature { Id = f.Id, Name = f.Name, Description = f.Description }));
         await db.SaveChangesAsync();
     }
 
@@ -65,3 +67,6 @@ public class CatalogSyncService
     }
 
 }
+
+// Minimal DTOs for remote fetch
+file record FeatureDto(int Id, string Name, string? Description);

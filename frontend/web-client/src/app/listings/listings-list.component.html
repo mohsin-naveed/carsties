@@ -1,0 +1,35 @@
+<div style="margin-top:24px">
+  <h2>Saved Listings</h2>
+  <div *ngIf="loading">Loading...</div>
+  <table *ngIf="!loading && items.length" style="width:100%; border-collapse:collapse">
+    <thead>
+      <tr>
+        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Title</th>
+        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Make</th>
+        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Model</th>
+        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Generation</th>
+        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Derivative</th>
+        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Variant</th>
+        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Body</th>
+        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Trans</th>
+        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Fuel</th>
+        <th style="text-align:right; border-bottom:1px solid #ddd; padding:6px">Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let l of items">
+        <td style="padding:6px; border-bottom:1px solid #f0f0f0">{{ l.title }}</td>
+        <td style="padding:6px; border-bottom:1px solid #f0f0f0">{{ l.makeName || l.makeId }}</td>
+        <td style="padding:6px; border-bottom:1px solid #f0f0f0">{{ l.modelName || l.modelId }}</td>
+        <td style="padding:6px; border-bottom:1px solid #f0f0f0">{{ l.generationName || l.generationId }}</td>
+        <td style="padding:6px; border-bottom:1px solid #f0f0f0">{{ l.derivativeName || l.derivativeId }}</td>
+        <td style="padding:6px; border-bottom:1px solid #f0f0f0">{{ l.variantName || l.variantId }}</td>
+        <td style="padding:6px; border-bottom:1px solid #f0f0f0">{{ l.bodyTypeName || l.bodyTypeId }}</td>
+        <td style="padding:6px; border-bottom:1px solid #f0f0f0">{{ l.transmissionName || l.transmissionId || '-' }}</td>
+        <td style="padding:6px; border-bottom:1px solid #f0f0f0">{{ l.fuelTypeName || l.fuelTypeId || '-' }}</td>
+        <td style="padding:6px; border-bottom:1px solid #f0f0f0; text-align:right">{{ l.price | number:'1.0-0' }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div *ngIf="!loading && !items.length">No listings yet.</div>
+</div>

@@ -2,6 +2,7 @@ using AutoMapper;
 using ListingService.Data;
 using ListingService.DTOs;
 using ListingService.Entities;
+using ListingService.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,7 +10,7 @@ namespace ListingService.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ListingsController(ListingDbContext context, IMapper mapper) : ControllerBase
+public class ListingsController(ListingDbContext context, IMapper mapper, ICatalogLookup catalog) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<List<ListingDto>>> GetAll()
@@ -31,6 +32,23 @@ public class ListingsController(ListingDbContext context, IMapper mapper) : Cont
     public async Task<ActionResult<ListingDto>> Create(CreateListingDto dto)
     {
         var listing = mapper.Map<Listing>(dto);
+        // Only populate from server if client did not supply snapshots
+        if (string.IsNullOrWhiteSpace(listing.MakeName) || string.IsNullOrWhiteSpace(listing.ModelName) || string.IsNullOrWhiteSpace(listing.VariantName))
+        {
+            await catalog.PopulateSnapshotsAsync(listing);
+        }
+        // Fetch variant features from Catalog and persist both JSON snapshot and join rows
+        var vfs = await catalog.GetVariantFeaturesAsync(listing.VariantId);
+        if (vfs.Count > 0)
+        {
+            listing.VariantFeaturesJson = System.Text.Json.JsonSerializer.Serialize(vfs);
+            // De-duplicate by FeatureId and attach
+            var distinct = vfs
+                .GroupBy(x => x.FeatureId)
+                .Select(g => new ListingFeature { FeatureId = g.Key })
+                .ToList();
+            if (distinct.Count > 0) listing.Features = distinct;
+        }
         context.Listings.Add(listing);
         var ok = await context.SaveChangesAsync() > 0;
         if (!ok) return BadRequest("Failed to create listing");
@@ -44,6 +62,11 @@ public class ListingsController(ListingDbContext context, IMapper mapper) : Cont
         var listing = await context.Listings.FindAsync(id);
         if (listing is null) return NotFound();
         mapper.Map(dto, listing);
+        // Refresh snapshots if core identifiers changed and client did not supply new snapshots
+        if (string.IsNullOrWhiteSpace(listing.MakeName) || string.IsNullOrWhiteSpace(listing.ModelName) || string.IsNullOrWhiteSpace(listing.VariantName))
+        {
+            await catalog.PopulateSnapshotsAsync(listing);
+        }
         var ok = await context.SaveChangesAsync() > 0;
         return ok ? Ok() : BadRequest("Failed to update listing");
     }

@@ -28,8 +28,10 @@ builder.Services.AddCors(options =>
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
-// HttpClient for Catalog sync
-builder.Services.AddHttpClient<CatalogSyncService>(client =>
+// Catalog lookup via CatalogService (typed client)
+
+// HttpClient for Catalog API (shared)
+void ConfigureCatalogClient(HttpClient client)
 {
     var baseUrl = builder.Configuration.GetSection("CatalogApi").GetValue<string>("BaseUrl") ?? "http://localhost:5208/api";
     // Ensure BaseAddress includes '/api' path segment
@@ -39,7 +41,12 @@ builder.Services.AddHttpClient<CatalogSyncService>(client =>
         normalized += "/api";
     }
     client.BaseAddress = new Uri(normalized);
-});
+}
+
+// Typed clients
+builder.Services.AddHttpClient<CatalogSyncService>(ConfigureCatalogClient);
+builder.Services.AddHttpClient<ListingService.Services.CatalogLookup>(ConfigureCatalogClient);
+builder.Services.AddScoped<ListingService.Services.ICatalogLookup>(sp => sp.GetRequiredService<ListingService.Services.CatalogLookup>());
 
 var app = builder.Build();
 

@@ -17,6 +17,20 @@ public class ListingDto
     public int? TransmissionId { get; set; }
     public int? FuelTypeId { get; set; }
     public int BodyTypeId { get; set; }
+
+    // Snapshots
+    public string? MakeName { get; set; }
+    public string? ModelName { get; set; }
+    public string? GenerationName { get; set; }
+    public string? DerivativeName { get; set; }
+    public string? VariantName { get; set; }
+    public string? BodyTypeName { get; set; }
+    public string? TransmissionName { get; set; }
+    public string? FuelTypeName { get; set; }
+    public short? SeatsSnapshot { get; set; }
+    public short? DoorsSnapshot { get; set; }
+    public string? EngineSnapshot { get; set; }
+    public decimal? BatteryCapacityKWhSnapshot { get; set; }
 }
 
 public class CreateListingDto
@@ -35,6 +49,21 @@ public class CreateListingDto
     public int? TransmissionId { get; set; }
     public int? FuelTypeId { get; set; }
     public int BodyTypeId { get; set; }
+
+    // Optional snapshots supplied by client
+    public string? MakeName { get; set; }
+    public string? ModelName { get; set; }
+    public string? GenerationName { get; set; }
+    public string? DerivativeName { get; set; }
+    public string? VariantName { get; set; }
+    public string? BodyTypeName { get; set; }
+    public string? TransmissionName { get; set; }
+    public string? FuelTypeName { get; set; }
+    public short? SeatsSnapshot { get; set; }
+    public short? DoorsSnapshot { get; set; }
+    public string? EngineSnapshot { get; set; }
+    public decimal? BatteryCapacityKWhSnapshot { get; set; }
+    public string? VariantFeaturesJson { get; set; }
 }
 
 public class UpdateListingDto

@@ -59,6 +59,21 @@ public class Listing {
     public int? FuelTypeId { get; set; }
     public int BodyTypeId { get; set; }
 
+    // Snapshot fields to decouple from CatalogService
+    public string? MakeName { get; set; }
+    public string? ModelName { get; set; }
+    public string? GenerationName { get; set; }
+    public string? DerivativeName { get; set; }
+    public string? VariantName { get; set; }
+    public string? BodyTypeName { get; set; }
+    public string? TransmissionName { get; set; }
+    public string? FuelTypeName { get; set; }
+    public short? SeatsSnapshot { get; set; }
+    public short? DoorsSnapshot { get; set; }
+    public string? EngineSnapshot { get; set; }
+    public decimal? BatteryCapacityKWhSnapshot { get; set; }
+    public string? VariantFeaturesJson { get; set; }
+
     public List<ListingFeature> Features { get; set; } = new();
     public Variant? Variant { get; set; }
 }

@@ -7,7 +7,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatOptionModule } from '@angular/material/core';
 import { ObserversModule } from '@angular/cdk/observers';
-import { ListingsApiService, MakeDto, ModelDto, GenerationDto, DerivativeDto, VariantDto, OptionDto, CreateListingDto } from './listings-api.service';
+import { ListingsApiService, MakeDto, ModelDto, GenerationDto, DerivativeDto, VariantDto, OptionDto, CreateListingDto, VariantFeatureSnapshot } from './listings-api.service';
 
 @Component({
   selector: 'app-add-listing',
@@ -44,6 +44,7 @@ export class AddListingComponent {
   transmissions: OptionDto[] = [];
   fuelTypes: OptionDto[] = [];
   bodyTypes: OptionDto[] = [];
+  variantFeatures: VariantFeatureSnapshot[] = [];
 
   constructor() {
     this.api.getMakes().subscribe(m => this.makes = m);
@@ -60,13 +61,46 @@ export class AddListingComponent {
     });
     this.form.get('derivativeId')!.valueChanges.subscribe(val => {
       this.variants = []; this.form.patchValue({ variantId: null }, { emitEvent: false });
-      if (val) this.api.getVariants(val).subscribe(vars => this.variants = vars);
+      if (val) {
+        const der = this.derivatives.find(d => d.id === val);
+        const genId = der?.generationId;
+        if (genId) this.api.getVariantsByGeneration(genId).subscribe(vars => this.variants = vars);
+      }
     });
+
+    this.form.get('variantId')!.valueChanges.subscribe(variantId => {
+      this.variantFeatures = [];
+      if (variantId) this.api.getVariantFeatures(variantId).subscribe(vf => this.variantFeatures = vf);
+    });
+  }
+
+  findById(list: { id: number }[], id: number | null | undefined) {
+    if (id == null) return undefined as any;
+    return list.find(x => x.id === id) as any;
   }
 
   submit() {
     if (this.form.invalid) return;
-    const dto = this.form.value as unknown as CreateListingDto;
+    const raw = this.form.value;
+    const dto: CreateListingDto = {
+      title: raw.title!, description: raw.description ?? undefined, year: raw.year!, mileage: raw.mileage!, price: raw.price!, color: raw.color ?? undefined,
+      makeId: raw.makeId!, modelId: raw.modelId!, generationId: raw.generationId!, derivativeId: raw.derivativeId!, variantId: raw.variantId!,
+      transmissionId: raw.transmissionId ?? undefined, fuelTypeId: raw.fuelTypeId ?? undefined, bodyTypeId: raw.bodyTypeId!,
+      // snapshots
+      makeName: this.makes.find(x => x.id === raw.makeId!)?.name,
+      modelName: this.models.find(x => x.id === raw.modelId!)?.name,
+      generationName: this.generations.find(x => x.id === raw.generationId!)?.name,
+      derivativeName: this.derivatives.find(x => x.id === raw.derivativeId!)?.name,
+      variantName: this.variants.find(x => x.id === raw.variantId!)?.name,
+      bodyTypeName: this.derivatives.find(x => x.id === raw.derivativeId!)?.bodyType ?? this.bodyTypes.find(x => x.id === raw.bodyTypeId!)?.name,
+      transmissionName: this.derivatives.find(x => x.id === raw.derivativeId!)?.transmission ?? this.transmissions.find(x => x.id === raw.transmissionId!)?.name,
+      fuelTypeName: this.derivatives.find(x => x.id === raw.derivativeId!)?.fuelType ?? this.fuelTypes.find(x => x.id === raw.fuelTypeId!)?.name,
+      seatsSnapshot: this.derivatives.find(x => x.id === raw.derivativeId!)?.seats,
+      doorsSnapshot: this.derivatives.find(x => x.id === raw.derivativeId!)?.doors,
+      engineSnapshot: this.derivatives.find(x => x.id === raw.derivativeId!)?.engine,
+      batteryCapacityKWhSnapshot: this.derivatives.find(x => x.id === raw.derivativeId!)?.batteryCapacityKWh,
+      variantFeaturesJson: this.variantFeatures.length ? JSON.stringify(this.variantFeatures) : undefined
+    };
     this.api.createListing(dto).subscribe({ next: () => alert('Listing created'), error: (e) => alert('Failed: ' + e) });
   }
 }

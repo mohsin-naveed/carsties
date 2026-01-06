@@ -9,6 +9,8 @@ namespace ListingService.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[ApiExplorerSettings(IgnoreApi = true)]
+[Obsolete("Deprecated: Reference data now comes from CatalogService. Use Catalog API from frontend; these endpoints will be removed.")]
 public class ReferencesController(ListingDbContext context, IMapper mapper) : ControllerBase
 {
     [HttpGet("makes")]

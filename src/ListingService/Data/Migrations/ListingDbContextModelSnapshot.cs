@@ -182,8 +182,15 @@ namespace ListingService.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<decimal?>("BatteryCapacityKWhSnapshot")
+                        .HasColumnType("numeric");
+
                     b.Property<int>("BodyTypeId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("BodyTypeName")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Color")
                         .HasMaxLength(50)
@@ -197,18 +204,41 @@ namespace ListingService.Data.Migrations
                     b.Property<int>("DerivativeId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("DerivativeName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("Description")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
+                    b.Property<short?>("DoorsSnapshot")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("EngineSnapshot")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<int?>("FuelTypeId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("FuelTypeName")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int>("GenerationId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("GenerationName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<int>("MakeId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("MakeName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("Mileage")
                         .HasColumnType("integer");
@@ -216,8 +246,15 @@ namespace ListingService.Data.Migrations
                     b.Property<int>("ModelId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("ModelName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric(18,2)");
+
+                    b.Property<short?>("SeatsSnapshot")
+                        .HasColumnType("smallint");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -227,11 +264,22 @@ namespace ListingService.Data.Migrations
                     b.Property<int?>("TransmissionId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("TransmissionName")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("VariantFeaturesJson")
+                        .HasColumnType("jsonb");
+
                     b.Property<int>("VariantId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("VariantName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("Year")
                         .HasColumnType("integer");

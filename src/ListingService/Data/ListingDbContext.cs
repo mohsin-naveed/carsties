@@ -150,6 +150,19 @@ public class ListingDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(x => x.Price).HasColumnType("numeric(18,2)");
             entity.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
 
+            // Snapshot columns config
+            entity.Property(x => x.MakeName).HasMaxLength(100);
+            entity.Property(x => x.ModelName).HasMaxLength(100);
+            entity.Property(x => x.GenerationName).HasMaxLength(100);
+            entity.Property(x => x.DerivativeName).HasMaxLength(100);
+            entity.Property(x => x.VariantName).HasMaxLength(100);
+            entity.Property(x => x.BodyTypeName).HasMaxLength(50);
+            entity.Property(x => x.TransmissionName).HasMaxLength(50);
+            entity.Property(x => x.FuelTypeName).HasMaxLength(50);
+            entity.Property(x => x.EngineSnapshot).HasMaxLength(100);
+            entity.Property(x => x.VariantFeaturesJson).HasColumnType("jsonb");
+            entity.Property(x => x.VariantFeaturesJson).HasColumnType("jsonb");
+
             entity.HasOne<Make>().WithMany().HasForeignKey(x => x.MakeId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Model>().WithMany().HasForeignKey(x => x.ModelId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Generation>().WithMany().HasForeignKey(x => x.GenerationId).OnDelete(DeleteBehavior.Restrict);

@@ -58,3 +58,22 @@
     <button mat-raised-button color="primary" type="submit">Add Listing</button>
   </div>
 </form>
+
+<div style="margin-top:16px; max-width:900px; border:1px solid #ddd; padding:12px; border-radius:6px;">
+  <h3 style="margin:0 0 8px 0;">Preview</h3>
+  <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;">
+    <div><strong>Make:</strong> {{ findById(makes, form.value.makeId)?.name || '-' }}</div>
+    <div><strong>Model:</strong> {{ findById(models, form.value.modelId)?.name || '-' }}</div>
+    <div><strong>Generation:</strong> {{ findById(generations, form.value.generationId)?.name || '-' }}</div>
+    <div><strong>Derivative:</strong> {{ findById(derivatives, form.value.derivativeId)?.name || '-' }}</div>
+    <div><strong>Variant:</strong> {{ findById(variants, form.value.variantId)?.name || '-' }}</div>
+    <div><strong>Body Type:</strong> {{ findById(derivatives, form.value.derivativeId)?.bodyType || findById(bodyTypes, form.value.bodyTypeId)?.name || '-' }}</div>
+    <div><strong>Transmission:</strong> {{ findById(derivatives, form.value.derivativeId)?.transmission || findById(transmissions, form.value.transmissionId)?.name || '-' }}</div>
+    <div><strong>Fuel:</strong> {{ findById(derivatives, form.value.derivativeId)?.fuelType || findById(fuelTypes, form.value.fuelTypeId)?.name || '-' }}</div>
+    <div><strong>Seats:</strong> {{ findById(derivatives, form.value.derivativeId)?.seats || '-' }}</div>
+    <div><strong>Doors:</strong> {{ findById(derivatives, form.value.derivativeId)?.doors || '-' }}</div>
+    <div><strong>Engine:</strong> {{ findById(derivatives, form.value.derivativeId)?.engine || '-' }}</div>
+    <div><strong>Battery (kWh):</strong> {{ findById(derivatives, form.value.derivativeId)?.batteryCapacityKWh || '-' }}</div>
+    <div style="grid-column:1/-1"><strong>Variant Features:</strong> {{ variantFeatures?.length || 0 }}</div>
+  </div>
+</div>
