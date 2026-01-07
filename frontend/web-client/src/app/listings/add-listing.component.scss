@@ -5,7 +5,7 @@
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr; /* one control per row */
   gap: 16px;
 }
 
@@ -19,6 +19,6 @@
   margin-top: 16px;
 }
 
-@media (max-width: 800px) {
-  .form-grid { grid-template-columns: 1fr; }
-}
+/* removed top-year header */
+
+/* Single column layout already enforced */

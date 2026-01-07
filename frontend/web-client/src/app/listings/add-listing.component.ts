@@ -10,6 +10,8 @@ import { MatCardModule } from '@angular/material/card';
 import { ObserversModule } from '@angular/cdk/observers';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ListingsApiService, MakeDto, ModelDto, GenerationDto, DerivativeDto, VariantDto, OptionDto, CreateListingDto, VariantFeatureSnapshot } from './listings-api.service';
+import { forkJoin } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { NotificationService } from '../core/notification.service';
 import { finalize } from 'rxjs/operators';
 
@@ -26,18 +28,18 @@ export class AddListingComponent {
   private notify = inject(NotificationService);
 
   saving = false;
+  years: number[] = [];
 
   form = this.fb.group({
-    title: ['', Validators.required],
     description: [''],
-    year: [2022, [Validators.required, Validators.min(1900)]],
+    year: [null as number | null, [Validators.required, Validators.min(1900)]],
     mileage: [0, [Validators.required, Validators.min(0)]],
     price: [0, [Validators.required, Validators.min(0)]],
-    color: [''],
     makeId: [null as number | null, Validators.required],
     modelId: [null as number | null, Validators.required],
-    generationId: [null as number | null, Validators.required],
-    derivativeId: [null as number | null, Validators.required],
+    // Hidden fields, set programmatically based on selected variant
+    generationId: [null as number | null],
+    derivativeId: [null as number | null],
     variantId: [null as number | null, Validators.required],
     transmissionId: [null as number | null],
     fuelTypeId: [null as number | null],
@@ -55,29 +57,48 @@ export class AddListingComponent {
   variantFeatures: VariantFeatureSnapshot[] = [];
 
   constructor() {
+    // Build years dropdown (descending from current year to 1900)
+    const current = new Date().getFullYear();
+    for (let y = current; y >= 1900; y--) this.years.push(y);
+
+    // Load static reference data
     this.api.getMakes().subscribe(m => this.makes = m);
     this.api.getOptions().subscribe(o => { this.transmissions = o.transmissions; this.fuelTypes = o.fuelTypes; this.bodyTypes = o.bodyTypes; });
 
-    this.form.get('makeId')!.valueChanges.subscribe(val => {
-      this.models = []; this.form.patchValue({ modelId: null, generationId: null, derivativeId: null, variantId: null }, { emitEvent: false });
-      if (val) this.api.getModels(val).subscribe(models => this.models = models);
-    });
-    this.form.get('modelId')!.valueChanges.subscribe(val => {
-      this.generations = []; this.form.patchValue({ generationId: null, derivativeId: null, variantId: null }, { emitEvent: false });
-      if (val) this.api.getGenerations(val).subscribe(gens => this.generations = gens);
-      if (val) this.api.getDerivatives(val).subscribe(ders => this.derivatives = ders);
-    });
-    this.form.get('derivativeId')!.valueChanges.subscribe(val => {
-      this.variants = []; this.form.patchValue({ variantId: null }, { emitEvent: false });
-      if (val) {
-        const der = this.derivatives.find(d => d.id === val);
-        const genId = der?.generationId;
-        if (genId) this.api.getVariantsByGeneration(genId).subscribe(vars => this.variants = vars);
-      }
+    // When Make changes: load models under make, aggregate derivatives/generations for its models, then refresh variants
+    this.form.get('makeId')!.valueChanges.subscribe(makeId => {
+      this.models = []; this.generations = []; this.derivatives = []; this.variants = []; this.variantFeatures = [];
+      this.form.patchValue({ modelId: null, generationId: null, derivativeId: null, variantId: null }, { emitEvent: false });
+      if (!makeId) return;
+      this.api.getModels(makeId).subscribe(models => {
+        this.models = models;
+        if (models.length === 0) { this.refreshVariants(); return; }
+        const genReqs = models.map(m => this.api.getGenerations(m.id));
+        const derReqs = models.map(m => this.api.getDerivatives(m.id));
+        forkJoin({ gens: forkJoin(genReqs).pipe(map(groups => groups.flat())), ders: forkJoin(derReqs).pipe(map(groups => groups.flat())) })
+          .subscribe(({ gens, ders }) => { this.generations = gens; this.derivatives = ders; this.refreshVariants(); });
+      });
     });
 
+    // When Model changes: refresh variants (derivatives/generations already loaded for make)
+    this.form.get('modelId')!.valueChanges.subscribe(() => {
+      this.variants = []; this.form.patchValue({ variantId: null }, { emitEvent: false });
+      this.refreshVariants();
+    });
+
+    // When Year changes: recompute variants
+    this.form.get('year')!.valueChanges.subscribe(() => {
+      this.variants = []; this.form.patchValue({ variantId: null }, { emitEvent: false });
+      this.refreshVariants();
+    });
+
+    // On Variant selection: derive generation/derivative and load features
     this.form.get('variantId')!.valueChanges.subscribe(variantId => {
       this.variantFeatures = [];
+      const variant = this.variants.find(v => v.id === variantId!);
+      const der = this.derivatives.find(d => d.id === variant?.derivativeId);
+      const genId = der?.generationId ?? null;
+      this.form.patchValue({ derivativeId: der?.id ?? null, generationId: genId }, { emitEvent: false });
       if (variantId) this.api.getVariantFeatures(variantId).subscribe(vf => this.variantFeatures = vf);
     });
   }
@@ -92,13 +113,17 @@ export class AddListingComponent {
     this.saving = true;
     this.form.disable({ emitEvent: false });
     const raw = this.form.value;
+    const makeName = this.makes.find(x => x.id === raw.makeId!)?.name;
+    const modelName = this.models.find(x => x.id === raw.modelId!)?.name;
+    const year = raw.year!;
+    const computedTitle = `${makeName ?? ''} ${modelName ?? ''} ${year}`.trim();
     const dto: CreateListingDto = {
-      title: raw.title!, description: raw.description ?? undefined, year: raw.year!, mileage: raw.mileage!, price: raw.price!, color: raw.color ?? undefined,
+      title: computedTitle, description: raw.description ?? undefined, year: raw.year!, mileage: raw.mileage!, price: raw.price!,
       makeId: raw.makeId!, modelId: raw.modelId!, generationId: raw.generationId!, derivativeId: raw.derivativeId!, variantId: raw.variantId!,
       transmissionId: raw.transmissionId ?? undefined, fuelTypeId: raw.fuelTypeId ?? undefined, bodyTypeId: raw.bodyTypeId!,
       // snapshots
-      makeName: this.makes.find(x => x.id === raw.makeId!)?.name,
-      modelName: this.models.find(x => x.id === raw.modelId!)?.name,
+      makeName,
+      modelName,
       generationName: this.generations.find(x => x.id === raw.generationId!)?.name,
       derivativeName: this.derivatives.find(x => x.id === raw.derivativeId!)?.name,
       variantName: this.variants.find(x => x.id === raw.variantId!)?.name,
@@ -122,6 +147,31 @@ export class AddListingComponent {
           });
         },
         error: (e) => this.notify.error(typeof e === 'string' ? e : 'Failed to create listing')
+      });
+  }
+
+  private refreshVariants() {
+    const makeId = this.form.value.makeId;
+    const modelId = this.form.value.modelId;
+    const year = this.form.value.year;
+    if (!makeId || !year) return; // Need at least make + year
+    const allowedModelIds = new Set(this.models.map(m => m.id));
+    // Filter generations by year range and by model filter (if a model is chosen)
+    const gensForYear = this.generations.filter(g => {
+      const start = g.startYear ?? 0;
+      const end = g.endYear ?? 9999;
+      const inYear = year >= start && year <= end;
+      const inMake = allowedModelIds.has(g.modelId);
+      const matchesModel = !modelId || g.modelId === modelId;
+      return inYear && inMake && matchesModel;
+    });
+    if (gensForYear.length === 0) { this.variants = []; return; }
+    forkJoin(gensForYear.map(g => this.api.getVariantsByGeneration(g.id)))
+      .pipe(map(groups => groups.flat()))
+      .subscribe(vars => {
+        const allowedDerivatives = this.derivatives.filter(d => allowedModelIds.has(d.modelId) && (!modelId || d.modelId === modelId));
+        const allowedDerIds = new Set(allowedDerivatives.map(d => d.id));
+        this.variants = vars.filter(v => allowedDerIds.has(v.derivativeId));
       });
   }
 }
