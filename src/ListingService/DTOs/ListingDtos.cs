@@ -85,16 +85,4 @@ public class UpdateListingDto
 }
 
 // Reference DTOs for output
-public record MakeDto(int id, string name);
-public record ModelDto(int id, string name, int makeId);
-public record GenerationDto(int id, string name, int modelId, int? startYear, int? endYear);
-public record DerivativeDto(int id, string? name, int modelId, int? generationId, int bodyTypeId, short seats, short doors, string? engine, int? transmissionId, int? fuelTypeId, decimal? batteryCapacityKWh);
-public record VariantDto(int id, string name, int derivativeId);
-public record OptionDto(int id, string name);
-
-public class VariantOptionsDto
-{
-    public List<OptionDto> transmissions { get; set; } = new();
-    public List<OptionDto> fuelTypes { get; set; } = new();
-    public List<OptionDto> bodyTypes { get; set; } = new();
-}
+// Reference DTOs removed from ListingService; use CatalogService for reference data.

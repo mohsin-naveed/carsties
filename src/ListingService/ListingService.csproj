@@ -21,4 +21,13 @@
     </PackageReference>
   </ItemGroup>
 
+  <!-- Exclude deprecated stub files from compilation (pending physical deletion) -->
+  <ItemGroup>
+    <Compile Remove="Controllers\ReferencesController.cs" />
+    <Compile Remove="Controllers\SyncController.cs" />
+    <Compile Remove="Services\CatalogSyncService.cs" />
+    <Compile Remove="Services\DbCatalogLookup.cs" />
+    <Compile Remove="Services\CatalogLookupService.cs" />
+  </ItemGroup>
+
 </Project>

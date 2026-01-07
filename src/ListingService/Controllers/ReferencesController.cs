@@ -1,60 +1,20 @@
-using AutoMapper;
-using AutoMapper.QueryableExtensions;
-using ListingService.Data;
-using ListingService.DTOs;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 
 namespace ListingService.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 [ApiExplorerSettings(IgnoreApi = true)]
-[Obsolete("Deprecated: Reference data now comes from CatalogService. Use Catalog API from frontend; these endpoints will be removed.")]
-public class ReferencesController(ListingDbContext context, IMapper mapper) : ControllerBase
+[Obsolete("Deprecated: Reference data comes from CatalogService. These endpoints return 410 and will be removed.")]
+public class ReferencesController : ControllerBase
 {
-    [HttpGet("makes")]
-    public async Task<ActionResult<List<MakeDto>>> GetMakes() =>
-        await context.Makes.OrderBy(x => x.Name).ProjectTo<MakeDto>(mapper.ConfigurationProvider).ToListAsync();
+    private ActionResult Gone(string endpoint) => StatusCode(StatusCodes.Status410Gone, $"Deprecated endpoint '{endpoint}'. Use CatalogService.");
 
-    [HttpGet("models")]
-    public async Task<ActionResult<List<ModelDto>>> GetModels([FromQuery] int? makeId)
-    {
-        var query = context.Models.AsQueryable();
-        if (makeId.HasValue) query = query.Where(m => m.MakeId == makeId);
-        return await query.OrderBy(x => x.Name).ProjectTo<ModelDto>(mapper.ConfigurationProvider).ToListAsync();
-    }
-
-    [HttpGet("generations")]
-    public async Task<ActionResult<List<GenerationDto>>> GetGenerations([FromQuery] int? modelId)
-    {
-        var query = context.Generations.AsQueryable();
-        if (modelId.HasValue) query = query.Where(g => g.ModelId == modelId);
-        return await query.OrderBy(x => x.Name).ProjectTo<GenerationDto>(mapper.ConfigurationProvider).ToListAsync();
-    }
-
-    [HttpGet("derivatives")]
-    public async Task<ActionResult<List<DerivativeDto>>> GetDerivatives([FromQuery] int? modelId)
-    {
-        var query = context.Derivatives.AsQueryable();
-        if (modelId.HasValue) query = query.Where(d => d.ModelId == modelId);
-        return await query.OrderBy(x => x.Name).ProjectTo<DerivativeDto>(mapper.ConfigurationProvider).ToListAsync();
-    }
-
-    [HttpGet("variants")]
-    public async Task<ActionResult<List<VariantDto>>> GetVariants([FromQuery] int? derivativeId)
-    {
-        var query = context.Variants.AsQueryable();
-        if (derivativeId.HasValue) query = query.Where(v => v.DerivativeId == derivativeId);
-        return await query.OrderBy(x => x.Name).ProjectTo<VariantDto>(mapper.ConfigurationProvider).ToListAsync();
-    }
-
-    [HttpGet("options")]
-    public async Task<ActionResult<VariantOptionsDto>> GetOptions()
-    {
-        var transmissions = await context.Transmissions.OrderBy(x => x.Name).ProjectTo<OptionDto>(mapper.ConfigurationProvider).ToListAsync();
-        var fuelTypes = await context.FuelTypes.OrderBy(x => x.Name).ProjectTo<OptionDto>(mapper.ConfigurationProvider).ToListAsync();
-        var bodyTypes = await context.BodyTypes.OrderBy(x => x.Name).ProjectTo<OptionDto>(mapper.ConfigurationProvider).ToListAsync();
-        return new VariantOptionsDto { transmissions = transmissions, fuelTypes = fuelTypes, bodyTypes = bodyTypes };
-    }
+    [HttpGet("makes")] public ActionResult GetMakes() => Gone("makes");
+    [HttpGet("models")] public ActionResult GetModels() => Gone("models");
+    [HttpGet("generations")] public ActionResult GetGenerations() => Gone("generations");
+    [HttpGet("derivatives")] public ActionResult GetDerivatives() => Gone("derivatives");
+    [HttpGet("variants")] public ActionResult GetVariants() => Gone("variants");
+    [HttpGet("options")] public ActionResult GetOptions() => Gone("options");
 }

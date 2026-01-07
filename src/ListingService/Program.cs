@@ -47,8 +47,7 @@ void ConfigureCatalogClient(HttpClient client)
     client.BaseAddress = new Uri(normalized);
 }
 
-// Typed clients
-builder.Services.AddHttpClient<CatalogSyncService>(ConfigureCatalogClient);
+// Typed client for Catalog lookup (HTTP)
 builder.Services.AddHttpClient<ListingService.Services.CatalogLookup>(ConfigureCatalogClient);
 builder.Services.AddScoped<ListingService.Services.ICatalogLookup>(sp => sp.GetRequiredService<ListingService.Services.CatalogLookup>());
 

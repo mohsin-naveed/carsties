@@ -11,24 +11,15 @@ public class DbInitializer
     {
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ListingDbContext>();
-        var sync = scope.ServiceProvider.GetRequiredService<CatalogSyncService>();
-
         if (app.Environment.IsDevelopment())
         {
+            // Recreate schema based on current model (Listings only)
             ResetDatabase(context);
+            context.Database.EnsureCreated();
+            return;
         }
-        try
-        {
-            context.Database.Migrate();
-
-            // Sync reference data from CatalogService
-            sync.SyncReferenceDataAsync(context).GetAwaiter().GetResult();
-        }
-        catch (Exception ex)
-        {
-            // In development, avoid crashing the app if DB or Catalog is not ready yet
-            Console.WriteLine($"DbInitializer warning: {ex.Message}");
-        }
+        // In non-dev, ensure DB exists
+        context.Database.EnsureCreated();
     }
 
     private static void ResetDatabase(ListingDbContext context)
