@@ -6,18 +6,26 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatOptionModule } from '@angular/material/core';
+import { MatCardModule } from '@angular/material/card';
 import { ObserversModule } from '@angular/cdk/observers';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ListingsApiService, MakeDto, ModelDto, GenerationDto, DerivativeDto, VariantDto, OptionDto, CreateListingDto, VariantFeatureSnapshot } from './listings-api.service';
+import { NotificationService } from '../core/notification.service';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-add-listing',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ObserversModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatOptionModule, MatButtonModule],
-  templateUrl: './add-listing.component.html'
+  imports: [CommonModule, ReactiveFormsModule, ObserversModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatOptionModule, MatButtonModule, MatCardModule, MatProgressSpinnerModule],
+  templateUrl: './add-listing.component.html',
+  styleUrls: ['./add-listing.component.scss']
 })
 export class AddListingComponent {
   private fb = inject(FormBuilder);
   private api = inject(ListingsApiService);
+  private notify = inject(NotificationService);
+
+  saving = false;
 
   form = this.fb.group({
     title: ['', Validators.required],
@@ -80,7 +88,9 @@ export class AddListingComponent {
   }
 
   submit() {
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.saving) return;
+    this.saving = true;
+    this.form.disable({ emitEvent: false });
     const raw = this.form.value;
     const dto: CreateListingDto = {
       title: raw.title!, description: raw.description ?? undefined, year: raw.year!, mileage: raw.mileage!, price: raw.price!, color: raw.color ?? undefined,
@@ -101,6 +111,17 @@ export class AddListingComponent {
       batteryCapacityKWhSnapshot: this.derivatives.find(x => x.id === raw.derivativeId!)?.batteryCapacityKWh,
       variantFeaturesJson: this.variantFeatures.length ? JSON.stringify(this.variantFeatures) : undefined
     };
-    this.api.createListing(dto).subscribe({ next: () => alert('Listing created'), error: (e) => alert('Failed: ' + e) });
+    this.api.createListing(dto)
+      .pipe(finalize(() => { this.saving = false; this.form.enable({ emitEvent: false }); }))
+      .subscribe({
+        next: () => {
+          const ref = this.notify.success('Listing created', 'View listings');
+          ref.onAction().subscribe(() => {
+            const el = document.getElementById('listings-section');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
+        },
+        error: (e) => this.notify.error(typeof e === 'string' ? e : 'Failed to create listing')
+      });
   }
 }

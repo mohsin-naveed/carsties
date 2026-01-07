@@ -34,11 +34,15 @@ builder.Services.AddAutoMapper(typeof(Program).Assembly);
 void ConfigureCatalogClient(HttpClient client)
 {
     var baseUrl = builder.Configuration.GetSection("CatalogApi").GetValue<string>("BaseUrl") ?? "http://localhost:5208/api";
-    // Ensure BaseAddress includes '/api' path segment
+    // Ensure BaseAddress includes '/api/' path segment and ends with a trailing slash so relative URIs append correctly
     var normalized = baseUrl.TrimEnd('/');
     if (!normalized.EndsWith("/api", StringComparison.OrdinalIgnoreCase))
     {
         normalized += "/api";
+    }
+    if (!normalized.EndsWith('/'))
+    {
+        normalized += "/";
     }
     client.BaseAddress = new Uri(normalized);
 }

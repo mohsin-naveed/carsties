@@ -1,35 +1,64 @@
 <div style="margin-top:24px">
   <h2>Saved Listings</h2>
-  <div *ngIf="loading">Loading...</div>
-  <table *ngIf="!loading && items.length" style="width:100%; border-collapse:collapse">
-    <thead>
-      <tr>
-        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Title</th>
-        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Make</th>
-        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Model</th>
-        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Generation</th>
-        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Derivative</th>
-        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Variant</th>
-        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Body</th>
-        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Trans</th>
-        <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px">Fuel</th>
-        <th style="text-align:right; border-bottom:1px solid #ddd; padding:6px">Price</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let l of items">
-        <td style="padding:6px; border-bottom:1px solid #f0f0f0">{{ l.title }}</td>
-        <td style="padding:6px; border-bottom:1px solid #f0f0f0">{{ l.makeName || l.makeId }}</td>
-        <td style="padding:6px; border-bottom:1px solid #f0f0f0">{{ l.modelName || l.modelId }}</td>
-        <td style="padding:6px; border-bottom:1px solid #f0f0f0">{{ l.generationName || l.generationId }}</td>
-        <td style="padding:6px; border-bottom:1px solid #f0f0f0">{{ l.derivativeName || l.derivativeId }}</td>
-        <td style="padding:6px; border-bottom:1px solid #f0f0f0">{{ l.variantName || l.variantId }}</td>
-        <td style="padding:6px; border-bottom:1px solid #f0f0f0">{{ l.bodyTypeName || l.bodyTypeId }}</td>
-        <td style="padding:6px; border-bottom:1px solid #f0f0f0">{{ l.transmissionName || l.transmissionId || '-' }}</td>
-        <td style="padding:6px; border-bottom:1px solid #f0f0f0">{{ l.fuelTypeName || l.fuelTypeId || '-' }}</td>
-        <td style="padding:6px; border-bottom:1px solid #f0f0f0; text-align:right">{{ l.price | number:'1.0-0' }}</td>
-      </tr>
-    </tbody>
-  </table>
-  <div *ngIf="!loading && !items.length">No listings yet.</div>
+  <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+
+  <div *ngIf="!loading && !dataSource.data.length">No listings yet.</div>
+
+  <div *ngIf="!loading && dataSource.data.length">
+    <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z1 mat-mdc-table">
+      <ng-container matColumnDef="title">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Title </th>
+        <td mat-cell *matCellDef="let l"> {{ l.title }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="make">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Make </th>
+        <td mat-cell *matCellDef="let l"> {{ l.makeName || l.makeId }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="model">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Model </th>
+        <td mat-cell *matCellDef="let l"> {{ l.modelName || l.modelId }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="generation">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Generation </th>
+        <td mat-cell *matCellDef="let l"> {{ l.generationName || l.generationId }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="derivative">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Derivative </th>
+        <td mat-cell *matCellDef="let l"> {{ l.derivativeName || l.derivativeId }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="variant">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Variant </th>
+        <td mat-cell *matCellDef="let l"> {{ l.variantName || l.variantId }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="body">
+        <th mat-header-cell *matHeaderCellDef> Body </th>
+        <td mat-cell *matCellDef="let l"> {{ l.bodyTypeName || l.bodyTypeId }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="transmission">
+        <th mat-header-cell *matHeaderCellDef> Trans </th>
+        <td mat-cell *matCellDef="let l"> {{ l.transmissionName || l.transmissionId || '-' }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="fuel">
+        <th mat-header-cell *matHeaderCellDef> Fuel </th>
+        <td mat-cell *matCellDef="let l"> {{ l.fuelTypeName || l.fuelTypeId || '-' }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="price">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header style="text-align:right"> Price </th>
+        <td mat-cell *matCellDef="let l" style="text-align:right"> {{ l.price | number:'1.0-0' }} </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+    <mat-paginator [pageSize]="10" [pageSizeOptions]="[5,10,25,50]"></mat-paginator>
+  </div>
 </div>

@@ -1,5 +1,20 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
+import { NotificationService } from './notification.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
-  return next(req).pipe();
+  const notify = inject(NotificationService);
+  return next(req).pipe(
+    catchError((err: unknown) => {
+      if (err instanceof HttpErrorResponse) {
+        const msg = err.error?.message || err.statusText || 'Unexpected error';
+        notify.error(msg);
+      } else {
+        notify.error('Unexpected error');
+      }
+      return throwError(() => err);
+    })
+  );
 };
