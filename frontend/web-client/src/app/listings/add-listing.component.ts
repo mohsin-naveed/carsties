@@ -7,9 +7,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatOptionModule } from '@angular/material/core';
 import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ObserversModule } from '@angular/cdk/observers';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ListingsApiService, MakeDto, ModelDto, GenerationDto, DerivativeDto, VariantDto, OptionDto, CreateListingDto, VariantFeatureSnapshot } from './listings-api.service';
+import { ListingsApiService, MakeDto, ModelDto, GenerationDto, DerivativeDto, VariantDto, OptionDto, CreateListingDto, VariantFeatureSnapshot, FeatureDto } from './listings-api.service';
 import { forkJoin } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { NotificationService } from '../core/notification.service';
@@ -18,7 +19,7 @@ import { finalize } from 'rxjs/operators';
 @Component({
   selector: 'app-add-listing',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ObserversModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatOptionModule, MatButtonModule, MatCardModule, MatProgressSpinnerModule],
+  imports: [CommonModule, ReactiveFormsModule, ObserversModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatOptionModule, MatButtonModule, MatCardModule, MatProgressSpinnerModule, MatCheckboxModule],
   templateUrl: './add-listing.component.html',
   styleUrls: ['./add-listing.component.scss']
 })
@@ -55,6 +56,8 @@ export class AddListingComponent {
   fuelTypes: OptionDto[] = [];
   bodyTypes: OptionDto[] = [];
   variantFeatures: VariantFeatureSnapshot[] = [];
+  features: FeatureDto[] = [];
+  selectedFeatureIds = new Set<number>();
 
   constructor() {
     // Build years dropdown (descending from current year to 1900)
@@ -64,6 +67,7 @@ export class AddListingComponent {
     // Load static reference data
     this.api.getMakes().subscribe(m => this.makes = m);
     this.api.getOptions().subscribe(o => { this.transmissions = o.transmissions; this.fuelTypes = o.fuelTypes; this.bodyTypes = o.bodyTypes; });
+    this.api.getFeatures().subscribe(f => this.features = f);
 
     // When Make changes: load models under make, aggregate derivatives/generations for its models, then refresh variants
     this.form.get('makeId')!.valueChanges.subscribe(makeId => {
@@ -95,11 +99,16 @@ export class AddListingComponent {
     // On Variant selection: derive generation/derivative and load features
     this.form.get('variantId')!.valueChanges.subscribe(variantId => {
       this.variantFeatures = [];
+      this.selectedFeatureIds.clear();
       const variant = this.variants.find(v => v.id === variantId!);
       const der = this.derivatives.find(d => d.id === variant?.derivativeId);
       const genId = der?.generationId ?? null;
       this.form.patchValue({ derivativeId: der?.id ?? null, generationId: genId }, { emitEvent: false });
-      if (variantId) this.api.getVariantFeatures(variantId).subscribe(vf => this.variantFeatures = vf);
+      if (variantId) this.api.getVariantFeatures(variantId).subscribe(vf => {
+        this.variantFeatures = vf;
+        // Preselect variant features
+        vf.forEach(v => this.selectedFeatureIds.add(v.featureId));
+      });
     });
   }
 
@@ -134,7 +143,7 @@ export class AddListingComponent {
       doorsSnapshot: this.derivatives.find(x => x.id === raw.derivativeId!)?.doors,
       engineSnapshot: this.derivatives.find(x => x.id === raw.derivativeId!)?.engine,
       batteryCapacityKWhSnapshot: this.derivatives.find(x => x.id === raw.derivativeId!)?.batteryCapacityKWh,
-      variantFeaturesJson: this.variantFeatures.length ? JSON.stringify(this.variantFeatures) : undefined
+      featureIds: Array.from(this.selectedFeatureIds)
     };
     this.api.createListing(dto)
       .pipe(finalize(() => { this.saving = false; this.form.enable({ emitEvent: false }); }))
@@ -148,6 +157,12 @@ export class AddListingComponent {
         },
         error: (e) => this.notify.error(typeof e === 'string' ? e : 'Failed to create listing')
       });
+  }
+
+  // Additional Information: toggle feature selection
+  toggleFeature(featureId: number, checked: boolean) {
+    if (checked) this.selectedFeatureIds.add(featureId);
+    else this.selectedFeatureIds.delete(featureId);
   }
 
   private refreshVariants() {

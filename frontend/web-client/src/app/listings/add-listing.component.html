@@ -69,6 +69,34 @@
     <mat-error *ngIf="form.get('bodyTypeId')?.hasError('required') && form.get('bodyTypeId')?.touched">Body Type is required</mat-error>
   </mat-form-field>
 
+  <!-- Additional Information: Features -->
+  <div style="grid-column:1/-1; margin-top:8px;">
+    <h4>Additional Information</h4>
+    <div><strong>Features</strong></div>
+    <div style="display:flex; flex-wrap:wrap; gap:12px;">
+      <!-- Show variant features first, checked -->
+      <ng-container *ngFor="let f of features">
+        <ng-container *ngIf="selectedFeatureIds.has(f.id)">
+          <mat-checkbox color="primary"
+                        [checked]="true"
+                        (change)="toggleFeature(f.id, $event.checked)">
+            {{f.name}}
+          </mat-checkbox>
+        </ng-container>
+      </ng-container>
+      <!-- Then show remaining features unchecked -->
+      <ng-container *ngFor="let f of features">
+        <ng-container *ngIf="!selectedFeatureIds.has(f.id)">
+          <mat-checkbox color="primary"
+                        [checked]="false"
+                        (change)="toggleFeature(f.id, $event.checked)">
+            {{f.name}}
+          </mat-checkbox>
+        </ng-container>
+      </ng-container>
+    </div>
+  </div>
+
     <div class="actions">
       <button mat-raised-button color="primary" type="submit" [disabled]="saving || form.invalid">
         <mat-progress-spinner *ngIf="saving" mode="indeterminate" diameter="18" strokeWidth="3"></mat-progress-spinner>
@@ -96,5 +124,6 @@
     <div><strong>Engine:</strong> {{ findById(derivatives, form.value.derivativeId)?.engine || '-' }}</div>
     <div><strong>Battery (kWh):</strong> {{ findById(derivatives, form.value.derivativeId)?.batteryCapacityKWh || '-' }}</div>
     <div style="grid-column:1/-1"><strong>Variant Features:</strong> {{ variantFeatures?.length || 0 }}</div>
+    <div style="grid-column:1/-1"><strong>Selected Features:</strong> {{ selectedFeatureIds.size }}</div>
   </div>
 </mat-card>

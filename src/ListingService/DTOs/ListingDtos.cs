@@ -63,7 +63,7 @@ public class CreateListingDto
     public short? DoorsSnapshot { get; set; }
     public string? EngineSnapshot { get; set; }
     public decimal? BatteryCapacityKWhSnapshot { get; set; }
-    public string? VariantFeaturesJson { get; set; }
+    public int[]? FeatureIds { get; set; }
 }
 
 public class UpdateListingDto

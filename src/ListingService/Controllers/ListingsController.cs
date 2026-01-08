@@ -35,15 +35,28 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         {
             await catalog.PopulateSnapshotsAsync(listing);
         }
-        // Fetch variant features from Catalog and persist JSON snapshot
-        var vfs = await catalog.GetVariantFeaturesAsync(listing.VariantId);
-        if (vfs.Count > 0)
-        {
-            listing.VariantFeaturesJson = System.Text.Json.JsonSerializer.Serialize(vfs);
-        }
+        // Persist selected features into relational table
+        var featureIds = dto.FeatureIds ?? Array.Empty<int>();
         context.Listings.Add(listing);
         var ok = await context.SaveChangesAsync() > 0;
         if (!ok) return BadRequest("Failed to create listing");
+
+        if (featureIds.Length > 0)
+        {
+            foreach (var fid in featureIds.Distinct())
+            {
+                var exists = await context.Features.AnyAsync(x => x.Id == fid);
+                if (!exists)
+                {
+                    var f = await catalog.GetFeatureAsync(fid);
+                    if (f is null) return BadRequest($"Unknown featureId {fid}");
+                    context.Features.Add(new Feature { Id = f.Id, Name = f.Name });
+                    await context.SaveChangesAsync();
+                }
+                context.ListingFeatures.Add(new ListingFeature { ListingId = listing.Id, FeatureId = fid });
+            }
+            await context.SaveChangesAsync();
+        }
         var result = mapper.Map<ListingDto>(listing);
         return CreatedAtAction(nameof(Get), new { id = listing.Id }, result);
     }

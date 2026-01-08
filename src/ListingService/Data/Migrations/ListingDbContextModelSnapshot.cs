@@ -22,83 +22,6 @@ namespace ListingService.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("ListingService.Entities.BodyType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("BodyTypes", (string)null);
-                });
-
-            modelBuilder.Entity("ListingService.Entities.Derivative", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal?>("BatteryCapacityKWh")
-                        .HasColumnType("numeric");
-
-                    b.Property<int>("BodyTypeId")
-                        .HasColumnType("integer");
-
-                    b.Property<short>("Doors")
-                        .HasColumnType("smallint");
-
-                    b.Property<string>("Engine")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<int?>("FuelTypeId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("GenerationId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ModelId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<short>("Seats")
-                        .HasColumnType("smallint");
-
-                    b.Property<int?>("TransmissionId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BodyTypeId");
-
-                    b.HasIndex("FuelTypeId");
-
-                    b.HasIndex("GenerationId");
-
-                    b.HasIndex("ModelId");
-
-                    b.HasIndex("TransmissionId");
-
-                    b.ToTable("Derivatives", (string)null);
-                });
-
             modelBuilder.Entity("ListingService.Entities.Feature", b =>
                 {
                     b.Property<int>("Id")
@@ -118,60 +41,7 @@ namespace ListingService.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
-                        .IsUnique();
-
                     b.ToTable("Features", (string)null);
-                });
-
-            modelBuilder.Entity("ListingService.Entities.FuelType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("FuelTypes", (string)null);
-                });
-
-            modelBuilder.Entity("ListingService.Entities.Generation", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<short?>("EndYear")
-                        .HasColumnType("smallint");
-
-                    b.Property<int>("ModelId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<short?>("StartYear")
-                        .HasColumnType("smallint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ModelId");
-
-                    b.ToTable("Generations", (string)null);
                 });
 
             modelBuilder.Entity("ListingService.Entities.Listing", b =>
@@ -271,9 +141,6 @@ namespace ListingService.Data.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("VariantFeaturesJson")
-                        .HasColumnType("jsonb");
-
                     b.Property<int>("VariantId")
                         .HasColumnType("integer");
 
@@ -285,22 +152,6 @@ namespace ListingService.Data.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BodyTypeId");
-
-                    b.HasIndex("DerivativeId");
-
-                    b.HasIndex("FuelTypeId");
-
-                    b.HasIndex("GenerationId");
-
-                    b.HasIndex("MakeId");
-
-                    b.HasIndex("ModelId");
-
-                    b.HasIndex("TransmissionId");
-
-                    b.HasIndex("VariantId");
 
                     b.ToTable("Listings", (string)null);
                 });
@@ -320,211 +171,6 @@ namespace ListingService.Data.Migrations
                     b.ToTable("ListingFeatures", (string)null);
                 });
 
-            modelBuilder.Entity("ListingService.Entities.Make", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("Makes", (string)null);
-                });
-
-            modelBuilder.Entity("ListingService.Entities.Model", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("MakeId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MakeId");
-
-                    b.ToTable("Models", (string)null);
-                });
-
-            modelBuilder.Entity("ListingService.Entities.Transmission", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("Transmissions", (string)null);
-                });
-
-            modelBuilder.Entity("ListingService.Entities.Variant", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("DerivativeId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Engine")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<int?>("FuelTypeId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<int?>("TransmissionId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DerivativeId");
-
-                    b.HasIndex("FuelTypeId");
-
-                    b.HasIndex("TransmissionId");
-
-                    b.ToTable("Variants", (string)null);
-                });
-
-            modelBuilder.Entity("ListingService.Entities.Derivative", b =>
-                {
-                    b.HasOne("ListingService.Entities.BodyType", "BodyTypeRef")
-                        .WithMany("Derivatives")
-                        .HasForeignKey("BodyTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ListingService.Entities.FuelType", "FuelTypeRef")
-                        .WithMany()
-                        .HasForeignKey("FuelTypeId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ListingService.Entities.Generation", "Generation")
-                        .WithMany()
-                        .HasForeignKey("GenerationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ListingService.Entities.Model", "Model")
-                        .WithMany("Derivatives")
-                        .HasForeignKey("ModelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ListingService.Entities.Transmission", "TransmissionRef")
-                        .WithMany()
-                        .HasForeignKey("TransmissionId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("BodyTypeRef");
-
-                    b.Navigation("FuelTypeRef");
-
-                    b.Navigation("Generation");
-
-                    b.Navigation("Model");
-
-                    b.Navigation("TransmissionRef");
-                });
-
-            modelBuilder.Entity("ListingService.Entities.Generation", b =>
-                {
-                    b.HasOne("ListingService.Entities.Model", "Model")
-                        .WithMany("Generations")
-                        .HasForeignKey("ModelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Model");
-                });
-
-            modelBuilder.Entity("ListingService.Entities.Listing", b =>
-                {
-                    b.HasOne("ListingService.Entities.BodyType", null)
-                        .WithMany()
-                        .HasForeignKey("BodyTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ListingService.Entities.Derivative", null)
-                        .WithMany()
-                        .HasForeignKey("DerivativeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ListingService.Entities.FuelType", null)
-                        .WithMany()
-                        .HasForeignKey("FuelTypeId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ListingService.Entities.Generation", null)
-                        .WithMany()
-                        .HasForeignKey("GenerationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ListingService.Entities.Make", null)
-                        .WithMany()
-                        .HasForeignKey("MakeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ListingService.Entities.Model", null)
-                        .WithMany()
-                        .HasForeignKey("ModelId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ListingService.Entities.Transmission", null)
-                        .WithMany()
-                        .HasForeignKey("TransmissionId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ListingService.Entities.Variant", "Variant")
-                        .WithMany()
-                        .HasForeignKey("VariantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Variant");
-                });
-
             modelBuilder.Entity("ListingService.Entities.ListingFeature", b =>
                 {
                     b.HasOne("ListingService.Entities.Feature", "Feature")
@@ -533,71 +179,15 @@ namespace ListingService.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ListingService.Entities.Listing", null)
-                        .WithMany("Features")
+                    b.HasOne("ListingService.Entities.Listing", "Listing")
+                        .WithMany()
                         .HasForeignKey("ListingId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Feature");
-                });
 
-            modelBuilder.Entity("ListingService.Entities.Model", b =>
-                {
-                    b.HasOne("ListingService.Entities.Make", "Make")
-                        .WithMany("Models")
-                        .HasForeignKey("MakeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Make");
-                });
-
-            modelBuilder.Entity("ListingService.Entities.Variant", b =>
-                {
-                    b.HasOne("ListingService.Entities.Derivative", "Derivative")
-                        .WithMany()
-                        .HasForeignKey("DerivativeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ListingService.Entities.FuelType", "FuelTypeRef")
-                        .WithMany()
-                        .HasForeignKey("FuelTypeId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ListingService.Entities.Transmission", "TransmissionRef")
-                        .WithMany()
-                        .HasForeignKey("TransmissionId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Derivative");
-
-                    b.Navigation("FuelTypeRef");
-
-                    b.Navigation("TransmissionRef");
-                });
-
-            modelBuilder.Entity("ListingService.Entities.BodyType", b =>
-                {
-                    b.Navigation("Derivatives");
-                });
-
-            modelBuilder.Entity("ListingService.Entities.Listing", b =>
-                {
-                    b.Navigation("Features");
-                });
-
-            modelBuilder.Entity("ListingService.Entities.Make", b =>
-                {
-                    b.Navigation("Models");
-                });
-
-            modelBuilder.Entity("ListingService.Entities.Model", b =>
-                {
-                    b.Navigation("Derivatives");
-
-                    b.Navigation("Generations");
+                    b.Navigation("Listing");
                 });
 #pragma warning restore 612, 618
         }

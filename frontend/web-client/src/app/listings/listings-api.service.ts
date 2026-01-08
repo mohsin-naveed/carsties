@@ -12,6 +12,7 @@ export interface VariantDto { id: number; name: string; derivativeId: number; }
 export interface OptionDto { id: number; name: string; }
 export interface VariantOptionsDto { transmissions: OptionDto[]; fuelTypes: OptionDto[]; bodyTypes: OptionDto[]; }
 export interface VariantFeatureSnapshot { variantId: number; featureId: number; isStandard: boolean; }
+export interface FeatureDto { id: number; name: string; description?: string; }
 export interface ListingDto {
   id: number; title: string; description?: string; year: number; mileage: number; price: number; color?: string;
   makeId: number; modelId: number; generationId: number; derivativeId: number; variantId: number;
@@ -29,13 +30,13 @@ export interface CreateListingDto {
   makeName?: string; modelName?: string; generationName?: string; derivativeName?: string; variantName?: string;
   bodyTypeName?: string; transmissionName?: string; fuelTypeName?: string;
   seatsSnapshot?: number; doorsSnapshot?: number; engineSnapshot?: string; batteryCapacityKWhSnapshot?: number;
-  variantFeaturesJson?: string;
+  featureIds?: number[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class ListingsApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '';
+  private readonly baseUrl = environment.apiBaseUrl;
   private readonly catalogBaseUrl = environment.catalogApiBaseUrl;
 
   // Reference data direct from CatalogService
@@ -53,6 +54,7 @@ export class ListingsApiService {
     }).pipe(map(({ varOpts, bodies }) => ({ transmissions: varOpts.transmissions, fuelTypes: varOpts.fuelTypes, bodyTypes: bodies })));
   }
   getVariantFeatures(variantId: number): Observable<VariantFeatureSnapshot[]> { return this.http.get<VariantFeatureSnapshot[]>(`${this.catalogBaseUrl}/variantfeatures`, { params: { variantId } as any }); }
+  getFeatures(): Observable<FeatureDto[]> { return this.http.get<FeatureDto[]>(`${this.catalogBaseUrl}/features`); }
 
   // ListingService endpoints
   getListings(): Observable<ListingDto[]> { return this.http.get<ListingDto[]>(`${this.baseUrl}/listings`); }
