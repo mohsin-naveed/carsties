@@ -6,7 +6,6 @@ namespace ListingService.Data;
 public class ListingDbContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<Listing> Listings => Set<Listing>();
-    public DbSet<Feature> Features => Set<Feature>();
     public DbSet<ListingFeature> ListingFeatures => Set<ListingFeature>();
     
 
@@ -39,20 +38,13 @@ public class ListingDbContext(DbContextOptions options) : DbContext(options)
             // JSON snapshot removed in favor of relational ListingFeatures
         });
 
-        modelBuilder.Entity<Feature>(entity =>
-        {
-            entity.ToTable("Features");
-            entity.HasKey(x => x.Id);
-            entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
-            entity.Property(x => x.Description).HasMaxLength(250);
-        });
-
         modelBuilder.Entity<ListingFeature>(entity =>
         {
             entity.ToTable("ListingFeatures");
             entity.HasKey(x => new { x.ListingId, x.FeatureId });
             entity.HasOne(x => x.Listing).WithMany().HasForeignKey(x => x.ListingId).OnDelete(DeleteBehavior.Cascade);
-            entity.HasOne(x => x.Feature).WithMany().HasForeignKey(x => x.FeatureId).OnDelete(DeleteBehavior.Cascade);
+            entity.Property(x => x.FeatureName).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.FeatureDescription).HasMaxLength(250);
         });
     }
 }

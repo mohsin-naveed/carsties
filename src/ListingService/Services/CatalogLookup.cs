@@ -55,7 +55,7 @@ public class CatalogLookup(HttpClient http) : ICatalogLookup
     public async Task<FeatureBasic?> GetFeatureAsync(int featureId)
     {
         var f = await http.GetFromJsonAsync<FeatureDto>($"features/{featureId}");
-        return f is null ? null : new FeatureBasic(f.Id, f.Name);
+        return f is null ? null : new FeatureBasic(f.Id, f.Name, f.Description);
     }
 
     // Minimal internal DTOs matching CatalogService outputs
@@ -65,6 +65,6 @@ public class CatalogLookup(HttpClient http) : ICatalogLookup
     private record VariantDto(int Id, string Name, int DerivativeId);
     private record DerivativeDto(int Id, string? Name, int ModelId, int? GenerationId, int BodyTypeId, string? BodyType, short Seats, short Doors, string? Engine, int? TransmissionId, string? Transmission, int? FuelTypeId, string? FuelType, decimal? BatteryCapacityKWh);
     private record VariantFeatureDto(int VariantId, int FeatureId, bool IsStandard, DateTime AddedDate);
-    private record FeatureDto(int Id, string Name);
+    private record FeatureDto(int Id, string Name, string? Description);
     
 }

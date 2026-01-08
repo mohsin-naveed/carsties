@@ -35,15 +35,10 @@ public class Listing {
     public decimal? BatteryCapacityKWhSnapshot { get; set; }
 }
 
-public class Feature {
-    public int Id { get; set; }
-    public required string Name { get; set; }
-    public string? Description { get; set; }
-}
-
 public class ListingFeature {
     public int ListingId { get; set; }
     public int FeatureId { get; set; }
+    public required string FeatureName { get; set; }
+    public string? FeatureDescription { get; set; }
     public Listing? Listing { get; set; }
-    public Feature? Feature { get; set; }
 }

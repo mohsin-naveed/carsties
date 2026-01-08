@@ -11,4 +11,4 @@ public interface ICatalogLookup
 }
 
 public record VariantFeatureSnapshot(int VariantId, int FeatureId, bool IsStandard);
-public record FeatureBasic(int Id, string Name);
+public record FeatureBasic(int Id, string Name, string? Description);

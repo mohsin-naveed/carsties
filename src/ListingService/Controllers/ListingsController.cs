@@ -35,7 +35,7 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         {
             await catalog.PopulateSnapshotsAsync(listing);
         }
-        // Persist selected features into relational table
+        // Persist selected features with snapshot of feature metadata from CatalogService
         var featureIds = dto.FeatureIds ?? Array.Empty<int>();
         context.Listings.Add(listing);
         var ok = await context.SaveChangesAsync() > 0;
@@ -45,15 +45,15 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         {
             foreach (var fid in featureIds.Distinct())
             {
-                var exists = await context.Features.AnyAsync(x => x.Id == fid);
-                if (!exists)
+                var f = await catalog.GetFeatureAsync(fid);
+                if (f is null) return BadRequest($"Unknown featureId {fid}");
+                context.ListingFeatures.Add(new ListingFeature
                 {
-                    var f = await catalog.GetFeatureAsync(fid);
-                    if (f is null) return BadRequest($"Unknown featureId {fid}");
-                    context.Features.Add(new Feature { Id = f.Id, Name = f.Name });
-                    await context.SaveChangesAsync();
-                }
-                context.ListingFeatures.Add(new ListingFeature { ListingId = listing.Id, FeatureId = fid });
+                    ListingId = listing.Id,
+                    FeatureId = f.Id,
+                    FeatureName = f.Name,
+                    FeatureDescription = f.Description
+                });
             }
             await context.SaveChangesAsync();
         }
