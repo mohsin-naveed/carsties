@@ -1,0 +1,175 @@
+<div class="filter-sidebar">
+  <div class="filter-header">
+    <h3 class="filter-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="filter-icon">
+        <path
+          d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      Filters
+    </h3>
+
+    <div class="filter-actions" *ngIf="getSelectedCount() > 0">
+      <span class="selected-count">({{ getSelectedCount() }} selected)</span>
+      <button class="clear-all-btn" (click)="clearAllFilters()">Clear All</button>
+    </div>
+  </div>
+
+  <div class="filter-content">
+    <div
+      *ngFor="let group of dynamicFilterOptions"
+      class="filter-section"
+      [attr.data-parent]="group.Parent"
+    >
+      <!-- Section Header -->
+      <div class="section-header" (click)="toggleSection(group.Parent)">
+        <div class="section-title-container">
+          <h4 class="section-title">{{ getDisplayParentName(group.Parent) }}</h4>
+          <span class="section-count" *ngIf="getSectionSelectedCount(group.Parent) > 0">
+            ({{ getSectionSelectedCount(group.Parent) }})
+          </span>
+        </div>
+
+        <div class="section-controls">
+          <button
+            *ngIf="getSectionSelectedCount(group.Parent) > 0"
+            class="clear-section-btn"
+            (click)="clearSectionFilters(group.Parent); $event.stopPropagation()"
+          >
+            Clear
+          </button>
+
+          <svg
+            class="expand-icon"
+            [class.expanded]="expandedSections[group.Parent]"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <path
+              d="M6 9L12 15L18 9"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Section Content -->
+      <div class="section-content" [class.expanded]="expandedSections[group.Parent]">
+        <div class="options-container">
+          <!-- Year range: render From/To selects -->
+          <ng-container *ngIf="group.Parent === 'year'">
+            <div class="year-range">
+              <div class="year-control">
+                <label class="year-label">From</label>
+                <select
+                  class="year-from"
+                  [ngModel]="selectedYearFrom"
+                  (ngModelChange)="onYearFromChange($event)"
+                >
+                  <option [ngValue]="null">Any</option>
+                  <option *ngFor="let y of yearFromOptions" [ngValue]="y.Year">
+                    {{ y.Label }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="year-control">
+                <label class="year-label">To</label>
+                <select
+                  class="year-to"
+                  [ngModel]="selectedYearTo"
+                  (ngModelChange)="onYearToChange($event)"
+                  [disabled]="!yearToOptions || yearToOptions.length === 0"
+                >
+                  <option *ngFor="let y of yearToOptions" [ngValue]="y.Year">{{ y.Label }}</option>
+                </select>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Price range: render From/To selects -->
+          <ng-container *ngIf="group.Parent === 'price'">
+            <div class="price-range-row" style="display: flex; gap: 8px; align-items: flex-start">
+              <div class="price-control" style="flex: 1; min-width: 0">
+                <label class="price-label">From</label>
+                <select
+                  class="price-from"
+                  [ngModel]="selectedPriceFrom"
+                  (ngModelChange)="onPriceFromChange($event)"
+                  style="width: 100%; box-sizing: border-box"
+                >
+                  <option [ngValue]="null">Any</option>
+                  <option *ngFor="let p of priceFromOptions" [ngValue]="p.Price">
+                    {{ p.Label }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="price-control" style="flex: 1; min-width: 0">
+                <label class="price-label">To</label>
+                <select
+                  class="price-to"
+                  [ngModel]="selectedPriceTo"
+                  (ngModelChange)="onPriceToChange($event)"
+                  [disabled]="!priceToOptions || priceToOptions.length === 0"
+                  style="width: 100%; box-sizing: border-box"
+                >
+                  <option *ngFor="let p of priceToOptions" [ngValue]="p.Price">
+                    {{ p.Label }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Default: checkbox list for other filters (exclude year and price which use special UI) -->
+          <ng-container *ngIf="group.Parent !== 'year' && group.Parent !== 'price'">
+            <ng-container *ngFor="let option of group.Options">
+              <div class="filter-option" *ngIf="option.Count > 0">
+                <label class="option-label">
+                  <input
+                    type="checkbox"
+                    class="filter-checkbox"
+                    [checked]="isFilterSelected(group.Parent, option.Slug)"
+                    (change)="onFilterChange(group.Parent, option.Slug, $event)"
+                  />
+
+                  <span class="custom-checkbox">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon">
+                      <path
+                        d="M20 6L9 17L4 12"
+                        stroke="currentColor"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </span>
+
+                  <span class="option-text">
+                    {{ option.Name }}
+                    <span class="option-count">({{ option.Count }})</span>
+                  </span>
+                </label>
+              </div>
+            </ng-container>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- No filters message -->
+  <div class="no-filters" *ngIf="filterOptions.length === 0">
+    <p>No filters available</p>
+  </div>
+</div>

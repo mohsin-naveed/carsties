@@ -1,0 +1,108 @@
+<div class="home-landing">
+  <!-- Bread crumb removed from landing page -->
+  <section class="filter-hero">
+    <div class="filter-hero-inner">
+      <div class="filter-hero-header">
+        <h1 class="filter-hero-title">Find Your Next Used Car</h1>
+        <p class="filter-hero-desc">
+          Search thousands of quality used cars from trusted dealers. Use our smart filters to find
+          the perfect match for your needs and budget.
+        </p>
+      </div>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="make-select">Make</label>
+          <select id="make-select" [(ngModel)]="selectedMake" (change)="onMakeChange()">
+            <option value="">All Makes</option>
+            <option *ngFor="let make of makes" [value]="make">{{ make }}</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="model-select">Model</label>
+          <select
+            id="model-select"
+            [(ngModel)]="selectedModel"
+            (change)="onModelChange()"
+            [disabled]="!selectedMake"
+          >
+            <option value="">All Models</option>
+            <option *ngFor="let model of models" [value]="model">{{ model }}</option>
+          </select>
+        </div>
+        <button class="btn primary search-btn" (click)="searchCars()">
+          Search Cars
+          <span class="search-btn-count">({{ filteredCars.length }})</span>
+        </button>
+      </div>
+    </div>
+  </section>
+  <section class="features">
+    <div class="feature-card">
+      <img
+        src="https://ik.imagekit.io/awgxmxfhhhr/web/Find_us_.svg?tr=h-80,w-80"
+        alt="Local to you"
+      />
+      <h3>Local to you</h3>
+      <p>
+        With locations all over the country, you can visit a branch local to you. Now, that's
+        convenience.
+      </p>
+    </div>
+    <div class="feature-card">
+      <img
+        src="https://ik.imagekit.io/awgxmxfhhhr/web/90_Day_Warranty.svg?tr=h-80,w-80"
+        alt="90-day warranty"
+      />
+      <h3>90-day warranty</h3>
+      <p>Our cars come with a 90-day warranty as standard so you can drive away with confidence.</p>
+    </div>
+    <div class="feature-card">
+      <img
+        src="https://ik.imagekit.io/awgxmxfhhhr/web/Quick_&amp;_Easy.svg?tr=h-80,w-80"
+        alt="Same day drive away"
+      />
+      <h3>Same day drive away</h3>
+      <p>
+        Complete your purchase in a couple of hours. No need to wait around, our cars are good to
+        go.
+      </p>
+    </div>
+    <div class="feature-card">
+      <img
+        src="https://ik.imagekit.io/awgxmxfhhhr/web/Low_Prices.svg?tr=h-80,w-80"
+        alt="Low prices"
+      />
+      <h3>Low prices</h3>
+      <p>
+        You’re getting a great deal, with up to 95% of our cars being priced below market value.
+      </p>
+    </div>
+    <div class="feature-card">
+      <img
+        src="https://ik.imagekit.io/awgxmxfhhhr/web/Big%20Quality%20Assured.svg?tr=h-80,w-80"
+        alt="200 multi-point inspection"
+      />
+      <h3>200 multi-point inspection</h3>
+      <p>
+        We're BIG on quality. That's why we check, check and check again. Customer confidence?
+        Check.
+      </p>
+    </div>
+    <div class="feature-card">
+      <img
+        src="https://ik.imagekit.io/awgxmxfhhhr/web/Hassle_&amp;_Haggle_Free.svg?tr=h-80,w-80"
+        alt="Hassle & haggle-free"
+      />
+      <h3>Hassle & haggle-free</h3>
+      <p>
+        Our lowest price. Always. There is no awkward haggling, no high mark-ups, and no pressure to
+        buy.
+      </p>
+    </div>
+  </section>
+  <section class="cta">
+    <a class="btn primary" routerLink="/used-cars">Search all cars</a>
+    <a class="btn secondary" routerLink="/part-exchange">Value my car</a>
+    <a class="btn secondary" routerLink="/sell-my-car">Sell my car</a>
+  </section>
+</div>

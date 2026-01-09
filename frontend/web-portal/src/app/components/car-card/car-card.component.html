@@ -1,0 +1,112 @@
+<div class="car-card">
+  <!-- Image Carousel -->
+  <div class="car-images">
+    <div class="image-container">
+      <div class="loading-placeholder" *ngIf="isImageLoading">
+        <div class="loading-spinner"></div>
+      </div>
+
+      <img
+        *ngIf="displayImages.length > 0"
+        [src]="displayImages[currentImageIndex]"
+        [alt]="car.MakeFullName"
+        class="main-image"
+        [class.loading]="isImageLoading"
+        (load)="onImageLoad()"
+        (error)="onImageError($event)"
+      />
+
+      <!-- Navigation arrows -->
+      <div class="image-nav" *ngIf="displayImages.length > 1">
+        <button class="nav-btn prev-btn" (click)="previousImage()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M15 18L9 12L15 6"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+        <button class="nav-btn next-btn" (click)="nextImage()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M9 18L15 12L9 6"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Image indicators -->
+      <div class="image-indicators" *ngIf="displayImages.length > 1">
+        <button
+          *ngFor="let image of displayImages; let i = index"
+          class="indicator"
+          [class.active]="i === currentImageIndex"
+          (click)="goToImage(i)"
+        ></button>
+      </div>
+    </div>
+
+    <!-- Tag overlay -->
+    <div class="tag-overlay" *ngIf="car.PrimaryTag">
+      <div class="primary-tag" [style.background-color]="car.PrimaryTag.SashColorHtmlHexCode">
+        {{ car.PrimaryTag.Name }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Car Details -->
+  <div class="car-details">
+    <div class="car-header">
+      <h3 class="car-title">{{ car.MakeFullName }}</h3>
+      <p class="car-caption">{{ car.HeadlineCaption }}</p>
+    </div>
+
+    <div class="car-specs">
+      <div class="spec-item">
+        <span class="spec-label">Mileage:</span>
+        <span class="spec-value">{{ formatMileage(car.Mileage) }}</span>
+      </div>
+      <div class="spec-item">
+        <span class="spec-label">Gearbox:</span>
+        <span class="spec-value">{{ getTransmissionDisplay(car.Transmission) }}</span>
+      </div>
+      <div class="spec-item">
+        <span class="spec-label">Fuel:</span>
+        <span class="spec-value">{{ getFuelDisplay(car.Fuel) }}</span>
+      </div>
+      <div class="spec-item">
+        <span class="spec-label">Location:</span>
+        <span class="spec-value">{{ car.Location }}</span>
+      </div>
+    </div>
+
+    <div class="car-features" *ngIf="car.KeyFeaturesString">
+      <p class="features-title">Key Features:</p>
+      <p class="features-text">{{ car.KeyFeaturesString }}</p>
+    </div>
+
+    <div class="car-footer">
+      <div class="pricing">
+        <div class="main-price">{{ formatPrice(car.AskingPrice) }}</div>
+        <div class="monthly-payment" *ngIf="car.LowestMonthlyPayment">
+          From £{{ car.LowestMonthlyPayment }}/month
+        </div>
+        <div class="savings" *ngIf="car.Savings && car.Savings !== '0.00'">
+          Save £{{ car.Savings }}
+        </div>
+      </div>
+
+      <div class="actions">
+        <a class="btn btn-primary" [routerLink]="['/car', car.StockNumber]"> View Details </a>
+        <button class="btn btn-secondary">Contact Dealer</button>
+      </div>
+    </div>
+  </div>
+</div>

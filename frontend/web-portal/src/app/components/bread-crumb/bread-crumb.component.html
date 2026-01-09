@@ -1,0 +1,13 @@
+<nav class="bread-crumb">
+  <ol>
+    <li *ngFor="let crumb of crumbs; let last = last">
+      <ng-container *ngIf="crumb.url && !last">
+        <a [routerLink]="crumb.url">{{ crumb.label }}</a>
+        <span class="separator">/</span>
+      </ng-container>
+      <ng-container *ngIf="!crumb.url || last">
+        <span class="current">{{ crumb.label }}</span>
+      </ng-container>
+    </li>
+  </ol>
+</nav>

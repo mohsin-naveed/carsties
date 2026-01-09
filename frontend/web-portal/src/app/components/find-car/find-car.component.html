@@ -1,0 +1,131 @@
+<div class="find-car-container">
+  <app-bread-crumb
+    [crumbs]="[
+      { label: 'Home', url: '/' },
+      { label: 'Find Cars', url: '/find-cars' }
+    ]"
+  />
+
+  <!-- Mobile Filters/Sort Buttons -->
+  <div class="mobile-header-buttons">
+    <button class="mobile-filter-btn" (click)="openMobileFilters()">Filters</button>
+    <button class="mobile-sort-btn" (click)="openMobileSort()">Sort</button>
+  </div>
+
+  <!-- Header with results count and sorting (desktop) -->
+  <div class="header-section">
+    <div class="results-info">
+      <h2 class="results-title">Find Your Perfect Car</h2>
+      <p class="results-count">Showing {{ startIndex }}-{{ endIndex }} of {{ totalCount }} cars</p>
+    </div>
+
+    <div class="sort-section">
+      <label for="sort-select" class="sort-label">Sort by:</label>
+      <select
+        id="sort-select"
+        class="sort-select"
+        [(ngModel)]="selectedSort"
+        (change)="onSortChange($event)"
+      >
+        <option value="">Default</option>
+        <option *ngFor="let option of sortOptions" [value]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <!-- Filter Sidebar -->
+    <aside class="filter-sidebar">
+      <app-filter-sidebar
+        [filterOptions]="filterOptions"
+        [appliedFilters]="appliedFilters"
+        (filtersChange)="onFiltersChange($event)"
+      >
+      </app-filter-sidebar>
+    </aside>
+
+    <!-- Car Results -->
+    <main class="car-results">
+      <div class="car-grid" *ngIf="cars.length > 0">
+        <app-car-card *ngFor="let car of cars" [car]="car"></app-car-card>
+      </div>
+
+      <!-- No Results -->
+      <div class="no-results" *ngIf="cars.length === 0 && !isLoading">
+        <div class="no-results-content">
+          <h3>No cars found</h3>
+          <p>Try adjusting your filters to see more results.</p>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading" *ngIf="isLoading">
+        <div class="loading-content">
+          <p>Loading cars...</p>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination-section" *ngIf="totalPages > 1">
+        <nav class="pagination">
+          <!-- Previous button -->
+          <button
+            class="pagination-btn pagination-prev"
+            [disabled]="!hasPreviousPage"
+            (click)="onPageChange(currentPage - 1)"
+          >
+            ← Previous
+          </button>
+
+          <!-- Page numbers -->
+          <button
+            *ngFor="let page of pages"
+            class="pagination-btn pagination-number"
+            [class.active]="page === currentPage"
+            (click)="onPageChange(page)"
+          >
+            {{ page }}
+          </button>
+
+          <!-- Next button -->
+          <button
+            class="pagination-btn pagination-next"
+            [disabled]="!hasNextPage"
+            (click)="onPageChange(currentPage + 1)"
+          >
+            Next →
+          </button>
+        </nav>
+
+        <div class="pagination-info">Page {{ currentPage }} of {{ totalPages }}</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ...existing code... -->
+  <!-- Mobile Filter Overlay (moved outside main container for true overlay) -->
+  <div class="mobile-filter-overlay" [class.active]="showMobileFilters">
+    <div *ngIf="showMobileFilters" class="mobile-filter-content">
+      <button class="popup-close-btn" (click)="cancelMobileFilters()" aria-label="Close">
+        &times;
+      </button>
+      <div class="mobile-filter-scroll">
+        <app-filter-sidebar
+          [filterOptions]="filterOptions"
+          [appliedFilters]="stagedMobileFilters"
+          (filtersChange)="onStagedMobileFiltersChange($event)"
+        ></app-filter-sidebar>
+      </div>
+      <div class="see-results-label-bar">
+        <button class="see-results-btn" (click)="applyMobileFilters()">
+          See {{ getStagedFilteredCount() | number }} Results
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Sort Overlay (placeholder, next step) -->
+  <!-- ...existing code... -->
+</div>

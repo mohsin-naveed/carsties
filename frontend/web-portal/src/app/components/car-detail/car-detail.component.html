@@ -1,0 +1,56 @@
+<div class="car-detail-breadcrumb">
+  <app-bread-crumb
+    [crumbs]="[
+      { label: 'Home', url: '/' },
+      { label: 'Find Cars', url: '/find-cars' },
+      { label: car?.Make + ' ' + car?.Model }
+    ]"
+  />
+</div>
+<div class="car-detail-container" *ngIf="car">
+  <div class="car-detail-header">
+    <h1 class="car-detail-title">{{ car.Make }} {{ car.Model }}</h1>
+    <span class="car-detail-spec">{{ car.Spec }}</span>
+    <span class="car-detail-price">£{{ car.AskingPrice | number : '1.0-0' }}</span>
+  </div>
+  <!-- Photo Gallery -->
+  <div class="photo-gallery">
+    <div class="main-photo">
+      <img [src]="car.WebsiteImageLinks[selectedImageIndex]" alt="Car photo" />
+    </div>
+    <div class="gallery-nav">
+      <button (click)="selectImage(selectedImageIndex - 1)" [disabled]="selectedImageIndex === 0">
+        &#8592;
+      </button>
+      <span>{{ selectedImageIndex + 1 }} / {{ car.WebsiteImageLinks.length }}</span>
+      <button
+        (click)="selectImage(selectedImageIndex + 1)"
+        [disabled]="selectedImageIndex === car.WebsiteImageLinks.length - 1"
+      >
+        &#8594;
+      </button>
+    </div>
+    <!-- Thumbnails removed for a cleaner, more professional gallery -->
+  </div>
+
+  <div class="car-info">
+    <div class="meta-grid">
+      <div><strong>Reg:</strong> {{ car.Registration }}</div>
+      <div><strong>Year:</strong> {{ car.DateRegistered | date : 'yyyy' }}</div>
+      <div><strong>Mileage:</strong> {{ car.Mileage | number }} miles</div>
+      <div><strong>Fuel:</strong> {{ car.Fuel }}</div>
+      <div><strong>Transmission:</strong> {{ car.Transmission }}</div>
+      <div><strong>Colour:</strong> {{ car.Colour }}</div>
+      <div><strong>Location:</strong> {{ car.DisplayLocation }}</div>
+      <div *ngIf="car.Status"><strong>Status:</strong> {{ car.Status }}</div>
+    </div>
+  </div>
+
+  <!-- Features Section -->
+  <div class="features-section" *ngIf="car.KeyFeaturesString">
+    <h3>Key Features</h3>
+    <ul class="features-list">
+      <li *ngFor="let feature of car.KeyFeaturesString.split(',')">{{ feature.trim() }}</li>
+    </ul>
+  </div>
+</div>

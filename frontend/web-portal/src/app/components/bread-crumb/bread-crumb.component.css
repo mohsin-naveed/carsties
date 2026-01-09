@@ -1,0 +1,59 @@
+.bread-crumb {
+  font-size: 1.08rem;
+  margin-bottom: 1.5rem;
+  color: #262965;
+  background: #f5f7fa;
+  border-radius: 0.7rem;
+  padding: 0.7rem 1.2rem;
+  box-shadow: 0 2px 8px rgba(38, 41, 101, 0.06);
+  width: fit-content;
+  max-width: 100%;
+}
+.bread-crumb ol {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0;
+  margin: 0;
+}
+.bread-crumb li {
+  display: flex;
+  align-items: center;
+  font-size: 1.08rem;
+  letter-spacing: 0.01em;
+}
+.bread-crumb a {
+  color: #262965;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.4rem;
+  transition: background 0.2s, color 0.2s;
+}
+.bread-crumb a:hover {
+  color: #fff;
+  background: #52d9f2;
+}
+.bread-crumb .separator {
+  margin: 0 0.5rem;
+  color: #b0b3c6;
+  font-size: 1.1rem;
+  font-weight: 400;
+}
+.bread-crumb .current {
+  font-weight: 700;
+  color: #262965;
+  background: #e9ecf4;
+  border-radius: 0.4rem;
+  padding: 0.1rem 0.4rem;
+}
+@media (max-width: 600px) {
+  .bread-crumb {
+    font-size: 0.97rem;
+    padding: 0.5rem 0.7rem;
+    margin-bottom: 1rem;
+  }
+  .bread-crumb li {
+    font-size: 0.97rem;
+  }
+}
