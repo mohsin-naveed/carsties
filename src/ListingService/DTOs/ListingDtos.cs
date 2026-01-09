@@ -33,6 +33,7 @@ public class ListingDto
     public decimal? BatteryCapacityKWhSnapshot { get; set; }
 
     public List<ListingImageDto> Images { get; set; } = new();
+    public int[]? FeatureIds { get; set; }
 }
 
 public class CreateListingDto
@@ -84,6 +85,7 @@ public class UpdateListingDto
     public int? TransmissionId { get; set; }
     public int? FuelTypeId { get; set; }
     public int? BodyTypeId { get; set; }
+    public int[]? FeatureIds { get; set; }
 }
 
 // Reference DTOs for output

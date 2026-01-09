@@ -20,6 +20,8 @@ export interface ListingDto {
   makeName?: string; modelName?: string; generationName?: string; derivativeName?: string; variantName?: string;
   bodyTypeName?: string; transmissionName?: string; fuelTypeName?: string;
   seatsSnapshot?: number; doorsSnapshot?: number; engineSnapshot?: string; batteryCapacityKWhSnapshot?: number;
+  images?: ListingImageDto[];
+  featureIds?: number[];
 }
 
 export interface CreateListingDto {
@@ -30,6 +32,20 @@ export interface CreateListingDto {
   makeName?: string; modelName?: string; generationName?: string; derivativeName?: string; variantName?: string;
   bodyTypeName?: string; transmissionName?: string; fuelTypeName?: string;
   seatsSnapshot?: number; doorsSnapshot?: number; engineSnapshot?: string; batteryCapacityKWhSnapshot?: number;
+  featureIds?: number[];
+}
+
+export interface ListingImageDto {
+  id: number;
+  fileName: string;
+  url: string;
+  thumbUrl?: string;
+}
+
+export interface UpdateListingDto {
+  title?: string; description?: string; year?: number; mileage?: number; price?: number; color?: string;
+  makeId?: number; modelId?: number; generationId?: number; derivativeId?: number; variantId?: number;
+  transmissionId?: number; fuelTypeId?: number; bodyTypeId?: number;
   featureIds?: number[];
 }
 
@@ -59,6 +75,8 @@ export class ListingsApiService {
   // ListingService endpoints
   getListings(): Observable<ListingDto[]> { return this.http.get<ListingDto[]>(`${this.baseUrl}/listings`); }
   createListing(dto: CreateListingDto) { return this.http.post<ListingDto>(`${this.baseUrl}/listings`, dto); }
+  getListing(id: number) { return this.http.get<ListingDto>(`${this.baseUrl}/listings/${id}`); }
+  updateListing(id: number, dto: UpdateListingDto) { return this.http.put(`${this.baseUrl}/listings/${id}`, dto); }
   uploadListingImages(listingId: number, files: File[]) {
     const fd = new FormData();
     for (const f of files) fd.append('files', f);

@@ -16,14 +16,28 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
     public async Task<ActionResult<List<ListingDto>>> GetAll()
     {
         var items = await context.Listings.Include(l => l.Images).ToListAsync();
-        return items.Select(mapper.Map<ListingDto>).ToList();
+        var dtos = items.Select(mapper.Map<ListingDto>).ToList();
+        var featuresByListing = await context.ListingFeatures
+            .GroupBy(f => f.ListingId)
+            .Select(g => new { ListingId = g.Key, FeatureIds = g.Select(x => x.FeatureId).ToArray() })
+            .ToListAsync();
+        var dict = featuresByListing.ToDictionary(x => x.ListingId, x => x.FeatureIds);
+        foreach (var d in dtos)
+        {
+            dict.TryGetValue(d.Id, out var ids);
+            d.FeatureIds = ids;
+        }
+        return dtos;
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ListingDto>> Get(int id)
     {
         var entity = await context.Listings.Include(l => l.Images).FirstOrDefaultAsync(l => l.Id == id);
-        return entity is null ? NotFound() : mapper.Map<ListingDto>(entity);
+        if (entity is null) return NotFound();
+        var dto = mapper.Map<ListingDto>(entity);
+        dto.FeatureIds = await context.ListingFeatures.Where(f => f.ListingId == id).Select(f => f.FeatureId).ToArrayAsync();
+        return dto;
     }
 
     [HttpPost]
@@ -73,7 +87,34 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             await catalog.PopulateSnapshotsAsync(listing);
         }
         var ok = await context.SaveChangesAsync() > 0;
-        return ok ? Ok() : BadRequest("Failed to update listing");
+        if (!ok) return BadRequest("Failed to update listing");
+
+        // Update features if provided
+        if (dto.FeatureIds is not null)
+        {
+            var existing = await context.ListingFeatures.Where(x => x.ListingId == id).ToListAsync();
+            var newSet = dto.FeatureIds.Distinct().ToHashSet();
+            // Remove not in new set
+            var toRemove = existing.Where(e => !newSet.Contains(e.FeatureId)).ToList();
+            if (toRemove.Count > 0) context.ListingFeatures.RemoveRange(toRemove);
+            // Add missing ones
+            var existingIds = existing.Select(e => e.FeatureId).ToHashSet();
+            foreach (var fid in newSet)
+            {
+                if (existingIds.Contains(fid)) continue;
+                var f = await catalog.GetFeatureAsync(fid);
+                if (f is null) continue;
+                context.ListingFeatures.Add(new ListingFeature
+                {
+                    ListingId = id,
+                    FeatureId = f.Id,
+                    FeatureName = f.Name,
+                    FeatureDescription = f.Description
+                });
+            }
+            await context.SaveChangesAsync();
+        }
+        return Ok();
     }
 
     [HttpDelete("{id:int}")]

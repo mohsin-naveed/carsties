@@ -4,17 +4,12 @@
     <strong>Carsties</strong>
   </span>
   <span class="spacer"></span>
-  <button mat-button>Listings</button>
-  <button mat-button>Sell a Car</button>
+  <button mat-button [routerLink]="['/listings']">Listings</button>
+  <button mat-button [routerLink]="['/sell']">Sell a Car</button>
 </mat-toolbar>
 
 <main class="page-container">
-  <section class="elevated" style="padding:16px; margin-bottom:16px;">
-    <h2 style="margin:0 0 12px 0;">Add Car Listing</h2>
-    <app-add-listing></app-add-listing>
-  </section>
-
-  <section id="listings-section" class="elevated" style="padding:16px;">
-    <app-listings-list></app-listings-list>
+  <section class="elevated" style="padding:16px;">
+    <router-outlet></router-outlet>
   </section>
 </main>
