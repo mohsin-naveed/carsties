@@ -11,5 +11,6 @@ public class MappingProfile : Profile
         CreateMap<Listing, ListingDto>();
         CreateMap<CreateListingDto, Listing>();
         CreateMap<UpdateListingDto, Listing>();
+        CreateMap<ListingImage, ListingImageDto>();
     }
 }

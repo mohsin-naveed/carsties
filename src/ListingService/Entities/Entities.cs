@@ -33,6 +33,9 @@ public class Listing {
     public short? DoorsSnapshot { get; set; }
     public string? EngineSnapshot { get; set; }
     public decimal? BatteryCapacityKWhSnapshot { get; set; }
+
+    // Images
+    public ICollection<ListingImage> Images { get; set; } = new List<ListingImage>();
 }
 
 public class ListingFeature {
@@ -40,5 +43,16 @@ public class ListingFeature {
     public int FeatureId { get; set; }
     public required string FeatureName { get; set; }
     public string? FeatureDescription { get; set; }
+    public Listing? Listing { get; set; }
+}
+
+public class ListingImage
+{
+    public int Id { get; set; }
+    public int ListingId { get; set; }
+    public required string FileName { get; set; }
+    public required string Url { get; set; }
+    public string? ThumbUrl { get; set; }
+    public DateTime CreatedAt { get; set; }
     public Listing? Listing { get; set; }
 }

@@ -58,5 +58,12 @@ export class ListingsApiService {
 
   // ListingService endpoints
   getListings(): Observable<ListingDto[]> { return this.http.get<ListingDto[]>(`${this.baseUrl}/listings`); }
-  createListing(dto: CreateListingDto) { return this.http.post(`${this.baseUrl}/listings`, dto); }
+  createListing(dto: CreateListingDto) { return this.http.post<ListingDto>(`${this.baseUrl}/listings`, dto); }
+  uploadListingImages(listingId: number, files: File[]) {
+    const fd = new FormData();
+    for (const f of files) fd.append('files', f);
+    return this.http.post(`${this.baseUrl}/listings/${listingId}/images`, fd);
+  }
+  getListingImages(listingId: number) { return this.http.get(`${this.baseUrl}/listings/${listingId}/images`); }
+  deleteListingImage(listingId: number, imageId: number) { return this.http.delete(`${this.baseUrl}/listings/${listingId}/images/${imageId}`); }
 }

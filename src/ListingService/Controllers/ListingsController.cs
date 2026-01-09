@@ -15,14 +15,14 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
     [HttpGet]
     public async Task<ActionResult<List<ListingDto>>> GetAll()
     {
-        var items = await context.Listings.ToListAsync();
+        var items = await context.Listings.Include(l => l.Images).ToListAsync();
         return items.Select(mapper.Map<ListingDto>).ToList();
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ListingDto>> Get(int id)
     {
-        var entity = await context.Listings.FindAsync(id);
+        var entity = await context.Listings.Include(l => l.Images).FirstOrDefaultAsync(l => l.Id == id);
         return entity is null ? NotFound() : mapper.Map<ListingDto>(entity);
     }
 

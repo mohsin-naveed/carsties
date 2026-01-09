@@ -31,6 +31,8 @@ public class ListingDto
     public short? DoorsSnapshot { get; set; }
     public string? EngineSnapshot { get; set; }
     public decimal? BatteryCapacityKWhSnapshot { get; set; }
+
+    public List<ListingImageDto> Images { get; set; } = new();
 }
 
 public class CreateListingDto
@@ -86,3 +88,11 @@ public class UpdateListingDto
 
 // Reference DTOs for output
 // Reference DTOs removed from ListingService; use CatalogService for reference data.
+
+public class ListingImageDto
+{
+    public int Id { get; set; }
+    public string FileName { get; set; } = string.Empty;
+    public string Url { get; set; } = string.Empty;
+    public string? ThumbUrl { get; set; }
+}

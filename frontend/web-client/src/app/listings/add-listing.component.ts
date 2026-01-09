@@ -58,6 +58,8 @@ export class AddListingComponent {
   variantFeatures: VariantFeatureSnapshot[] = [];
   features: FeatureDto[] = [];
   selectedFeatureIds = new Set<number>();
+  selectedFiles: File[] = [];
+  previews: string[] = [];
 
   constructor() {
     // Build years dropdown (descending from current year to 1900)
@@ -146,16 +148,20 @@ export class AddListingComponent {
       featureIds: Array.from(this.selectedFeatureIds)
     };
     this.api.createListing(dto)
-      .pipe(finalize(() => { this.saving = false; this.form.enable({ emitEvent: false }); }))
       .subscribe({
-        next: () => {
-          const ref = this.notify.success('Listing created', 'View listings');
-          ref.onAction().subscribe(() => {
-            const el = document.getElementById('listings-section');
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          });
+        next: (created) => {
+          const upload$ = this.selectedFiles.length ? this.api.uploadListingImages(created.id, this.selectedFiles) : undefined;
+          if (upload$) {
+            upload$.pipe(finalize(() => { this.saving = false; this.form.enable({ emitEvent: false }); }))
+              .subscribe({
+                next: () => this.afterCreated(),
+                error: (e) => { this.saving = false; this.form.enable({ emitEvent: false }); this.notify.error(typeof e === 'string' ? e : 'Failed to upload images'); }
+              });
+          } else {
+            this.saving = false; this.form.enable({ emitEvent: false }); this.afterCreated();
+          }
         },
-        error: (e) => this.notify.error(typeof e === 'string' ? e : 'Failed to create listing')
+        error: (e) => { this.saving = false; this.form.enable({ emitEvent: false }); this.notify.error(typeof e === 'string' ? e : 'Failed to create listing'); }
       });
   }
 
@@ -188,5 +194,38 @@ export class AddListingComponent {
         const allowedDerIds = new Set(allowedDerivatives.map(d => d.id));
         this.variants = vars.filter(v => allowedDerIds.has(v.derivativeId));
       });
+  }
+
+  onFilesSelected(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    const files = input.files;
+    const list = files ? Array.from(files) : [];
+    // Validate: max 10 files, type and size (<=5MB)
+    const maxCount = 10;
+    const maxSize = 5 * 1024 * 1024;
+    const allowed = new Set(['image/jpeg','image/png','image/webp','image/gif']);
+    const filtered: File[] = [];
+    for (const f of list) {
+      if (filtered.length >= maxCount) break;
+      if (!allowed.has(f.type)) continue;
+      if (f.size > maxSize) continue;
+      filtered.push(f);
+    }
+    this.selectedFiles = filtered;
+    // Build previews
+    this.previews.forEach(url => URL.revokeObjectURL(url));
+    this.previews = this.selectedFiles.map(f => URL.createObjectURL(f));
+  }
+
+  private afterCreated() {
+    const ref = this.notify.success('Listing created', 'View listings');
+    ref.onAction().subscribe(() => {
+      const el = document.getElementById('listings-section');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    // Reset selected files and previews
+    this.selectedFiles = [];
+    this.previews.forEach(url => URL.revokeObjectURL(url));
+    this.previews = [];
   }
 }

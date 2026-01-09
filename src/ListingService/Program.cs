@@ -60,6 +60,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("CorsPolicy");
 
+// Static files for images
+var webRoot = Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+Directory.CreateDirectory(Path.Combine(webRoot, "images"));
+app.UseStaticFiles();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();

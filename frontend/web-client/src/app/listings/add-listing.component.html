@@ -97,6 +97,18 @@
     </div>
   </div>
 
+  <!-- Images -->
+  <div style="grid-column:1/-1; margin-top:12px;">
+    <h4>Images</h4>
+    <input type="file" multiple accept="image/*" (change)="onFilesSelected($event)" />
+    <div style="margin-top:6px; font-size:12px; color:#666;">
+      Selected: {{ selectedFiles.length }} file(s)
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+      <img *ngFor="let p of previews" [src]="p" style="width:120px; height:90px; object-fit:cover; border-radius:4px; border:1px solid #ddd;" alt="preview" />
+    </div>
+  </div>
+
     <div class="actions">
       <button mat-raised-button color="primary" type="submit" [disabled]="saving || form.invalid">
         <mat-progress-spinner *ngIf="saving" mode="indeterminate" diameter="18" strokeWidth="3"></mat-progress-spinner>
@@ -125,5 +137,6 @@
     <div><strong>Battery (kWh):</strong> {{ findById(derivatives, form.value.derivativeId)?.batteryCapacityKWh || '-' }}</div>
     <div style="grid-column:1/-1"><strong>Variant Features:</strong> {{ variantFeatures?.length || 0 }}</div>
     <div style="grid-column:1/-1"><strong>Selected Features:</strong> {{ selectedFeatureIds.size }}</div>
+    <div style="grid-column:1/-1"><strong>Selected Images:</strong> {{ selectedFiles.length }}</div>
   </div>
 </mat-card>

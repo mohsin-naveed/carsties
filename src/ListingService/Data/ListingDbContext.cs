@@ -7,6 +7,7 @@ public class ListingDbContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<Listing> Listings => Set<Listing>();
     public DbSet<ListingFeature> ListingFeatures => Set<ListingFeature>();
+    public DbSet<ListingImage> ListingImages => Set<ListingImage>();
     
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -36,6 +37,11 @@ public class ListingDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(x => x.FuelTypeName).HasMaxLength(50);
             entity.Property(x => x.EngineSnapshot).HasMaxLength(100);
             // JSON snapshot removed in favor of relational ListingFeatures
+
+            entity.HasMany(x => x.Images)
+                .WithOne(i => i.Listing)
+                .HasForeignKey(i => i.ListingId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<ListingFeature>(entity =>
@@ -45,6 +51,17 @@ public class ListingDbContext(DbContextOptions options) : DbContext(options)
             entity.HasOne(x => x.Listing).WithMany().HasForeignKey(x => x.ListingId).OnDelete(DeleteBehavior.Cascade);
             entity.Property(x => x.FeatureName).IsRequired().HasMaxLength(100);
             entity.Property(x => x.FeatureDescription).HasMaxLength(250);
+        });
+
+        modelBuilder.Entity<ListingImage>(entity =>
+        {
+            entity.ToTable("ListingImages");
+            entity.HasKey(x => x.Id);
+            entity.HasOne(x => x.Listing).WithMany(l => l.Images).HasForeignKey(x => x.ListingId).OnDelete(DeleteBehavior.Cascade);
+            entity.Property(x => x.FileName).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.Url).IsRequired().HasMaxLength(500);
+            entity.Property(x => x.ThumbUrl).HasMaxLength(500);
+            entity.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
         });
     }
 }
