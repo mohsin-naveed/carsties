@@ -1,0 +1,54 @@
+.find-car-container { max-width: 1400px; margin: 0 auto; padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+.mobile-header-buttons { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 0 8px; }
+.mobile-filter-btn, .mobile-sort-btn { flex: 1 1 50%; padding: 12px 0; font-size: 16px; font-weight: 600; border: none; background: #f8f9fa; color: #007bff; border-radius: 8px; margin: 0 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.mobile-filter-btn { text-align: left; }
+.mobile-sort-btn { text-align: right; }
+.header-section { display: none; }
+@media (min-width: 768px) { .mobile-header-buttons { display: none; } .header-section { display: flex; } }
+.header-section { justify-content: space-between; align-items: center; margin-bottom: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.results-title { margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #2c3e50; }
+.results-count { margin: 0; color: #6c757d; font-size: 14px; }
+.sort-section { display: flex; align-items: center; gap: 10px; }
+.sort-label { font-weight: 600; color: #495057; }
+.sort-select { padding: 8px 12px; border: 2px solid #dee2e6; border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; transition: all 0.3s ease; }
+.sort-select:hover { border-color: #007bff; }
+.sort-select:focus { outline: none; border-color: #007bff; box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
+.main-content { display: grid; grid-template-columns: 300px 1fr; gap: 30px; }
+.filter-sidebar { background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); height: fit-content; position: sticky; top: 20px; }
+@media (max-width: 767px) { .filter-sidebar { display: none !important; } }
+.car-results { min-height: 600px; }
+.car-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 24px; margin-bottom: 40px; }
+.no-results { display: flex; align-items: center; justify-content: center; min-height: 400px; text-align: center; }
+.no-results-content h3 { font-size: 24px; color: #6c757d; margin-bottom: 16px; }
+.no-results-content p { color: #adb5bd; font-size: 16px; }
+.car-card { display: flex; flex-direction: column; cursor: pointer; }
+.thumb-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; }
+.thumb { width: 100%; height: 100%; object-fit: cover; }
+.thumb.placeholder { display:flex; align-items:center; justify-content:center; background:#f2f2f2; color:#777; width:100%; height:100%; }
+.price-badge { position: absolute; right: 8px; top: 8px; background: rgba(0,0,0,0.7); color: #fff; padding: 4px 8px; border-radius: 12px; font-weight: 600; }
+.specs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+/* removed inline price since we now use badge */
+.full { width: 100%; }
+.muted { color: rgba(0,0,0,0.6); }
+
+/* Filter sidebar visuals */
+.filter-sidebar .filter-sidebar { background: white; border-radius: 8px; overflow: hidden; }
+.filter-header { padding: 20px; border-bottom: 2px solid #e9ecef; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; }
+.filter-title { display: flex; align-items: center; gap: 8px; margin: 0 0 8px 0; font-size: 18px; font-weight: 700; }
+.filter-icon { color: rgba(255,255,255,0.9); }
+.filter-content { max-height: calc(100vh - 200px); overflow-y: auto; }
+.filter-section { border-bottom: 1px solid #e9ecef; }
+.filter-section:last-child { border-bottom: none; }
+.section-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; cursor: pointer; background: #f8f9fa; transition: all 0.3s ease; border-bottom: 1px solid #e9ecef; }
+.section-title { margin: 0; font-size: 15px; font-weight: 600; color: #2c3e50; }
+.section-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+.section-content.expanded { max-height: 400px; overflow-y: auto; }
+.options-container { padding: 16px 20px; }
+.filter-option { margin-bottom: 12px; }
+.option-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; line-height: 1.4; transition: all 0.3s ease; padding: 4px 0; }
+.filter-checkbox { display: none; }
+.custom-checkbox { position: relative; width: 18px; height: 18px; border: 2px solid #dee2e6; border-radius: 3px; background: white; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; flex-shrink: 0; }
+.filter-checkbox:checked + .custom-checkbox { background: #007bff; border-color: #007bff; }
+.filter-checkbox:checked + .custom-checkbox .check-icon { opacity: 1; transform: scale(1); }
+.check-icon { color: white; opacity: 0; transform: scale(0); transition: all 0.3s ease; }
+.option-text { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; }

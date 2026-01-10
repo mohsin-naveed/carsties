@@ -1,0 +1,215 @@
+<div class="find-car-container">
+  <!-- Mobile header buttons to match web-portal -->
+  <div class="mobile-header-buttons">
+    <button class="mobile-filter-btn">Filters</button>
+    <button class="mobile-sort-btn">Sort</button>
+  </div>
+
+  <!-- Header with results count and sorting -->
+  <div class="header-section">
+    <div class="results-info">
+      <h2 class="results-title">Find Your Perfect Car</h2>
+      <p class="results-count">Showing {{ totalCount() }} cars</p>
+    </div>
+
+    <div class="sort-section">
+      <label for="sort-select" class="sort-label">Sort by:</label>
+      <select id="sort-select" class="sort-select" [ngModel]="selectedSort()" (ngModelChange)="selectedSort.set($event)">
+        <option *ngFor="let option of sortOptions" [value]="option.value">{{ option.label }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <!-- Filter Sidebar -->
+    <aside class="filter-sidebar">
+      <div class="filter-sidebar">
+        <div class="filter-header">
+          <h3 class="filter-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="filter-icon">
+              <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Filters
+          </h3>
+        </div>
+        <div class="filter-content">
+          <div class="filter-section">
+            <div class="section-header"><div class="section-title-container"><h4 class="section-title">Make</h4></div></div>
+            <div class="section-content expanded">
+              <div class="options-container">
+                <div class="filter-option">
+                  <label class="option-label">
+                    <input type="checkbox" class="filter-checkbox" [checked]="!selectedMakeId()" (change)="selectedMakeId.set(null)" />
+                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <span class="option-text">All</span>
+                  </label>
+                </div>
+                <div class="filter-option" *ngFor="let m of makes()">
+                  <label class="option-label">
+                    <input type="checkbox" class="filter-checkbox" [checked]="selectedMakeId()===m.id" (change)="selectedMakeId.set(m.id)" />
+                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <span class="option-text">{{ m.name }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-section">
+            <div class="section-header"><div class="section-title-container"><h4 class="section-title">Model</h4></div></div>
+            <div class="section-content expanded">
+              <div class="options-container">
+                <div class="filter-option">
+                  <label class="option-label">
+                    <input type="checkbox" class="filter-checkbox" [checked]="!selectedModelId()" (change)="selectedModelId.set(null)" />
+                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <span class="option-text">All</span>
+                  </label>
+                </div>
+                <div class="filter-option" *ngFor="let m of models()">
+                  <label class="option-label">
+                    <input type="checkbox" class="filter-checkbox" [checked]="selectedModelId()===m.id" (change)="selectedModelId.set(m.id)" />
+                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <span class="option-text">{{ m.name }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-section">
+            <div class="section-header"><div class="section-title-container"><h4 class="section-title">Variant</h4></div></div>
+            <div class="section-content expanded">
+              <div class="options-container">
+                <div class="filter-option">
+                  <label class="option-label">
+                    <input type="checkbox" class="filter-checkbox" [checked]="!selectedVariantId()" (change)="selectedVariantId.set(null)" />
+                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <span class="option-text">All</span>
+                  </label>
+                </div>
+                <div class="filter-option" *ngFor="let v of variants()">
+                  <label class="option-label">
+                    <input type="checkbox" class="filter-checkbox" [checked]="selectedVariantId()===v.id" (change)="selectedVariantId.set(v.id)" />
+                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <span class="option-text">{{ v.name }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-section">
+            <div class="section-header"><div class="section-title-container"><h4 class="section-title">Transmission</h4></div></div>
+            <div class="section-content expanded">
+              <div class="options-container">
+                <div class="filter-option">
+                  <label class="option-label">
+                    <input type="checkbox" class="filter-checkbox" [checked]="!selectedTransmissionId()" (change)="selectedTransmissionId.set(null)" />
+                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <span class="option-text">All</span>
+                  </label>
+                </div>
+                <div class="filter-option" *ngFor="let t of transmissions()">
+                  <label class="option-label">
+                    <input type="checkbox" class="filter-checkbox" [checked]="selectedTransmissionId()===t.id" (change)="selectedTransmissionId.set(t.id)" />
+                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <span class="option-text">{{ t.name }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-section">
+            <div class="section-header"><div class="section-title-container"><h4 class="section-title">Body Type</h4></div></div>
+            <div class="section-content expanded">
+              <div class="options-container">
+                <div class="filter-option">
+                  <label class="option-label">
+                    <input type="checkbox" class="filter-checkbox" [checked]="!selectedBodyTypeId()" (change)="selectedBodyTypeId.set(null)" />
+                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <span class="option-text">All</span>
+                  </label>
+                </div>
+                <div class="filter-option" *ngFor="let b of bodyTypes()">
+                  <label class="option-label">
+                    <input type="checkbox" class="filter-checkbox" [checked]="selectedBodyTypeId()===b.id" (change)="selectedBodyTypeId.set(b.id)" />
+                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <span class="option-text">{{ b.name }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-section">
+            <div class="section-header"><div class="section-title-container"><h4 class="section-title">Fuel Type</h4></div></div>
+            <div class="section-content expanded">
+              <div class="options-container">
+                <div class="filter-option">
+                  <label class="option-label">
+                    <input type="checkbox" class="filter-checkbox" [checked]="!selectedFuelTypeId()" (change)="selectedFuelTypeId.set(null)" />
+                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <span class="option-text">All</span>
+                  </label>
+                </div>
+                <div class="filter-option" *ngFor="let f of fuelTypes()">
+                  <label class="option-label">
+                    <input type="checkbox" class="filter-checkbox" [checked]="selectedFuelTypeId()===f.id" (change)="selectedFuelTypeId.set(f.id)" />
+                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <span class="option-text">{{ f.name }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="car-results">
+      <div class="car-grid">
+        <mat-card *ngFor="let car of filteredListings()" class="car-card" [routerLink]="['/listings', car.id]" [queryParamsHandling]="'preserve'" title="View details">
+          <mat-card-header>
+            <mat-card-title>{{ car.title }}</mat-card-title>
+            <mat-card-subtitle>
+              {{ car.makeName || car.makeId }} · {{ car.modelName || car.modelId }} · {{ car.year }}
+            </mat-card-subtitle>
+          </mat-card-header>
+          <div class="thumb-wrap">
+            <img *ngIf="car.images?.length" class="thumb" [src]="car.images[0].thumbUrl || car.images[0].url" alt="car image">
+            <div *ngIf="!car.images?.length" class="thumb placeholder">
+              <mat-icon>directions_car</mat-icon>
+            </div>
+            <span class="price-badge">R {{ car.price | number:'1.0-0' }}</span>
+          </div>
+          <mat-card-content>
+            <div class="specs">
+              <span>Variant: {{ car.variantName || car.variantId }}</span>
+              <span>Body: {{ car.bodyTypeName || car.bodyTypeId }}</span>
+              <span>Trans: {{ car.transmissionName || car.transmissionId || '-' }}</span>
+              <span>Fuel: {{ car.fuelTypeName || car.fuelTypeId || '-' }}</span>
+            </div>
+          </mat-card-content>
+          <mat-card-actions>
+            <a mat-button [routerLink]="['/listings', car.id]" [queryParamsHandling]="'preserve'">View Details</a>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+      <div *ngIf="!loading() && totalCount() === 0" class="no-results">
+        <div class="no-results-content">
+          <h3>No cars found</h3>
+          <p>Try adjusting your filters to see more results.</p>
+        </div>
+      </div>
+      <!-- Simple Pagination Controls -->
+      <div class="pagination" *ngIf="totalPages() > 1">
+        <button class="page-btn" [disabled]="page() === 1 || loading()" (click)="prevPage()">Previous</button>
+        <span class="page-info">Page {{ page() }} of {{ totalPages() }}</span>
+        <button class="page-btn" [disabled]="page() === totalPages() || loading()" (click)="nextPage()">Next</button>
+      </div>
+      <mat-progress-bar *ngIf="loading()" mode="indeterminate"></mat-progress-bar>
+    </main>
+  </div>
+</div>

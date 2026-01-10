@@ -13,9 +13,22 @@ namespace ListingService.Controllers;
 public class ListingsController(ListingDbContext context, IMapper mapper, ICatalogLookup catalog) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<List<ListingDto>>> GetAll()
+    public async Task<ActionResult<List<ListingDto>>> GetAll(
+        [FromQuery] int? makeId,
+        [FromQuery] int? modelId,
+        [FromQuery] int? variantId,
+        [FromQuery] int? transmissionId,
+        [FromQuery] int? bodyTypeId,
+        [FromQuery] int? fuelTypeId)
     {
-        var items = await context.Listings.Include(l => l.Images).ToListAsync();
+        var query = context.Listings.Include(l => l.Images).AsQueryable();
+        if (makeId is not null) query = query.Where(l => l.MakeId == makeId);
+        if (modelId is not null) query = query.Where(l => l.ModelId == modelId);
+        if (variantId is not null) query = query.Where(l => l.VariantId == variantId);
+        if (transmissionId is not null) query = query.Where(l => l.TransmissionId == transmissionId);
+        if (bodyTypeId is not null) query = query.Where(l => l.BodyTypeId == bodyTypeId);
+        if (fuelTypeId is not null) query = query.Where(l => l.FuelTypeId == fuelTypeId);
+        var items = await query.ToListAsync();
         var dtos = items.Select(mapper.Map<ListingDto>).ToList();
         var featuresByListing = await context.ListingFeatures
             .GroupBy(f => f.ListingId)
@@ -28,6 +41,75 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             d.FeatureIds = ids;
         }
         return dtos;
+    }
+
+    [HttpGet("search")]
+    public async Task<ActionResult<PaginatedResponse<ListingDto>>> Search(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 12,
+        [FromQuery] string? sortBy = null, // "price" or "year"
+        [FromQuery] string? sortDirection = null, // "asc" or "desc"
+        [FromQuery] int? makeId = null,
+        [FromQuery] int? modelId = null,
+        [FromQuery] int? variantId = null,
+        [FromQuery] int? transmissionId = null,
+        [FromQuery] int? bodyTypeId = null,
+        [FromQuery] int? fuelTypeId = null)
+    {
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 12;
+
+        var query = context.Listings.Include(l => l.Images).AsQueryable();
+        if (makeId is not null) query = query.Where(l => l.MakeId == makeId);
+        if (modelId is not null) query = query.Where(l => l.ModelId == modelId);
+        if (variantId is not null) query = query.Where(l => l.VariantId == variantId);
+        if (transmissionId is not null) query = query.Where(l => l.TransmissionId == transmissionId);
+        if (bodyTypeId is not null) query = query.Where(l => l.BodyTypeId == bodyTypeId);
+        if (fuelTypeId is not null) query = query.Where(l => l.FuelTypeId == fuelTypeId);
+
+        // Sorting
+        var dir = (sortDirection ?? "asc").ToLowerInvariant();
+        var by = (sortBy ?? "").ToLowerInvariant();
+        if (by == "price")
+            query = dir == "desc" ? query.OrderByDescending(l => l.Price) : query.OrderBy(l => l.Price);
+        else if (by == "year")
+            query = dir == "desc" ? query.OrderByDescending(l => l.Year) : query.OrderBy(l => l.Year);
+        else
+            query = query.OrderBy(l => l.Id);
+
+        var totalCount = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        if (totalPages == 0) totalPages = 1;
+        if (page > totalPages) page = totalPages;
+
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        var dtos = items.Select(mapper.Map<ListingDto>).ToList();
+
+        // Attach features
+        var ids = dtos.Select(d => d.Id).ToArray();
+        var featuresByListing = await context.ListingFeatures
+            .Where(f => ids.Contains(f.ListingId))
+            .GroupBy(f => f.ListingId)
+            .Select(g => new { ListingId = g.Key, FeatureIds = g.Select(x => x.FeatureId).ToArray() })
+            .ToListAsync();
+        var dict = featuresByListing.ToDictionary(x => x.ListingId, x => x.FeatureIds);
+        foreach (var d in dtos)
+        {
+            dict.TryGetValue(d.Id, out var fids);
+            d.FeatureIds = fids;
+        }
+
+        var resp = new PaginatedResponse<ListingDto>
+        {
+            Data = dtos,
+            TotalCount = totalCount,
+            TotalPages = totalPages,
+            CurrentPage = page,
+            PageSize = pageSize,
+            HasNextPage = page < totalPages,
+            HasPreviousPage = page > 1
+        };
+        return resp;
     }
 
     [HttpGet("{id:int}")]

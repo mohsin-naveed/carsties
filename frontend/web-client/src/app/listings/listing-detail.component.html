@@ -1,0 +1,43 @@
+<div>
+  <div class="header">
+    <a mat-button [routerLink]="['/search']" [queryParamsHandling]="'preserve'" class="back">← Back to Search</a>
+    <h2>Car Details</h2>
+  </div>
+  <mat-progress-bar *ngIf="loading()" mode="indeterminate"></mat-progress-bar>
+
+  <div *ngIf="!loading() && listing() as car">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>{{ car.title }}</mat-card-title>
+        <mat-card-subtitle>
+          {{ car.makeName || car.makeId }} · {{ car.modelName || car.modelId }} · {{ car.year }}
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <div class="images">
+        <img *ngFor="let img of car.images" [src]="img.url" alt="image">
+        <div *ngIf="!car.images?.length" class="placeholder">
+          <mat-icon>directions_car</mat-icon>
+        </div>
+      </div>
+
+      <mat-card-content>
+        <div class="specs">
+          <div><strong>Variant:</strong> {{ car.variantName || car.variantId }}</div>
+          <div><strong>Body:</strong> {{ car.bodyTypeName || car.bodyTypeId }}</div>
+          <div><strong>Transmission:</strong> {{ car.transmissionName || car.transmissionId || '-' }}</div>
+          <div><strong>Fuel:</strong> {{ car.fuelTypeName || car.fuelTypeId || '-' }}</div>
+          <div><strong>Mileage:</strong> {{ car.mileage | number:'1.0-0' }} km</div>
+          <div><strong>Color:</strong> {{ car.color || '-' }}</div>
+        </div>
+        <div class="price">R {{ car.price | number:'1.0-0' }}</div>
+        <p *ngIf="car.description">{{ car.description }}</p>
+
+        <div *ngIf="car.featureIds?.length" class="features">
+          <h4>Features</h4>
+          <span *ngFor="let fid of car.featureIds" class="chip">#{{ fid }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

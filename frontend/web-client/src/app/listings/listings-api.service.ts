@@ -24,6 +24,21 @@ export interface ListingDto {
   featureIds?: number[];
 }
 
+export interface ListingSearchParams {
+  makeId?: number; modelId?: number; variantId?: number; transmissionId?: number; bodyTypeId?: number; fuelTypeId?: number;
+  page?: number; pageSize?: number; sortBy?: 'price'|'year'; sortDirection?: 'asc'|'desc';
+}
+
+export interface PaginationResponse<T> {
+  data: T[];
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
 export interface CreateListingDto {
   title: string; description?: string; year: number; mileage: number; price: number; color?: string;
   makeId: number; modelId: number; generationId: number; derivativeId: number; variantId: number;
@@ -73,7 +88,24 @@ export class ListingsApiService {
   getFeatures(): Observable<FeatureDto[]> { return this.http.get<FeatureDto[]>(`${this.catalogBaseUrl}/features`); }
 
   // ListingService endpoints
-  getListings(): Observable<ListingDto[]> { return this.http.get<ListingDto[]>(`${this.baseUrl}/listings`); }
+  getListings(params?: ListingSearchParams): Observable<ListingDto[]> {
+    const clean = params ? this.cleanParams(params) : undefined;
+    const options = clean ? { params: clean } : {};
+    return this.http.get<ListingDto[]>(`${this.baseUrl}/listings`, options);
+  }
+  searchListings(params: ListingSearchParams): Observable<PaginationResponse<ListingDto>> {
+    const clean = this.cleanParams(params);
+    return this.http.get<PaginationResponse<ListingDto>>(`${this.baseUrl}/listings/search`, { params: clean });
+  }
+
+  private cleanParams(params: Record<string, any>): Record<string, any> {
+    const q: Record<string, any> = {};
+    for (const [k, v] of Object.entries(params)) {
+      if (v === undefined || v === null) continue;
+      q[k] = v;
+    }
+    return q;
+  }
   createListing(dto: CreateListingDto) { return this.http.post<ListingDto>(`${this.baseUrl}/listings`, dto); }
   getListing(id: number) { return this.http.get<ListingDto>(`${this.baseUrl}/listings/${id}`); }
   updateListing(id: number, dto: UpdateListingDto) { return this.http.put(`${this.baseUrl}/listings/${id}`, dto); }
