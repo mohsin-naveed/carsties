@@ -26,7 +26,7 @@
           <div class="filter-section">
             <div class="section-header" role="button" [attr.aria-expanded]="(makeOpen$ | async) ? 'true' : 'false'" (click)="toggleMakeFacet()">
               <div class="section-title-container">
-                <h4 class="section-title">Make <span class="count">({{ ((makes$ | async)?.length) ?? 0 }})</span></h4>
+                <h4 class="section-title">Make</h4>
               </div>
               <span class="chevron">
                 <mat-icon *ngIf="!(makeOpen$ | async)">expand_more</mat-icon>
@@ -48,7 +48,7 @@
 
           <div class="filter-section">
             <div class="section-header" role="button" [attr.aria-expanded]="(modelOpen$ | async) ? 'true' : 'false'" (click)="toggleModelFacet()">
-              <div class="section-title-container"><h4 class="section-title">Model <span class="count">({{ ((filteredModels$ | async)?.length) ?? 0 }})</span></h4></div>
+              <div class="section-title-container"><h4 class="section-title">Model</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(modelOpen$ | async)">expand_more</mat-icon>
                 <mat-icon *ngIf="(modelOpen$ | async)">expand_less</mat-icon>
@@ -143,7 +143,7 @@
 
           <div class="filter-section">
             <div class="section-header" role="button" [attr.aria-expanded]="(transOpen$ | async) ? 'true' : 'false'" (click)="toggleTransmissionFacet()">
-              <div class="section-title-container"><h4 class="section-title">Gearbox <span class="count">({{ ((transmissions$ | async)?.length) ?? 0 }})</span></h4></div>
+              <div class="section-title-container"><h4 class="section-title">Gearbox</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(transOpen$ | async)">expand_more</mat-icon>
                 <mat-icon *ngIf="(transOpen$ | async)">expand_less</mat-icon>
@@ -164,7 +164,7 @@
 
           <div class="filter-section">
             <div class="section-header" role="button" [attr.aria-expanded]="(bodyOpen$ | async) ? 'true' : 'false'" (click)="toggleBodyFacet()">
-              <div class="section-title-container"><h4 class="section-title">Body type <span class="count">({{ ((bodyTypes$ | async)?.length) ?? 0 }})</span></h4></div>
+              <div class="section-title-container"><h4 class="section-title">Body type</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(bodyOpen$ | async)">expand_more</mat-icon>
                 <mat-icon *ngIf="(bodyOpen$ | async)">expand_less</mat-icon>
@@ -185,7 +185,7 @@
 
           <div class="filter-section">
             <div class="section-header" role="button" [attr.aria-expanded]="(fuelOpen$ | async) ? 'true' : 'false'" (click)="toggleFuelFacet()">
-              <div class="section-title-container"><h4 class="section-title">Fuel type <span class="count">({{ ((fuelTypes$ | async)?.length) ?? 0 }})</span></h4></div>
+              <div class="section-title-container"><h4 class="section-title">Fuel type</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(fuelOpen$ | async)">expand_more</mat-icon>
                 <mat-icon *ngIf="(fuelOpen$ | async)">expand_less</mat-icon>
