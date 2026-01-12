@@ -40,6 +40,14 @@ export class SearchComponent {
   readonly selectedBodyTypeIds$ = new BehaviorSubject<number[]>([]);
   readonly selectedFuelTypeIds$ = new BehaviorSubject<number[]>([]);
 
+  // Range filters
+  readonly priceMin$ = new BehaviorSubject<number | undefined>(undefined);
+  readonly priceMax$ = new BehaviorSubject<number | undefined>(undefined);
+  readonly yearMin$ = new BehaviorSubject<number | undefined>(undefined);
+  readonly yearMax$ = new BehaviorSubject<number | undefined>(undefined);
+  readonly mileageMin$ = new BehaviorSubject<number | undefined>(undefined);
+  readonly mileageMax$ = new BehaviorSubject<number | undefined>(undefined);
+
   // Sorting & pagination subjects
   readonly sort$ = new BehaviorSubject<string>('price-asc');
   readonly page$ = new BehaviorSubject<number>(1);
@@ -71,12 +79,18 @@ export class SearchComponent {
     this.selectedTransmissionIds$,
     this.selectedBodyTypeIds$,
     this.selectedFuelTypeIds$,
+    this.priceMin$,
+    this.priceMax$,
+    this.yearMin$,
+    this.yearMax$,
+    this.mileageMin$,
+    this.mileageMax$,
     this.sort$,
     this.page$,
     this.pageSize$
   ]).pipe(
     debounceTime(100),
-    map(([makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, sort, page, pageSize]) => ({ makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, sort, page, pageSize })),
+    map(([makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax, sort, page, pageSize]) => ({ makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax, sort, page, pageSize })),
     distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
     shareReplay(1)
   );
@@ -108,10 +122,16 @@ export class SearchComponent {
     this.selectedModelIds$,
     this.selectedTransmissionIds$,
     this.selectedBodyTypeIds$,
-    this.selectedFuelTypeIds$
+    this.selectedFuelTypeIds$,
+    this.priceMin$,
+    this.priceMax$,
+    this.yearMin$,
+    this.yearMax$,
+    this.mileageMin$,
+    this.mileageMax$
   ]).pipe(
     debounceTime(100),
-    map(([makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds]) => ({ makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds })),
+    map(([makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax]) => ({ makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax })),
     distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
     switchMap(params => this.api.getFacetCounts(params)),
     map(dto => ({
@@ -147,6 +167,48 @@ export class SearchComponent {
     shareReplay(1)
   );
 
+  // Facet collapse preferences and open states (open when any selection is active)
+  // Keep Make facet open on initial load
+  readonly makePref$ = new BehaviorSubject<boolean>(true);
+  readonly modelPref$ = new BehaviorSubject<boolean>(false);
+  readonly transPref$ = new BehaviorSubject<boolean>(false);
+  readonly bodyPref$ = new BehaviorSubject<boolean>(false);
+  readonly fuelPref$ = new BehaviorSubject<boolean>(false);
+
+  readonly makeOpen$ = combineLatest([this.selectedMakeIds$, this.makePref$]).pipe(map(([ids, pref]) => (ids.length > 0) ? true : pref), shareReplay(1));
+  readonly modelOpen$ = combineLatest([this.selectedModelIds$, this.modelPref$]).pipe(map(([ids, pref]) => (ids.length > 0) ? true : pref), shareReplay(1));
+  readonly transOpen$ = combineLatest([this.selectedTransmissionIds$, this.transPref$]).pipe(map(([ids, pref]) => (ids.length > 0) ? true : pref), shareReplay(1));
+  readonly bodyOpen$ = combineLatest([this.selectedBodyTypeIds$, this.bodyPref$]).pipe(map(([ids, pref]) => (ids.length > 0) ? true : pref), shareReplay(1));
+  readonly fuelOpen$ = combineLatest([this.selectedFuelTypeIds$, this.fuelPref$]).pipe(map(([ids, pref]) => (ids.length > 0) ? true : pref), shareReplay(1));
+
+  toggleMakeFacet() { this.makePref$.next(!this.makePref$.value); }
+  toggleModelFacet() { this.modelPref$.next(!this.modelPref$.value); }
+  toggleTransmissionFacet() { this.transPref$.next(!this.transPref$.value); }
+  toggleBodyFacet() { this.bodyPref$.next(!this.bodyPref$.value); }
+  toggleFuelFacet() { this.fuelPref$.next(!this.fuelPref$.value); }
+
+  // Range facet collapse preferences and open states
+  readonly pricePref$ = new BehaviorSubject<boolean>(false);
+  readonly yearPref$ = new BehaviorSubject<boolean>(false);
+  readonly mileagePref$ = new BehaviorSubject<boolean>(false);
+
+  readonly priceOpen$ = combineLatest([this.priceMin$, this.priceMax$, this.pricePref$]).pipe(
+    map(([min, max, pref]) => ((min != null) || (max != null)) ? true : pref),
+    shareReplay(1)
+  );
+  readonly yearOpen$ = combineLatest([this.yearMin$, this.yearMax$, this.yearPref$]).pipe(
+    map(([min, max, pref]) => ((min != null) || (max != null)) ? true : pref),
+    shareReplay(1)
+  );
+  readonly mileageOpen$ = combineLatest([this.mileageMin$, this.mileageMax$, this.mileagePref$]).pipe(
+    map(([min, max, pref]) => ((min != null) || (max != null)) ? true : pref),
+    shareReplay(1)
+  );
+
+  togglePriceFacet() { this.pricePref$.next(!this.pricePref$.value); }
+  toggleYearFacet() { this.yearPref$.next(!this.yearPref$.value); }
+  toggleMileageFacet() { this.mileagePref$.next(!this.mileagePref$.value); }
+
   // Facet count maps for template usage
   readonly makeCounts$ = this.facetCounts$.pipe(map(x => x.makes));
   readonly modelCounts$ = this.facetCounts$.pipe(map(x => x.models));
@@ -174,6 +236,22 @@ export class SearchComponent {
       return labels;
     }),
     shareReplay(1)
+  );
+
+  // Count of active filters for quick display (include ranges)
+  readonly activeFilterCount$ = combineLatest([
+    this.activeFilters$,
+    this.priceMin$, this.priceMax$,
+    this.yearMin$, this.yearMax$,
+    this.mileageMin$, this.mileageMax$
+  ]).pipe(
+    map(([labels, pmin, pmax, ymin, ymax, mmin, mmax]) => {
+      let extra = 0;
+      if (pmin != null || pmax != null) extra++;
+      if (ymin != null || ymax != null) extra++;
+      if (mmin != null || mmax != null) extra++;
+      return labels.length + extra;
+    })
   );
 
   constructor() {
@@ -251,9 +329,22 @@ export class SearchComponent {
     ids$.next(curr.includes(id) ? curr.filter(x => x !== id) : [...curr, id]);
   }
   clear(ids$: BehaviorSubject<number[]>) { ids$.next([]); }
+  clearAll() {
+    this.selectedMakeIds$.next([]);
+    this.selectedModelIds$.next([]);
+    this.selectedTransmissionIds$.next([]);
+    this.selectedBodyTypeIds$.next([]);
+    this.selectedFuelTypeIds$.next([]);
+    this.priceMin$.next(undefined); this.priceMax$.next(undefined);
+    this.yearMin$.next(undefined); this.yearMax$.next(undefined);
+    this.mileageMin$.next(undefined); this.mileageMax$.next(undefined);
+  }
   toggleMake(id: number) { this.toggle(this.selectedMakeIds$, id); }
   toggleModel(id: number) { this.toggle(this.selectedModelIds$, id); }
   toggleTransmission(id: number) { this.toggle(this.selectedTransmissionIds$, id); }
   toggleBodyType(id: number) { this.toggle(this.selectedBodyTypeIds$, id); }
   toggleFuelType(id: number) { this.toggle(this.selectedFuelTypeIds$, id); }
+
+  // Simple illustrative monthly price (placeholder UI affordance)
+  monthly(price: number): number { return Math.round((price || 0) / 60); }
 }

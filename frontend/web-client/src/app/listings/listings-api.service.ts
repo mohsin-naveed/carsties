@@ -27,6 +27,10 @@ export interface ListingDto {
 export interface ListingSearchParams {
   makeId?: number; modelId?: number; variantId?: number; transmissionId?: number; bodyTypeId?: number; fuelTypeId?: number;
   makeIds?: number[]; modelIds?: number[]; variantIds?: number[]; transmissionIds?: number[]; bodyTypeIds?: number[]; fuelTypeIds?: number[];
+  // Ranges
+  priceMin?: number; priceMax?: number;
+  yearMin?: number; yearMax?: number;
+  mileageMin?: number; mileageMax?: number;
   page?: number; pageSize?: number; sortBy?: 'price'|'year'; sortDirection?: 'asc'|'desc';
 }
 

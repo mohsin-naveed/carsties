@@ -26,9 +26,21 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         [FromQuery] int? bodyTypeId,
         [FromQuery(Name = "bodyTypeIds")] int[]? bodyTypeIds,
         [FromQuery] int? fuelTypeId,
-        [FromQuery(Name = "fuelTypeIds")] int[]? fuelTypeIds)
+        [FromQuery(Name = "fuelTypeIds")] int[]? fuelTypeIds,
+        [FromQuery] decimal? priceMin,
+        [FromQuery] decimal? priceMax,
+        [FromQuery] int? yearMin,
+        [FromQuery] int? yearMax,
+        [FromQuery] int? mileageMin,
+        [FromQuery] int? mileageMax)
     {
         var query = context.Listings.Include(l => l.Images).AsQueryable();
+        if (priceMin is not null) query = query.Where(l => l.Price >= priceMin);
+        if (priceMax is not null) query = query.Where(l => l.Price <= priceMax);
+        if (yearMin is not null) query = query.Where(l => l.Year >= yearMin);
+        if (yearMax is not null) query = query.Where(l => l.Year <= yearMax);
+        if (mileageMin is not null) query = query.Where(l => l.Mileage >= mileageMin);
+        if (mileageMax is not null) query = query.Where(l => l.Mileage <= mileageMax);
         if (makeId is not null) query = query.Where(l => l.MakeId == makeId);
         else if (makeIds is not null && makeIds.Length > 0) query = query.Where(l => makeIds.Contains(l.MakeId));
 
@@ -74,10 +86,25 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         [FromQuery] int? bodyTypeId,
         [FromQuery(Name = "bodyTypeIds")] int[]? bodyTypeIds,
         [FromQuery] int? fuelTypeId,
-        [FromQuery(Name = "fuelTypeIds")] int[]? fuelTypeIds)
+        [FromQuery(Name = "fuelTypeIds")] int[]? fuelTypeIds,
+        [FromQuery] decimal? priceMin,
+        [FromQuery] decimal? priceMax,
+        [FromQuery] int? yearMin,
+        [FromQuery] int? yearMax,
+        [FromQuery] int? mileageMin,
+        [FromQuery] int? mileageMax)
     {
         // Base query for counts
-        IQueryable<Listing> Base() => context.Listings.AsNoTracking();
+        IQueryable<Listing> Base() {
+            var q = context.Listings.AsNoTracking();
+            if (priceMin is not null) q = q.Where(l => l.Price >= priceMin);
+            if (priceMax is not null) q = q.Where(l => l.Price <= priceMax);
+            if (yearMin is not null) q = q.Where(l => l.Year >= yearMin);
+            if (yearMax is not null) q = q.Where(l => l.Year <= yearMax);
+            if (mileageMin is not null) q = q.Where(l => l.Mileage >= mileageMin);
+            if (mileageMax is not null) q = q.Where(l => l.Mileage <= mileageMax);
+            return q;
+        }
 
         // Apply filters except the facet under evaluation
         IQueryable<Listing> ApplyWithoutMake(IQueryable<Listing> q) {
@@ -197,12 +224,24 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         [FromQuery] int? bodyTypeId = null,
         [FromQuery(Name = "bodyTypeIds")] int[]? bodyTypeIds = null,
         [FromQuery] int? fuelTypeId = null,
-        [FromQuery(Name = "fuelTypeIds")] int[]? fuelTypeIds = null)
+        [FromQuery(Name = "fuelTypeIds")] int[]? fuelTypeIds = null,
+        [FromQuery] decimal? priceMin = null,
+        [FromQuery] decimal? priceMax = null,
+        [FromQuery] int? yearMin = null,
+        [FromQuery] int? yearMax = null,
+        [FromQuery] int? mileageMin = null,
+        [FromQuery] int? mileageMax = null)
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 12;
 
         var query = context.Listings.Include(l => l.Images).AsQueryable();
+        if (priceMin is not null) query = query.Where(l => l.Price >= priceMin);
+        if (priceMax is not null) query = query.Where(l => l.Price <= priceMax);
+        if (yearMin is not null) query = query.Where(l => l.Year >= yearMin);
+        if (yearMax is not null) query = query.Where(l => l.Year <= yearMax);
+        if (mileageMin is not null) query = query.Where(l => l.Mileage >= mileageMin);
+        if (mileageMax is not null) query = query.Where(l => l.Mileage <= mileageMax);
         if (makeId is not null) query = query.Where(l => l.MakeId == makeId);
         else if (makeIds is not null && makeIds.Length > 0) query = query.Where(l => makeIds.Contains(l.MakeId));
 

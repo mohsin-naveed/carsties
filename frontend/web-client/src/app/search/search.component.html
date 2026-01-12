@@ -1,19 +1,8 @@
 <div class="find-car-container">
-  <!-- Mobile header buttons to match web-portal -->
-  <div class="mobile-header-buttons">
-    <button class="mobile-filter-btn">Filters</button>
-    <button class="mobile-sort-btn">Sort</button>
-  </div>
-
-  <!-- Header with results count and sorting -->
-  <div class="header-section">
-    <div class="results-info">
-      <h2 class="results-title">Find Your Perfect Car</h2>
-      <p class="results-count">Showing {{ (totalCount$ | async) ?? 0 }} cars</p>
-    </div>
-
-    <div class="sort-section">
-      <label for="sort-select" class="sort-label">Sort by:</label>
+  <!-- Top search + sort bar, desktop style mirroring screenshot -->
+  <div class="topbar">
+    <div class="sort-wrap">
+      <label for="sort-select" class="sort-label">Sort</label>
       <select id="sort-select" class="sort-select" [ngModel]="(sort$ | async)" (ngModelChange)="sort$.next($event)">
         <option *ngFor="let option of sortOptions" [value]="option.value">{{ option.label }}</option>
       </select>
@@ -31,19 +20,21 @@
             </svg>
             Filters
           </h3>
+          <a href="#" class="clear-all" (click)="$event.preventDefault(); clearAll()">Clear all ({{ (activeFilterCount$ | async) ?? 0 }})</a>
         </div>
         <div class="filter-content">
           <div class="filter-section">
-            <div class="section-header"><div class="section-title-container"><h4 class="section-title">Make</h4></div></div>
-            <div class="section-content expanded">
+            <div class="section-header" role="button" [attr.aria-expanded]="(makeOpen$ | async) ? 'true' : 'false'" (click)="toggleMakeFacet()">
+              <div class="section-title-container">
+                <h4 class="section-title">Make <span class="count">({{ ((makes$ | async)?.length) ?? 0 }})</span></h4>
+              </div>
+              <span class="chevron">
+                <mat-icon *ngIf="!(makeOpen$ | async)">expand_more</mat-icon>
+                <mat-icon *ngIf="(makeOpen$ | async)">expand_less</mat-icon>
+              </span>
+            </div>
+            <div class="section-content" [class.expanded]="(makeOpen$ | async)">
               <div class="options-container">
-                <div class="filter-option">
-                  <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="((selectedMakeIds$ | async)?.length ?? 0) === 0" (change)="clear(selectedMakeIds$)" />
-                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    <span class="option-text">All</span>
-                  </label>
-                </div>
                 <div class="filter-option" *ngFor="let m of (makes$ | async) ?? []">
                   <label class="option-label">
                     <input type="checkbox" class="filter-checkbox" [checked]="(selectedMakeIds$ | async)?.includes(m.id)" (change)="toggleMake(m.id)" />
@@ -56,16 +47,15 @@
           </div>
 
           <div class="filter-section">
-            <div class="section-header"><div class="section-title-container"><h4 class="section-title">Model</h4></div></div>
-            <div class="section-content expanded">
+            <div class="section-header" role="button" [attr.aria-expanded]="(modelOpen$ | async) ? 'true' : 'false'" (click)="toggleModelFacet()">
+              <div class="section-title-container"><h4 class="section-title">Model <span class="count">({{ ((filteredModels$ | async)?.length) ?? 0 }})</span></h4></div>
+              <span class="chevron">
+                <mat-icon *ngIf="!(modelOpen$ | async)">expand_more</mat-icon>
+                <mat-icon *ngIf="(modelOpen$ | async)">expand_less</mat-icon>
+              </span>
+            </div>
+            <div class="section-content" [class.expanded]="(modelOpen$ | async)">
               <div class="options-container">
-                <div class="filter-option">
-                  <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="((selectedModelIds$ | async)?.length ?? 0) === 0" (change)="clear(selectedModelIds$)" />
-                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    <span class="option-text">All</span>
-                  </label>
-                </div>
                 <div class="filter-option" *ngFor="let m of (filteredModels$ | async) ?? []">
                   <label class="option-label">
                     <input type="checkbox" class="filter-checkbox" [checked]="(selectedModelIds$ | async)?.includes(m.id)" (change)="toggleModel(m.id)" />
@@ -77,19 +67,72 @@
             </div>
           </div>
 
+          <!-- Price Range -->
+          <div class="filter-section">
+            <div class="section-header" role="button" [attr.aria-expanded]="(priceOpen$ | async) ? 'true' : 'false'" (click)="togglePriceFacet()">
+              <div class="section-title-container"><h4 class="section-title">Price</h4></div>
+              <span class="chevron">
+                <mat-icon *ngIf="!(priceOpen$ | async)">expand_more</mat-icon>
+                <mat-icon *ngIf="(priceOpen$ | async)">expand_less</mat-icon>
+              </span>
+            </div>
+            <div class="section-content" [class.expanded]="(priceOpen$ | async)">
+              <div class="range-row">
+                <input type="number" class="range-input" placeholder="Min" [ngModel]="(priceMin$ | async)" (ngModelChange)="priceMin$.next($event === '' ? undefined : +$event)" />
+                <span class="range-sep">–</span>
+                <input type="number" class="range-input" placeholder="Max" [ngModel]="(priceMax$ | async)" (ngModelChange)="priceMax$.next($event === '' ? undefined : +$event)" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Year Range -->
+          <div class="filter-section">
+            <div class="section-header" role="button" [attr.aria-expanded]="(yearOpen$ | async) ? 'true' : 'false'" (click)="toggleYearFacet()">
+              <div class="section-title-container"><h4 class="section-title">Year</h4></div>
+              <span class="chevron">
+                <mat-icon *ngIf="!(yearOpen$ | async)">expand_more</mat-icon>
+                <mat-icon *ngIf="(yearOpen$ | async)">expand_less</mat-icon>
+              </span>
+            </div>
+            <div class="section-content" [class.expanded]="(yearOpen$ | async)">
+              <div class="range-row">
+                <input type="number" class="range-input" placeholder="From" [ngModel]="(yearMin$ | async)" (ngModelChange)="yearMin$.next($event === '' ? undefined : +$event)" />
+                <span class="range-sep">–</span>
+                <input type="number" class="range-input" placeholder="To" [ngModel]="(yearMax$ | async)" (ngModelChange)="yearMax$.next($event === '' ? undefined : +$event)" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Mileage Range -->
+          <div class="filter-section">
+            <div class="section-header" role="button" [attr.aria-expanded]="(mileageOpen$ | async) ? 'true' : 'false'" (click)="toggleMileageFacet()">
+              <div class="section-title-container"><h4 class="section-title">Mileage</h4></div>
+              <span class="chevron">
+                <mat-icon *ngIf="!(mileageOpen$ | async)">expand_more</mat-icon>
+                <mat-icon *ngIf="(mileageOpen$ | async)">expand_less</mat-icon>
+              </span>
+            </div>
+            <div class="section-content" [class.expanded]="(mileageOpen$ | async)">
+              <div class="range-row">
+                <input type="number" class="range-input" placeholder="Min" [ngModel]="(mileageMin$ | async)" (ngModelChange)="mileageMin$.next($event === '' ? undefined : +$event)" />
+                <span class="range-sep">–</span>
+                <input type="number" class="range-input" placeholder="Max" [ngModel]="(mileageMax$ | async)" (ngModelChange)="mileageMax$.next($event === '' ? undefined : +$event)" />
+              </div>
+            </div>
+          </div>
+
           
 
           <div class="filter-section">
-            <div class="section-header"><div class="section-title-container"><h4 class="section-title">Transmission</h4></div></div>
-            <div class="section-content expanded">
+            <div class="section-header" role="button" [attr.aria-expanded]="(transOpen$ | async) ? 'true' : 'false'" (click)="toggleTransmissionFacet()">
+              <div class="section-title-container"><h4 class="section-title">Gearbox <span class="count">({{ ((transmissions$ | async)?.length) ?? 0 }})</span></h4></div>
+              <span class="chevron">
+                <mat-icon *ngIf="!(transOpen$ | async)">expand_more</mat-icon>
+                <mat-icon *ngIf="(transOpen$ | async)">expand_less</mat-icon>
+              </span>
+            </div>
+            <div class="section-content" [class.expanded]="(transOpen$ | async)">
               <div class="options-container">
-                <div class="filter-option">
-                  <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="((selectedTransmissionIds$ | async)?.length ?? 0) === 0" (change)="clear(selectedTransmissionIds$)" />
-                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    <span class="option-text">All</span>
-                  </label>
-                </div>
                 <div class="filter-option" *ngFor="let t of (transmissions$ | async) ?? []">
                   <label class="option-label">
                     <input type="checkbox" class="filter-checkbox" [checked]="(selectedTransmissionIds$ | async)?.includes(t.id)" (change)="toggleTransmission(t.id)" />
@@ -102,16 +145,15 @@
           </div>
 
           <div class="filter-section">
-            <div class="section-header"><div class="section-title-container"><h4 class="section-title">Body Type</h4></div></div>
-            <div class="section-content expanded">
+            <div class="section-header" role="button" [attr.aria-expanded]="(bodyOpen$ | async) ? 'true' : 'false'" (click)="toggleBodyFacet()">
+              <div class="section-title-container"><h4 class="section-title">Body type <span class="count">({{ ((bodyTypes$ | async)?.length) ?? 0 }})</span></h4></div>
+              <span class="chevron">
+                <mat-icon *ngIf="!(bodyOpen$ | async)">expand_more</mat-icon>
+                <mat-icon *ngIf="(bodyOpen$ | async)">expand_less</mat-icon>
+              </span>
+            </div>
+            <div class="section-content" [class.expanded]="(bodyOpen$ | async)">
               <div class="options-container">
-                <div class="filter-option">
-                  <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="((selectedBodyTypeIds$ | async)?.length ?? 0) === 0" (change)="clear(selectedBodyTypeIds$)" />
-                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    <span class="option-text">All</span>
-                  </label>
-                </div>
                 <div class="filter-option" *ngFor="let b of (bodyTypes$ | async) ?? []">
                   <label class="option-label">
                     <input type="checkbox" class="filter-checkbox" [checked]="(selectedBodyTypeIds$ | async)?.includes(b.id)" (change)="toggleBodyType(b.id)" />
@@ -124,16 +166,15 @@
           </div>
 
           <div class="filter-section">
-            <div class="section-header"><div class="section-title-container"><h4 class="section-title">Fuel Type</h4></div></div>
-            <div class="section-content expanded">
+            <div class="section-header" role="button" [attr.aria-expanded]="(fuelOpen$ | async) ? 'true' : 'false'" (click)="toggleFuelFacet()">
+              <div class="section-title-container"><h4 class="section-title">Fuel type <span class="count">({{ ((fuelTypes$ | async)?.length) ?? 0 }})</span></h4></div>
+              <span class="chevron">
+                <mat-icon *ngIf="!(fuelOpen$ | async)">expand_more</mat-icon>
+                <mat-icon *ngIf="(fuelOpen$ | async)">expand_less</mat-icon>
+              </span>
+            </div>
+            <div class="section-content" [class.expanded]="(fuelOpen$ | async)">
               <div class="options-container">
-                <div class="filter-option">
-                  <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="((selectedFuelTypeIds$ | async)?.length ?? 0) === 0" (change)="clear(selectedFuelTypeIds$)" />
-                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    <span class="option-text">All</span>
-                  </label>
-                </div>
                 <div class="filter-option" *ngFor="let f of (fuelTypes$ | async) ?? []">
                   <label class="option-label">
                     <input type="checkbox" class="filter-checkbox" [checked]="(selectedFuelTypeIds$ | async)?.includes(f.id)" (change)="toggleFuelType(f.id)" />
@@ -149,33 +190,36 @@
     </aside>
 
     <main class="car-results">
+      <div class="results-header">
+        We have found {{ (totalCount$ | async) ?? 0 }} vehicles
+      </div>
       <div class="car-grid">
-        <mat-card *ngFor="let car of (listings$ | async) ?? []" class="car-card" [routerLink]="['/listings', car.id]" [queryParamsHandling]="'preserve'" title="View details">
-          <mat-card-header>
-            <mat-card-title>{{ car.title }}</mat-card-title>
-            <mat-card-subtitle>
-              {{ car.makeName || car.makeId }} · {{ car.modelName || car.modelId }} · {{ car.year }}
-            </mat-card-subtitle>
-          </mat-card-header>
-          <div class="thumb-wrap">
-            <img *ngIf="car.images?.length" class="thumb" [src]="car.images[0].thumbUrl || car.images[0].url" alt="car image">
-            <div *ngIf="!car.images?.length" class="thumb placeholder">
-              <mat-icon>directions_car</mat-icon>
-            </div>
-            <span class="price-badge">R {{ car.price | number:'1.0-0' }}</span>
+        <div class="car-card" *ngFor="let car of (listings$ | async) ?? []">
+          <div class="card-media" [routerLink]="['/listings', car.id]" [queryParamsHandling]="'preserve'" title="View details">
+            <img *ngIf="car.images?.length" [src]="car.images[0].thumbUrl || car.images[0].url" alt="car image" />
+            <div *ngIf="!car.images?.length" class="media-placeholder"><mat-icon>directions_car</mat-icon></div>
+            <div class="price-tag">£{{ car.price | number:'1.0-0' }}</div>
           </div>
-          <mat-card-content>
-            <div class="specs">
-              <span>Variant: {{ car.variantName || car.variantId }}</span>
-              <span>Body: {{ car.bodyTypeName || car.bodyTypeId }}</span>
-              <span>Trans: {{ car.transmissionName || car.transmissionId || '-' }}</span>
-              <span>Fuel: {{ car.fuelTypeName || car.fuelTypeId || '-' }}</span>
+          <div class="card-body">
+            <div class="title">{{ car.makeName || car.makeId }} {{ car.modelName || car.modelId }}</div>
+            <div class="subtitle">{{ car.variantName || car.derivativeName || '' }}</div>
+            <div class="chips">
+              <span class="chip">{{ car.year }}</span>
+              <span class="chip">{{ car.mileage | number }} miles</span>
+              <span class="chip" *ngIf="car.engineSnapshot as eng">{{ eng }}</span>
+              <span class="chip" *ngIf="car.transmissionName as tn">{{ tn }}</span>
             </div>
-          </mat-card-content>
-          <mat-card-actions>
-            <a mat-button [routerLink]="['/listings', car.id]" [queryParamsHandling]="'preserve'">View Details</a>
-          </mat-card-actions>
-        </mat-card>
+            <div class="fuel-pill" *ngIf="car.fuelTypeName as f">{{ f }}</div>
+            <div class="price-row">
+              <div class="price">£{{ car.price | number:'1.0-0' }}</div>
+              <div class="monthly">£{{ monthly(car.price) | number:'1.0-0' }} / monthly</div>
+            </div>
+            <div class="actions">
+              <button class="btn btn-secondary" disabled>Reserve</button>
+              <a class="btn btn-primary" [routerLink]="['/listings', car.id]" [queryParamsHandling]="'preserve'">View Details</a>
+            </div>
+          </div>
+        </div>
       </div>
       <div *ngIf="!(loading$ | async) && ((totalCount$ | async) ?? 0) === 0" class="no-results">
         <div class="no-results-content">
@@ -193,7 +237,7 @@
       <!-- Active filters chips -->
       <div class="active-filters" *ngIf="(activeFilters$ | async)?.length">
         <span class="chip" *ngFor="let f of (activeFilters$ | async)">{{ f }}</span>
-        <button class="clear-filters" (click)="clear(selectedMakeIds$); clear(selectedModelIds$); clear(selectedTransmissionIds$); clear(selectedBodyTypeIds$); clear(selectedFuelTypeIds$)">Clear all</button>
+        <button class="clear-filters" (click)="clearAll()">Clear all</button>
       </div>
     </main>
   </div>
