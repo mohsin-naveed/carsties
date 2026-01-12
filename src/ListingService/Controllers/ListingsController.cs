@@ -282,7 +282,7 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             .GroupBy(l => ((int)l.Price / priceStep) * priceStep)
             .Select(g => new { Id = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Id, x => x.Count);
-        // Bucketed mileage counts (step = 5000)
+        // Bucketed mileage counts (fixed step = 5000)
         const int mileageStep = 5000;
         var mileageCounts = await ApplyWithoutMileage(BaseWithoutMileage())
             .GroupBy(l => (l.Mileage / mileageStep) * mileageStep)

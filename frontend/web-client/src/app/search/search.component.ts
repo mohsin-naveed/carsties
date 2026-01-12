@@ -269,8 +269,8 @@ export class SearchComponent {
     map(mapper => Array.from(mapper.keys()).sort((a, b) => a - b)),
     shareReplay(1)
   );
-  readonly fromMileageOptions$ = combineLatest([this.mileageValues$, this.mileageMax$, this.mileageStep$]).pipe(
-    map(([vals, max, step]) => vals.filter(m => max == null || m <= max)),
+  readonly fromMileageOptions$ = combineLatest([this.mileageValues$, this.mileageMax$]).pipe(
+    map(([vals, max]) => vals.filter(m => max == null || m <= max)),
     shareReplay(1)
   );
   readonly toMileageOptions$ = combineLatest([this.mileageValues$, this.mileageMin$, this.mileageStep$]).pipe(
@@ -279,6 +279,12 @@ export class SearchComponent {
       const end = m + (step ?? 0) - 1;
       return end >= min;
     })),
+    shareReplay(1)
+  );
+
+  // Derive selected 'To' bucket start from max using fixed step
+  readonly mileageMaxStart$ = combineLatest([this.mileageMax$, this.mileageStep$]).pipe(
+    map(([end, step]) => (end == null || !step) ? undefined : (end - (step - 1))),
     shareReplay(1)
   );
 
