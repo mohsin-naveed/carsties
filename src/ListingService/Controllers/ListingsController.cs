@@ -5,6 +5,7 @@ using ListingService.Entities;
 using ListingService.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
 namespace ListingService.Controllers;
 
@@ -58,6 +59,125 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             d.FeatureIds = ids;
         }
         return dtos;
+    }
+
+    [HttpGet("facets")]
+    public async Task<ActionResult<FacetCountsDto>> GetFacetCounts(
+        [FromQuery] int? makeId,
+        [FromQuery(Name = "makeIds")] int[]? makeIds,
+        [FromQuery] int? modelId,
+        [FromQuery(Name = "modelIds")] int[]? modelIds,
+        [FromQuery] int? variantId,
+        [FromQuery(Name = "variantIds")] int[]? variantIds,
+        [FromQuery] int? transmissionId,
+        [FromQuery(Name = "transmissionIds")] int[]? transmissionIds,
+        [FromQuery] int? bodyTypeId,
+        [FromQuery(Name = "bodyTypeIds")] int[]? bodyTypeIds,
+        [FromQuery] int? fuelTypeId,
+        [FromQuery(Name = "fuelTypeIds")] int[]? fuelTypeIds)
+    {
+        // Base query for counts
+        IQueryable<Listing> Base() => context.Listings.AsNoTracking();
+
+        // Apply filters except the facet under evaluation
+        IQueryable<Listing> ApplyWithoutMake(IQueryable<Listing> q) {
+            if (modelId is not null) q = q.Where(l => l.ModelId == modelId);
+            else if (modelIds is not null && modelIds.Length > 0) q = q.Where(l => modelIds.Contains(l.ModelId));
+            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
+            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
+            if (transmissionId is not null) q = q.Where(l => l.TransmissionId == transmissionId);
+            else if (transmissionIds is not null && transmissionIds.Length > 0) q = q.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
+            if (bodyTypeId is not null) q = q.Where(l => l.BodyTypeId == bodyTypeId);
+            else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
+            if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
+            else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
+            return q;
+        }
+        IQueryable<Listing> ApplyWithoutModel(IQueryable<Listing> q) {
+            if (makeId is not null) q = q.Where(l => l.MakeId == makeId);
+            else if (makeIds is not null && makeIds.Length > 0) q = q.Where(l => makeIds.Contains(l.MakeId));
+            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
+            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
+            if (transmissionId is not null) q = q.Where(l => l.TransmissionId == transmissionId);
+            else if (transmissionIds is not null && transmissionIds.Length > 0) q = q.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
+            if (bodyTypeId is not null) q = q.Where(l => l.BodyTypeId == bodyTypeId);
+            else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
+            if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
+            else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
+            return q;
+        }
+        IQueryable<Listing> ApplyWithoutTransmission(IQueryable<Listing> q) {
+            if (makeId is not null) q = q.Where(l => l.MakeId == makeId);
+            else if (makeIds is not null && makeIds.Length > 0) q = q.Where(l => makeIds.Contains(l.MakeId));
+            if (modelId is not null) q = q.Where(l => l.ModelId == modelId);
+            else if (modelIds is not null && modelIds.Length > 0) q = q.Where(l => modelIds.Contains(l.ModelId));
+            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
+            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
+            if (bodyTypeId is not null) q = q.Where(l => l.BodyTypeId == bodyTypeId);
+            else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
+            if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
+            else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
+            return q;
+        }
+        IQueryable<Listing> ApplyWithoutBody(IQueryable<Listing> q) {
+            if (makeId is not null) q = q.Where(l => l.MakeId == makeId);
+            else if (makeIds is not null && makeIds.Length > 0) q = q.Where(l => makeIds.Contains(l.MakeId));
+            if (modelId is not null) q = q.Where(l => l.ModelId == modelId);
+            else if (modelIds is not null && modelIds.Length > 0) q = q.Where(l => modelIds.Contains(l.ModelId));
+            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
+            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
+            if (transmissionId is not null) q = q.Where(l => l.TransmissionId == transmissionId);
+            else if (transmissionIds is not null && transmissionIds.Length > 0) q = q.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
+            if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
+            else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
+            return q;
+        }
+        IQueryable<Listing> ApplyWithoutFuel(IQueryable<Listing> q) {
+            if (makeId is not null) q = q.Where(l => l.MakeId == makeId);
+            else if (makeIds is not null && makeIds.Length > 0) q = q.Where(l => makeIds.Contains(l.MakeId));
+            if (modelId is not null) q = q.Where(l => l.ModelId == modelId);
+            else if (modelIds is not null && modelIds.Length > 0) q = q.Where(l => modelIds.Contains(l.ModelId));
+            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
+            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
+            if (transmissionId is not null) q = q.Where(l => l.TransmissionId == transmissionId);
+            else if (transmissionIds is not null && transmissionIds.Length > 0) q = q.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
+            if (bodyTypeId is not null) q = q.Where(l => l.BodyTypeId == bodyTypeId);
+            else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
+            return q;
+        }
+
+        var makeCounts = await ApplyWithoutMake(Base())
+            .GroupBy(l => l.MakeId)
+            .Select(g => new { Id = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Id, x => x.Count);
+        var modelCounts = await ApplyWithoutModel(Base())
+            .GroupBy(l => l.ModelId)
+            .Select(g => new { Id = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Id, x => x.Count);
+        var transCounts = await ApplyWithoutTransmission(Base())
+            .Where(l => l.TransmissionId != null)
+            .GroupBy(l => l.TransmissionId!.Value)
+            .Select(g => new { Id = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Id, x => x.Count);
+        var bodyCounts = await ApplyWithoutBody(Base())
+            .GroupBy(l => l.BodyTypeId)
+            .Select(g => new { Id = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Id, x => x.Count);
+        var fuelCounts = await ApplyWithoutFuel(Base())
+            .Where(l => l.FuelTypeId != null)
+            .GroupBy(l => l.FuelTypeId!.Value)
+            .Select(g => new { Id = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Id, x => x.Count);
+
+        var dto = new FacetCountsDto
+        {
+            Makes = makeCounts,
+            Models = modelCounts,
+            Transmissions = transCounts,
+            Bodies = bodyCounts,
+            Fuels = fuelCounts
+        };
+        return dto;
     }
 
     [HttpGet("search")]

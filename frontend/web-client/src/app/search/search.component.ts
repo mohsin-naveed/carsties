@@ -103,25 +103,24 @@ export class SearchComponent {
   readonly totalPages$ = this.results$.pipe(map(r => r.totalPages));
 
   // Facet counts: for each facet, compute counts based on listings matching other filters
-  private readonly facetCounts$ = this.listings$.pipe(
-    map(list => {
-      const countBy = (listings: ListingDto[], key: (l: ListingDto) => number | undefined | null) => {
-        const m = new Map<number, number>();
-        for (const l of listings) {
-          const k = key(l);
-          if (!k || k <= 0) continue;
-          m.set(k, (m.get(k) ?? 0) + 1);
-        }
-        return m;
-      };
-      return {
-        makes: countBy(list, l => l.makeId),
-        models: countBy(list, l => l.modelId),
-        transmissions: countBy(list, l => l.transmissionId ?? undefined),
-        bodies: countBy(list, l => l.bodyTypeId),
-        fuels: countBy(list, l => l.fuelTypeId ?? undefined)
-      } as const;
-    }),
+  private readonly facetCounts$ = combineLatest([
+    this.selectedMakeIds$,
+    this.selectedModelIds$,
+    this.selectedTransmissionIds$,
+    this.selectedBodyTypeIds$,
+    this.selectedFuelTypeIds$
+  ]).pipe(
+    debounceTime(100),
+    map(([makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds]) => ({ makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds })),
+    distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
+    switchMap(params => this.api.getFacetCounts(params)),
+    map(dto => ({
+      makes: new Map<number, number>(Object.entries(dto.makes).map(([k,v]) => [Number(k), v as number])),
+      models: new Map<number, number>(Object.entries(dto.models).map(([k,v]) => [Number(k), v as number])),
+      transmissions: new Map<number, number>(Object.entries(dto.transmissions).map(([k,v]) => [Number(k), v as number])),
+      bodies: new Map<number, number>(Object.entries(dto.bodies).map(([k,v]) => [Number(k), v as number])),
+      fuels: new Map<number, number>(Object.entries(dto.fuels).map(([k,v]) => [Number(k), v as number]))
+    })),
     shareReplay(1)
   );
 

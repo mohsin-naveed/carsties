@@ -65,6 +65,14 @@ export interface UpdateListingDto {
   featureIds?: number[];
 }
 
+export interface FacetCountsDto {
+  makes: Record<number, number>;
+  models: Record<number, number>;
+  transmissions: Record<number, number>;
+  bodies: Record<number, number>;
+  fuels: Record<number, number>;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ListingsApiService {
   private readonly http = inject(HttpClient);
@@ -115,6 +123,11 @@ export class ListingsApiService {
   searchListings(params: ListingSearchParams): Observable<PaginationResponse<ListingDto>> {
     const clean = this.cleanParams(params);
     return this.http.get<PaginationResponse<ListingDto>>(`${this.baseUrl}/listings/search`, { params: clean });
+  }
+
+  getFacetCounts(params: ListingSearchParams): Observable<FacetCountsDto> {
+    const clean = this.cleanParams(params);
+    return this.http.get<FacetCountsDto>(`${this.baseUrl}/listings/facets`, { params: clean });
   }
 
   private cleanParams(params: Record<string, any>): Record<string, any> {
