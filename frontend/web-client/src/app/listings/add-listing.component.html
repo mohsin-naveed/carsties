@@ -11,14 +11,14 @@
 
   <mat-form-field appearance="outline"><mat-label>Make</mat-label>
     <mat-select formControlName="makeId">
-      <mat-option *ngFor="let m of makes" [value]="m.id">{{m.name}}</mat-option>
+      <mat-option *ngFor="let m of (makes$ | async) ?? makes" [value]="m.id">{{m.name}}</mat-option>
     </mat-select>
     <mat-error *ngIf="form.get('makeId')?.hasError('required') && form.get('makeId')?.touched">Make is required</mat-error>
   </mat-form-field>
 
   <mat-form-field appearance="outline"><mat-label>Model</mat-label>
     <mat-select formControlName="modelId">
-      <mat-option *ngFor="let m of models" [value]="m.id">{{m.name}}</mat-option>
+      <mat-option *ngFor="let m of (models$ | async) ?? models" [value]="m.id">{{m.name}}</mat-option>
     </mat-select>
     <mat-error *ngIf="form.get('modelId')?.hasError('required') && form.get('modelId')?.touched">Model is required</mat-error>
   </mat-form-field>
@@ -27,7 +27,7 @@
 
   <mat-form-field appearance="outline"><mat-label>Variant</mat-label>
     <mat-select formControlName="variantId">
-      <mat-option *ngFor="let v of variants" [value]="v.id">{{v.name}}</mat-option>
+      <mat-option *ngFor="let v of (variants$ | async) ?? variants" [value]="v.id">{{v.name}}</mat-option>
     </mat-select>
     <mat-error *ngIf="form.get('variantId')?.hasError('required') && form.get('variantId')?.touched">Variant is required</mat-error>
   </mat-form-field>
@@ -52,19 +52,19 @@
 
   <mat-form-field appearance="outline"><mat-label>Transmission</mat-label>
     <mat-select formControlName="transmissionId">
-      <mat-option *ngFor="let t of transmissions" [value]="t.id">{{t.name}}</mat-option>
+      <mat-option *ngFor="let t of (transmissions$ | async) ?? transmissions" [value]="t.id">{{t.name}}</mat-option>
     </mat-select>
   </mat-form-field>
 
   <mat-form-field appearance="outline"><mat-label>Fuel Type</mat-label>
     <mat-select formControlName="fuelTypeId">
-      <mat-option *ngFor="let f of fuelTypes" [value]="f.id">{{f.name}}</mat-option>
+      <mat-option *ngFor="let f of (fuelTypes$ | async) ?? fuelTypes" [value]="f.id">{{f.name}}</mat-option>
     </mat-select>
   </mat-form-field>
 
   <mat-form-field appearance="outline"><mat-label>Body Type</mat-label>
     <mat-select formControlName="bodyTypeId">
-      <mat-option *ngFor="let b of bodyTypes" [value]="b.id">{{b.name}}</mat-option>
+      <mat-option *ngFor="let b of (bodyTypes$ | async) ?? bodyTypes" [value]="b.id">{{b.name}}</mat-option>
     </mat-select>
     <mat-error *ngIf="form.get('bodyTypeId')?.hasError('required') && form.get('bodyTypeId')?.touched">Body Type is required</mat-error>
   </mat-form-field>

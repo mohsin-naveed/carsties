@@ -15,19 +15,36 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
     [HttpGet]
     public async Task<ActionResult<List<ListingDto>>> GetAll(
         [FromQuery] int? makeId,
+        [FromQuery(Name = "makeIds")] int[]? makeIds,
         [FromQuery] int? modelId,
+        [FromQuery(Name = "modelIds")] int[]? modelIds,
         [FromQuery] int? variantId,
+        [FromQuery(Name = "variantIds")] int[]? variantIds,
         [FromQuery] int? transmissionId,
+        [FromQuery(Name = "transmissionIds")] int[]? transmissionIds,
         [FromQuery] int? bodyTypeId,
-        [FromQuery] int? fuelTypeId)
+        [FromQuery(Name = "bodyTypeIds")] int[]? bodyTypeIds,
+        [FromQuery] int? fuelTypeId,
+        [FromQuery(Name = "fuelTypeIds")] int[]? fuelTypeIds)
     {
         var query = context.Listings.Include(l => l.Images).AsQueryable();
         if (makeId is not null) query = query.Where(l => l.MakeId == makeId);
+        else if (makeIds is not null && makeIds.Length > 0) query = query.Where(l => makeIds.Contains(l.MakeId));
+
         if (modelId is not null) query = query.Where(l => l.ModelId == modelId);
+        else if (modelIds is not null && modelIds.Length > 0) query = query.Where(l => modelIds.Contains(l.ModelId));
+
         if (variantId is not null) query = query.Where(l => l.VariantId == variantId);
+        else if (variantIds is not null && variantIds.Length > 0) query = query.Where(l => variantIds.Contains(l.VariantId));
+
         if (transmissionId is not null) query = query.Where(l => l.TransmissionId == transmissionId);
+        else if (transmissionIds is not null && transmissionIds.Length > 0) query = query.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
+
         if (bodyTypeId is not null) query = query.Where(l => l.BodyTypeId == bodyTypeId);
+        else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) query = query.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
+
         if (fuelTypeId is not null) query = query.Where(l => l.FuelTypeId == fuelTypeId);
+        else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) query = query.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
         var items = await query.ToListAsync();
         var dtos = items.Select(mapper.Map<ListingDto>).ToList();
         var featuresByListing = await context.ListingFeatures
@@ -50,22 +67,39 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         [FromQuery] string? sortBy = null, // "price" or "year"
         [FromQuery] string? sortDirection = null, // "asc" or "desc"
         [FromQuery] int? makeId = null,
+        [FromQuery(Name = "makeIds")] int[]? makeIds = null,
         [FromQuery] int? modelId = null,
+        [FromQuery(Name = "modelIds")] int[]? modelIds = null,
         [FromQuery] int? variantId = null,
+        [FromQuery(Name = "variantIds")] int[]? variantIds = null,
         [FromQuery] int? transmissionId = null,
+        [FromQuery(Name = "transmissionIds")] int[]? transmissionIds = null,
         [FromQuery] int? bodyTypeId = null,
-        [FromQuery] int? fuelTypeId = null)
+        [FromQuery(Name = "bodyTypeIds")] int[]? bodyTypeIds = null,
+        [FromQuery] int? fuelTypeId = null,
+        [FromQuery(Name = "fuelTypeIds")] int[]? fuelTypeIds = null)
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 12;
 
         var query = context.Listings.Include(l => l.Images).AsQueryable();
         if (makeId is not null) query = query.Where(l => l.MakeId == makeId);
+        else if (makeIds is not null && makeIds.Length > 0) query = query.Where(l => makeIds.Contains(l.MakeId));
+
         if (modelId is not null) query = query.Where(l => l.ModelId == modelId);
+        else if (modelIds is not null && modelIds.Length > 0) query = query.Where(l => modelIds.Contains(l.ModelId));
+
         if (variantId is not null) query = query.Where(l => l.VariantId == variantId);
+        else if (variantIds is not null && variantIds.Length > 0) query = query.Where(l => variantIds.Contains(l.VariantId));
+
         if (transmissionId is not null) query = query.Where(l => l.TransmissionId == transmissionId);
+        else if (transmissionIds is not null && transmissionIds.Length > 0) query = query.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
+
         if (bodyTypeId is not null) query = query.Where(l => l.BodyTypeId == bodyTypeId);
+        else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) query = query.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
+
         if (fuelTypeId is not null) query = query.Where(l => l.FuelTypeId == fuelTypeId);
+        else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) query = query.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
 
         // Sorting
         var dir = (sortDirection ?? "asc").ToLowerInvariant();

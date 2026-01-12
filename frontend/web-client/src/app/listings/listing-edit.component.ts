@@ -7,8 +7,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { ListingsApiService, ListingDto, UpdateListingDto, OptionDto, MakeDto, ModelDto, GenerationDto, DerivativeDto, VariantDto, FeatureDto, VariantFeatureSnapshot } from './listings-api.service';
-import { forkJoin } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { BehaviorSubject, forkJoin } from 'rxjs';
+import { map, distinctUntilChanged, shareReplay } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DestroyRef } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatOptionModule } from '@angular/material/core';
@@ -119,6 +121,7 @@ export class ListingEditComponent {
   private router = inject(Router);
   private api = inject(ListingsApiService);
   private fb = inject(FormBuilder);
+  private destroyRef = inject(DestroyRef);
 
   id!: number;
   saving = false;
@@ -132,6 +135,12 @@ export class ListingEditComponent {
   derivatives: DerivativeDto[] = [];
   variants: VariantDto[] = [];
   features: FeatureDto[] = [];
+  readonly makes$ = new BehaviorSubject<MakeDto[]>([]);
+  readonly models$ = new BehaviorSubject<ModelDto[]>([]);
+  readonly generations$ = new BehaviorSubject<GenerationDto[]>([]);
+  readonly derivatives$ = new BehaviorSubject<DerivativeDto[]>([]);
+  readonly variants$ = new BehaviorSubject<VariantDto[]>([]);
+  readonly features$ = new BehaviorSubject<FeatureDto[]>([]);
   variantFeatures: VariantFeatureSnapshot[] = [];
   selectedFeatureIds = new Set<number>();
   selectedFiles: File[] = [];
@@ -155,9 +164,9 @@ export class ListingEditComponent {
 
   ngOnInit() {
     this.id = Number(this.route.snapshot.paramMap.get('id'));
-    this.api.getOptions().subscribe(o => { this.transmissions = o.transmissions; this.fuelTypes = o.fuelTypes; this.bodyTypes = o.bodyTypes; });
-    this.api.getMakes().subscribe(m => this.makes = m);
-    this.api.getFeatures().subscribe(f => this.features = f);
+    this.api.getOptions().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(o => { this.transmissions = o.transmissions; this.fuelTypes = o.fuelTypes; this.bodyTypes = o.bodyTypes; });
+    this.api.getMakes().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(m => { this.makes = m; this.makes$.next(m); });
+    this.api.getFeatures().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(f => { this.features = f; this.features$.next(f); });
     this.api.getListing(this.id).subscribe({
       next: (l: ListingDto) => {
         this.listing = l;
@@ -179,17 +188,21 @@ export class ListingEditComponent {
         // Preselect listing features
         (l.featureIds ?? []).forEach(id => this.selectedFeatureIds.add(id));
         // Load models/generations/derivatives for make
-        this.api.getModels(l.makeId).subscribe(models => {
+        this.api.getModels(l.makeId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(models => {
           this.models = models;
+          this.models$.next(models);
           const genReqs = models.map(m => this.api.getGenerations(m.id));
           const derReqs = models.map(m => this.api.getDerivatives(m.id));
           forkJoin({ gens: forkJoin(genReqs).pipe(map(groups => groups.flat())), ders: forkJoin(derReqs).pipe(map(groups => groups.flat())) })
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(({ gens, ders }) => {
               this.generations = gens;
               this.derivatives = ders;
+              this.generations$.next(gens);
+              this.derivatives$.next(ders);
               this.refreshVariants();
               // Set variant features
-              this.api.getVariantFeatures(l.variantId).subscribe(vf => {
+              this.api.getVariantFeatures(l.variantId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(vf => {
                 this.variantFeatures = vf;
               });
             });
@@ -292,7 +305,9 @@ export class ListingEditComponent {
       .subscribe(vars => {
         const allowedDerivatives = this.derivatives.filter(d => allowedModelIds.has(d.modelId) && (!modelId || d.modelId === modelId));
         const allowedDerIds = new Set(allowedDerivatives.map(d => d.id));
-        this.variants = vars.filter(v => allowedDerIds.has(v.derivativeId));
+        const filtered = vars.filter(v => allowedDerIds.has(v.derivativeId));
+        this.variants = filtered;
+        this.variants$.next(filtered);
       });
   }
 }

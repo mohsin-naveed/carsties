@@ -1,0 +1,8 @@
+{
+  "/images": {
+    "target": "http://localhost:5220",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "info"
+  }
+}

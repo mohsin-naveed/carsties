@@ -9,12 +9,12 @@
   <div class="header-section">
     <div class="results-info">
       <h2 class="results-title">Find Your Perfect Car</h2>
-      <p class="results-count">Showing {{ totalCount() }} cars</p>
+      <p class="results-count">Showing {{ (totalCount$ | async) ?? 0 }} cars</p>
     </div>
 
     <div class="sort-section">
       <label for="sort-select" class="sort-label">Sort by:</label>
-      <select id="sort-select" class="sort-select" [ngModel]="selectedSort()" (ngModelChange)="selectedSort.set($event)">
+      <select id="sort-select" class="sort-select" [ngModel]="(sort$ | async)" (ngModelChange)="sort$.next($event)">
         <option *ngFor="let option of sortOptions" [value]="option.value">{{ option.label }}</option>
       </select>
     </div>
@@ -39,14 +39,14 @@
               <div class="options-container">
                 <div class="filter-option">
                   <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="!selectedMakeId()" (change)="selectedMakeId.set(null)" />
+                    <input type="checkbox" class="filter-checkbox" [checked]="((selectedMakeIds$ | async)?.length ?? 0) === 0" (change)="clear(selectedMakeIds$)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                     <span class="option-text">All</span>
                   </label>
                 </div>
-                <div class="filter-option" *ngFor="let m of makes()">
+                <div class="filter-option" *ngFor="let m of (makes$ | async) ?? []">
                   <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="selectedMakeId()===m.id" (change)="selectedMakeId.set(m.id)" />
+                    <input type="checkbox" class="filter-checkbox" [checked]="(selectedMakeIds$ | async)?.includes(m.id)" (change)="toggleMake(m.id)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                     <span class="option-text">{{ m.name }}</span>
                   </label>
@@ -61,14 +61,14 @@
               <div class="options-container">
                 <div class="filter-option">
                   <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="!selectedModelId()" (change)="selectedModelId.set(null)" />
+                    <input type="checkbox" class="filter-checkbox" [checked]="((selectedModelIds$ | async)?.length ?? 0) === 0" (change)="clear(selectedModelIds$)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                     <span class="option-text">All</span>
                   </label>
                 </div>
-                <div class="filter-option" *ngFor="let m of models()">
+                <div class="filter-option" *ngFor="let m of (models$ | async) ?? []">
                   <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="selectedModelId()===m.id" (change)="selectedModelId.set(m.id)" />
+                    <input type="checkbox" class="filter-checkbox" [checked]="(selectedModelIds$ | async)?.includes(m.id)" (change)="toggleModel(m.id)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                     <span class="option-text">{{ m.name }}</span>
                   </label>
@@ -77,27 +77,7 @@
             </div>
           </div>
 
-          <div class="filter-section">
-            <div class="section-header"><div class="section-title-container"><h4 class="section-title">Variant</h4></div></div>
-            <div class="section-content expanded">
-              <div class="options-container">
-                <div class="filter-option">
-                  <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="!selectedVariantId()" (change)="selectedVariantId.set(null)" />
-                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    <span class="option-text">All</span>
-                  </label>
-                </div>
-                <div class="filter-option" *ngFor="let v of variants()">
-                  <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="selectedVariantId()===v.id" (change)="selectedVariantId.set(v.id)" />
-                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    <span class="option-text">{{ v.name }}</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
+          
 
           <div class="filter-section">
             <div class="section-header"><div class="section-title-container"><h4 class="section-title">Transmission</h4></div></div>
@@ -105,14 +85,14 @@
               <div class="options-container">
                 <div class="filter-option">
                   <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="!selectedTransmissionId()" (change)="selectedTransmissionId.set(null)" />
+                    <input type="checkbox" class="filter-checkbox" [checked]="((selectedTransmissionIds$ | async)?.length ?? 0) === 0" (change)="clear(selectedTransmissionIds$)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                     <span class="option-text">All</span>
                   </label>
                 </div>
-                <div class="filter-option" *ngFor="let t of transmissions()">
+                <div class="filter-option" *ngFor="let t of (transmissions$ | async) ?? []">
                   <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="selectedTransmissionId()===t.id" (change)="selectedTransmissionId.set(t.id)" />
+                    <input type="checkbox" class="filter-checkbox" [checked]="(selectedTransmissionIds$ | async)?.includes(t.id)" (change)="toggleTransmission(t.id)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                     <span class="option-text">{{ t.name }}</span>
                   </label>
@@ -127,14 +107,14 @@
               <div class="options-container">
                 <div class="filter-option">
                   <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="!selectedBodyTypeId()" (change)="selectedBodyTypeId.set(null)" />
+                    <input type="checkbox" class="filter-checkbox" [checked]="((selectedBodyTypeIds$ | async)?.length ?? 0) === 0" (change)="clear(selectedBodyTypeIds$)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                     <span class="option-text">All</span>
                   </label>
                 </div>
-                <div class="filter-option" *ngFor="let b of bodyTypes()">
+                <div class="filter-option" *ngFor="let b of (bodyTypes$ | async) ?? []">
                   <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="selectedBodyTypeId()===b.id" (change)="selectedBodyTypeId.set(b.id)" />
+                    <input type="checkbox" class="filter-checkbox" [checked]="(selectedBodyTypeIds$ | async)?.includes(b.id)" (change)="toggleBodyType(b.id)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                     <span class="option-text">{{ b.name }}</span>
                   </label>
@@ -149,14 +129,14 @@
               <div class="options-container">
                 <div class="filter-option">
                   <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="!selectedFuelTypeId()" (change)="selectedFuelTypeId.set(null)" />
+                    <input type="checkbox" class="filter-checkbox" [checked]="((selectedFuelTypeIds$ | async)?.length ?? 0) === 0" (change)="clear(selectedFuelTypeIds$)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                     <span class="option-text">All</span>
                   </label>
                 </div>
-                <div class="filter-option" *ngFor="let f of fuelTypes()">
+                <div class="filter-option" *ngFor="let f of (fuelTypes$ | async) ?? []">
                   <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="selectedFuelTypeId()===f.id" (change)="selectedFuelTypeId.set(f.id)" />
+                    <input type="checkbox" class="filter-checkbox" [checked]="(selectedFuelTypeIds$ | async)?.includes(f.id)" (change)="toggleFuelType(f.id)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                     <span class="option-text">{{ f.name }}</span>
                   </label>
@@ -170,7 +150,7 @@
 
     <main class="car-results">
       <div class="car-grid">
-        <mat-card *ngFor="let car of filteredListings()" class="car-card" [routerLink]="['/listings', car.id]" [queryParamsHandling]="'preserve'" title="View details">
+        <mat-card *ngFor="let car of (listings$ | async) ?? []" class="car-card" [routerLink]="['/listings', car.id]" [queryParamsHandling]="'preserve'" title="View details">
           <mat-card-header>
             <mat-card-title>{{ car.title }}</mat-card-title>
             <mat-card-subtitle>
@@ -197,19 +177,24 @@
           </mat-card-actions>
         </mat-card>
       </div>
-      <div *ngIf="!loading() && totalCount() === 0" class="no-results">
+      <div *ngIf="!(loading$ | async) && ((totalCount$ | async) ?? 0) === 0" class="no-results">
         <div class="no-results-content">
           <h3>No cars found</h3>
           <p>Try adjusting your filters to see more results.</p>
         </div>
       </div>
       <!-- Simple Pagination Controls -->
-      <div class="pagination" *ngIf="totalPages() > 1">
-        <button class="page-btn" [disabled]="page() === 1 || loading()" (click)="prevPage()">Previous</button>
-        <span class="page-info">Page {{ page() }} of {{ totalPages() }}</span>
-        <button class="page-btn" [disabled]="page() === totalPages() || loading()" (click)="nextPage()">Next</button>
+      <div class="pagination" *ngIf="((totalPages$ | async) ?? 1) > 1">
+        <button class="page-btn" [disabled]="((page$ | async) ?? 1) === 1 || (loading$ | async)" (click)="prevPage()">Previous</button>
+        <span class="page-info">Page {{ (page$ | async) }} of {{ (totalPages$ | async) }}</span>
+        <button class="page-btn" [disabled]="((page$ | async) ?? 1) === ((totalPages$ | async) ?? 1) || (loading$ | async)" (click)="nextPage()">Next</button>
       </div>
-      <mat-progress-bar *ngIf="loading()" mode="indeterminate"></mat-progress-bar>
+      <mat-progress-bar *ngIf="(loading$ | async)" mode="indeterminate"></mat-progress-bar>
+      <!-- Active filters chips -->
+      <div class="active-filters" *ngIf="(activeFilters$ | async)?.length">
+        <span class="chip" *ngFor="let f of (activeFilters$ | async)">{{ f }}</span>
+        <button class="clear-filters" (click)="clear(selectedMakeIds$); clear(selectedModelIds$); clear(selectedTransmissionIds$); clear(selectedBodyTypeIds$); clear(selectedFuelTypeIds$)">Clear all</button>
+      </div>
     </main>
   </div>
 </div>

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, shareReplay } from 'rxjs/operators';
 import { environment } from '../../environments/environment.development';
 
 export interface MakeDto { id: number; name: string; }
@@ -26,6 +26,7 @@ export interface ListingDto {
 
 export interface ListingSearchParams {
   makeId?: number; modelId?: number; variantId?: number; transmissionId?: number; bodyTypeId?: number; fuelTypeId?: number;
+  makeIds?: number[]; modelIds?: number[]; variantIds?: number[]; transmissionIds?: number[]; bodyTypeIds?: number[]; fuelTypeIds?: number[];
   page?: number; pageSize?: number; sortBy?: 'price'|'year'; sortDirection?: 'asc'|'desc';
 }
 
@@ -70,8 +71,18 @@ export class ListingsApiService {
   private readonly baseUrl = environment.apiBaseUrl;
   private readonly catalogBaseUrl = environment.catalogApiBaseUrl;
 
+  // Cached streams for reference data (no params)
+  private makesCache$?: Observable<MakeDto[]>;
+  private featuresCache$?: Observable<FeatureDto[]>;
+  private optionsCache$?: Observable<VariantOptionsDto>;
+
   // Reference data direct from CatalogService
-  getMakes(): Observable<MakeDto[]> { return this.http.get<MakeDto[]>(`${this.catalogBaseUrl}/makes`); }
+  getMakes(): Observable<MakeDto[]> {
+    if (!this.makesCache$) {
+      this.makesCache$ = this.http.get<MakeDto[]>(`${this.catalogBaseUrl}/makes`).pipe(shareReplay(1));
+    }
+    return this.makesCache$;
+  }
   getModels(makeId?: number): Observable<ModelDto[]> { const params: any = {}; if (makeId) params.makeId = makeId; return this.http.get<ModelDto[]>(`${this.catalogBaseUrl}/models`, { params }); }
   getGenerations(modelId?: number): Observable<GenerationDto[]> { const params: any = {}; if (modelId) params.modelId = modelId; return this.http.get<GenerationDto[]>(`${this.catalogBaseUrl}/generations`, { params }); }
   getDerivatives(modelId?: number): Observable<DerivativeDto[]> { const params: any = {}; if (modelId) params.modelId = modelId; return this.http.get<DerivativeDto[]>(`${this.catalogBaseUrl}/derivatives`, { params }); }
@@ -79,13 +90,21 @@ export class ListingsApiService {
   getVariantsByGeneration(generationId: number): Observable<VariantDto[]> { const params: any = { generationId }; return this.http.get<VariantDto[]>(`${this.catalogBaseUrl}/variants`, { params }); }
   // Combine options from two endpoints
   getOptions(): Observable<VariantOptionsDto> {
-    return forkJoin({
-      varOpts: this.http.get<VariantOptionsDto>(`${this.catalogBaseUrl}/variants/options`),
-      bodies: this.http.get<OptionDto[]>(`${this.catalogBaseUrl}/derivatives/options`)
-    }).pipe(map(({ varOpts, bodies }) => ({ transmissions: varOpts.transmissions, fuelTypes: varOpts.fuelTypes, bodyTypes: bodies })));
+    if (!this.optionsCache$) {
+      this.optionsCache$ = forkJoin({
+        varOpts: this.http.get<VariantOptionsDto>(`${this.catalogBaseUrl}/variants/options`),
+        bodies: this.http.get<OptionDto[]>(`${this.catalogBaseUrl}/derivatives/options`)
+      }).pipe(map(({ varOpts, bodies }) => ({ transmissions: varOpts.transmissions, fuelTypes: varOpts.fuelTypes, bodyTypes: bodies })), shareReplay(1));
+    }
+    return this.optionsCache$;
   }
   getVariantFeatures(variantId: number): Observable<VariantFeatureSnapshot[]> { return this.http.get<VariantFeatureSnapshot[]>(`${this.catalogBaseUrl}/variantfeatures`, { params: { variantId } as any }); }
-  getFeatures(): Observable<FeatureDto[]> { return this.http.get<FeatureDto[]>(`${this.catalogBaseUrl}/features`); }
+  getFeatures(): Observable<FeatureDto[]> {
+    if (!this.featuresCache$) {
+      this.featuresCache$ = this.http.get<FeatureDto[]>(`${this.catalogBaseUrl}/features`).pipe(shareReplay(1));
+    }
+    return this.featuresCache$;
+  }
 
   // ListingService endpoints
   getListings(params?: ListingSearchParams): Observable<ListingDto[]> {
@@ -102,6 +121,11 @@ export class ListingsApiService {
     const q: Record<string, any> = {};
     for (const [k, v] of Object.entries(params)) {
       if (v === undefined || v === null) continue;
+      if (Array.isArray(v)) {
+        if (v.length === 0) continue; // omit empty arrays to avoid accidental over-filtering
+        q[k] = v.map(x => String(x)); // ensure proper serialization as string[]
+        continue;
+      }
       q[k] = v;
     }
     return q;

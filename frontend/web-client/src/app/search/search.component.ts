@@ -1,7 +1,8 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ListingsApiService, ListingDto, MakeDto, ModelDto, VariantDto, OptionDto } from '../listings/listings-api.service';
-import { forkJoin } from 'rxjs';
+import { ListingsApiService, ListingDto, MakeDto, ModelDto, OptionDto, PaginationResponse } from '../listings/listings-api.service';
+import { BehaviorSubject, combineLatest, forkJoin, of } from 'rxjs';
+import { map, switchMap, shareReplay, distinctUntilChanged, debounceTime, catchError, startWith, tap, take } from 'rxjs/operators';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,200 +17,163 @@ import { RouterModule } from '@angular/router';
   standalone: true,
   imports: [CommonModule, FormsModule, MatFormFieldModule, MatSelectModule, MatIconModule, MatCardModule, MatProgressBarModule, RouterModule],
   templateUrl: './search.component.html',
-  styleUrls: ['./search.component.scss']
+  styleUrls: ['./search.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SearchComponent {
-  private api = inject(ListingsApiService);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
+  private readonly api = inject(ListingsApiService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  // Filters
-  makes = signal<MakeDto[]>([]);
-  models = signal<ModelDto[]>([]);
-  variants = signal<VariantDto[]>([]);
-  transmissions = signal<OptionDto[]>([]);
-  bodyTypes = signal<OptionDto[]>([]);
-  fuelTypes = signal<OptionDto[]>([]);
-
-  selectedMakeId = signal<number | null>(null);
-  selectedModelId = signal<number | null>(null);
-  selectedVariantId = signal<number | null>(null);
-  selectedTransmissionId = signal<number | null>(null);
-  selectedBodyTypeId = signal<number | null>(null);
-  selectedFuelTypeId = signal<number | null>(null);
-
-  // Listings + pagination
-  allListings = signal<ListingDto[]>([]);
-  loading = signal<boolean>(true);
-  page = signal<number>(1);
-  pageSize = signal<number>(12);
-  totalCount = signal<number>(0);
-  totalPages = signal<number>(1);
-  // Sorting
-  selectedSort = signal<string>('price-asc');
-  sortOptions = [
+  // Sorting options (used in template)
+  readonly sortOptions = [
     { label: 'Price: Low to High', value: 'price-asc' },
     { label: 'Price: High to Low', value: 'price-desc' },
     { label: 'Year: Newest', value: 'year-desc' },
     { label: 'Year: Oldest', value: 'year-asc' }
   ];
 
-  anyFilterActive = computed(() => !!(
-    this.selectedMakeId() || this.selectedModelId() || this.selectedVariantId() ||
-    this.selectedTransmissionId() || this.selectedBodyTypeId() || this.selectedFuelTypeId()
-  ));
+  // Filter subjects
+  readonly selectedMakeIds$ = new BehaviorSubject<number[]>([]);
+  readonly selectedModelIds$ = new BehaviorSubject<number[]>([]);
+  readonly selectedTransmissionIds$ = new BehaviorSubject<number[]>([]);
+  readonly selectedBodyTypeIds$ = new BehaviorSubject<number[]>([]);
+  readonly selectedFuelTypeIds$ = new BehaviorSubject<number[]>([]);
 
-  filteredListings = computed(() => {
-    // Server returns already filtered + sorted data for the current page
-    return this.allListings();
-  });
+  // Sorting & pagination subjects
+  readonly sort$ = new BehaviorSubject<string>('price-asc');
+  readonly page$ = new BehaviorSubject<number>(1);
+  readonly pageSize$ = new BehaviorSubject<number>(12);
+
+  // Loading indicator
+  readonly loading$ = new BehaviorSubject<boolean>(true);
+
+  // Reference data
+  readonly makes$ = this.api.getMakes().pipe(shareReplay(1));
+  private readonly options$ = this.api.getOptions().pipe(shareReplay(1));
+  readonly transmissions$ = this.options$.pipe(map(o => o.transmissions));
+  readonly bodyTypes$ = this.options$.pipe(map(o => o.bodyTypes));
+  readonly fuelTypes$ = this.options$.pipe(map(o => o.fuelTypes));
+
+  // Models depend on selected make
+  readonly models$ = this.api.getModels().pipe(
+    switchMap(all => this.selectedMakeIds$.pipe(map(ids => ids.length ? all.filter(m => ids.includes(m.makeId)) : all))),
+    shareReplay(1)
+  );
+
+  // Variants filter removed
+
+  // Query params stream
+  private readonly query$ = combineLatest([
+    this.selectedMakeIds$,
+    this.selectedModelIds$,
+    this.selectedTransmissionIds$,
+    this.selectedBodyTypeIds$,
+    this.selectedFuelTypeIds$,
+    this.sort$,
+    this.page$,
+    this.pageSize$
+  ]).pipe(debounceTime(25), shareReplay(1));
+
+  // Results stream
+  readonly results$ = this.query$.pipe(
+    tap(() => this.loading$.next(true)),
+    switchMap(([makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, sort, page, pageSize]) => {
+      const [sortBy, sortDirection] = this.mapSort(sort);
+      const params = { makeIds, modelIds,
+        transmissionIds, bodyTypeIds, fuelTypeIds,
+        page, pageSize, sortBy, sortDirection } as const;
+      return this.api.searchListings(params).pipe(
+        catchError(() => this.api.getListings({} as any).pipe(
+          map(xs => ({ data: xs, totalCount: xs.length, totalPages: Math.max(1, Math.ceil(xs.length / pageSize)), currentPage: page, pageSize } as PaginationResponse<ListingDto>))
+        ))
+      );
+    }),
+    tap(() => this.loading$.next(false)),
+    shareReplay(1)
+  );
+
+  // Derived UI streams
+  readonly listings$ = this.results$.pipe(map(r => r.data));
+  readonly totalCount$ = this.results$.pipe(map(r => r.totalCount));
+  readonly totalPages$ = this.results$.pipe(map(r => r.totalPages));
+
+  // Active filter labels (for chips)
+  readonly activeFilters$ = combineLatest([
+    this.selectedMakeIds$, this.makes$.pipe(startWith([] as MakeDto[])),
+    this.selectedModelIds$, this.models$.pipe(startWith([] as ModelDto[])),
+    this.selectedTransmissionIds$, this.transmissions$.pipe(startWith([] as OptionDto[])),
+    this.selectedBodyTypeIds$, this.bodyTypes$.pipe(startWith([] as OptionDto[])),
+    this.selectedFuelTypeIds$, this.fuelTypes$.pipe(startWith([] as OptionDto[]))
+  ]).pipe(
+    map(([mkIds, makes, mdIds, models, trIds, transmissions, btIds, bodies, fuIds, fuels]) => {
+      const namesFor = (ids: number[], list: { id: number; name: string }[]) => ids.map(id => list.find(x => x.id === id)?.name).filter(Boolean) as string[];
+      const labels = [
+        ...namesFor(mkIds, makes),
+        ...namesFor(mdIds, models),
+        ...namesFor(trIds, transmissions),
+        ...namesFor(btIds, bodies),
+        ...namesFor(fuIds, fuels)
+      ];
+      return labels;
+    }),
+    shareReplay(1)
+  );
 
   constructor() {
-    // Load initial data
-    this.fetch();
-    this.api.getMakes().subscribe(xs => this.makes.set(xs));
-    this.api.getOptions().subscribe(opts => {
-      this.transmissions.set(opts.transmissions);
-      this.bodyTypes.set(opts.bodyTypes);
-      this.fuelTypes.set(opts.fuelTypes);
-    });
-
-    // React to Make selection -> load Models
-    effect(() => {
-      const mk = this.selectedMakeId();
-      this.selectedModelId.set(null);
-      this.models.set([]);
-      this.variants.set([]);
-      this.selectedVariantId.set(null);
-      if (mk) {
-        this.api.getModels(mk).subscribe(xs => this.models.set(xs));
-      }
-    });
-
-    // React to Model selection -> load Variants across generations
-    effect(() => {
-      const mdl = this.selectedModelId();
-      this.variants.set([]);
-      this.selectedVariantId.set(null);
-      if (mdl) {
-        this.api.getGenerations(mdl).subscribe(gens => {
-          if (!gens || gens.length === 0) { this.variants.set([]); return; }
-            const obs = gens.map(g => this.api.getVariantsByGeneration(g.id));
-            // Combine all variants from all generations
-            forkJoin(obs).subscribe({
-              next: results => { this.variants.set(results.flat()); },
-              error: _ => { this.variants.set([]); }
-            });
-        });
-      }
-    });
-
-    // Read initial filters from URL
-    this.route.queryParamMap.subscribe(q => {
-      const getNum = (key: string) => {
-        const v = q.get(key); return v ? Number(v) : null;
+    // Seed from URL using names (comma-separated)
+    combineLatest([
+      this.route.queryParamMap,
+      this.makes$.pipe(startWith([] as MakeDto[])),
+      this.api.getModels().pipe(startWith([] as ModelDto[])),
+      this.transmissions$.pipe(startWith([] as OptionDto[])),
+      this.bodyTypes$.pipe(startWith([] as OptionDto[])),
+      this.fuelTypes$.pipe(startWith([] as OptionDto[]))
+    ]).subscribe(([q, makes, models, transmissions, bodies, fuels]) => {
+      const namesToIds = (param: string | null, list: { id: number; name: string }[]) => {
+        if (!param) return [] as number[];
+        const wanted = param.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+        return list.filter(x => wanted.includes((x.name ?? '').toLowerCase())).map(x => x.id);
       };
-      this.selectedMakeId.set(getNum('make'));
-      this.selectedModelId.set(getNum('model'));
-      this.selectedVariantId.set(getNum('variant'));
-      this.selectedTransmissionId.set(getNum('trans'));
-      this.selectedBodyTypeId.set(getNum('body'));
-      this.selectedFuelTypeId.set(getNum('fuel'));
-      const qpSort = q.get('sort');
-      if (qpSort) this.selectedSort.set(qpSort);
-      const qpPage = q.get('page');
-      this.page.set(qpPage ? Number(qpPage) : 1);
+      this.selectedMakeIds$.next(namesToIds(q.get('make'), makes));
+      this.selectedModelIds$.next(namesToIds(q.get('model'), models));
+      this.selectedTransmissionIds$.next(namesToIds(q.get('trans'), transmissions));
+      this.selectedBodyTypeIds$.next(namesToIds(q.get('body'), bodies));
+      this.selectedFuelTypeIds$.next(namesToIds(q.get('fuel'), fuels));
+      const s = q.get('sort'); if (s) this.sort$.next(s);
+      const p = q.get('page'); this.page$.next(p ? Number(p) : 1);
     });
 
-    // Persist filters to URL when they change
-    effect(() => {
+    // Persist to URL on changes
+    combineLatest([
+      this.selectedMakeIds$, this.makes$.pipe(startWith([] as MakeDto[])),
+      this.selectedModelIds$, this.api.getModels().pipe(startWith([] as ModelDto[])),
+      this.selectedTransmissionIds$, this.transmissions$.pipe(startWith([] as OptionDto[])),
+      this.selectedBodyTypeIds$, this.bodyTypes$.pipe(startWith([] as OptionDto[])),
+      this.selectedFuelTypeIds$, this.fuelTypes$.pipe(startWith([] as OptionDto[])),
+      this.sort$, this.page$
+    ]).pipe(debounceTime(50)).subscribe(([mkIds, makes, mdIds, models, trIds, transmissions, btIds, bodies, fuIds, fuels, sort, page]) => {
+      const namesFor = (ids: number[], list: { id: number; name: string }[]) => ids.map(id => list.find(x => x.id === id)?.name).filter(Boolean) as string[];
       const qp: any = {
-        make: this.selectedMakeId(),
-        model: this.selectedModelId(),
-        variant: this.selectedVariantId(),
-        trans: this.selectedTransmissionId(),
-        body: this.selectedBodyTypeId(),
-        fuel: this.selectedFuelTypeId(),
-        sort: this.selectedSort(),
-        page: this.page()
+        make: namesFor(mkIds, makes).join(',') || undefined,
+        model: namesFor(mdIds, models).join(',') || undefined,
+        trans: namesFor(trIds, transmissions).join(',') || undefined,
+        body: namesFor(btIds, bodies).join(',') || undefined,
+        fuel: namesFor(fuIds, fuels).join(',') || undefined,
+        sort, page
       };
-      // Remove nulls for cleaner URLs
-      Object.keys(qp).forEach(k => qp[k] === null && delete qp[k]);
       this.router.navigate([], { queryParams: qp, queryParamsHandling: 'merge' });
     });
 
-    // Trigger server search on filters, sort, page or pageSize changes
-    effect(() => {
-      // Reset to first page when filters or sort change
-      const mk = this.selectedMakeId();
-      const md = this.selectedModelId();
-      const vr = this.selectedVariantId();
-      const tr = this.selectedTransmissionId();
-      const bt = this.selectedBodyTypeId();
-      const fu = this.selectedFuelTypeId();
-      const srt = this.selectedSort();
-      // Intentionally reference to create dependencies
-      void mk; void md; void vr; void tr; void bt; void fu; void srt;
-      this.page.set(1);
-    });
+    // Reset to first page when filters or sort change
+    combineLatest([this.selectedMakeIds$, this.selectedModelIds$, this.selectedTransmissionIds$, this.selectedBodyTypeIds$, this.selectedFuelTypeIds$, this.sort$])
+      .pipe(debounceTime(50)).subscribe(() => this.page$.next(1));
 
-    effect(() => {
-      const p = this.page();
-      const ps = this.pageSize();
-      void ps;
-      // Fetch page when page number changes
-      this.fetch();
+    // Reset dependent selections to avoid stale combos
+    this.selectedMakeIds$.pipe(distinctUntilChanged()).subscribe(() => {
+      this.selectedModelIds$.next([]);
     });
-  }
-
-  private fetch() {
-    const [sortBy, sortDirection] = this.mapSort(this.selectedSort());
-    const params = {
-      makeId: this.selectedMakeId() ?? undefined,
-      modelId: this.selectedModelId() ?? undefined,
-      variantId: this.selectedVariantId() ?? undefined,
-      transmissionId: this.selectedTransmissionId() ?? undefined,
-      bodyTypeId: this.selectedBodyTypeId() ?? undefined,
-      fuelTypeId: this.selectedFuelTypeId() ?? undefined,
-      page: this.page(),
-      pageSize: this.pageSize(),
-      sortBy,
-      sortDirection
-    } as const;
-    this.loading.set(true);
-    this.api.searchListings(params).subscribe({
-      next: res => {
-        this.allListings.set(res.data);
-        this.totalCount.set(res.totalCount);
-        this.totalPages.set(res.totalPages);
-        this.loading.set(false);
-      },
-      error: _ => {
-        // Fallback to non-paginated endpoint to avoid empty UI if /search is unavailable
-        const fallbackParams: any = {
-          makeId: params.makeId,
-          modelId: params.modelId,
-          variantId: params.variantId,
-          transmissionId: params.transmissionId,
-          bodyTypeId: params.bodyTypeId,
-          fuelTypeId: params.fuelTypeId
-        };
-        this.api.getListings(fallbackParams).subscribe({
-          next: xs => {
-            this.allListings.set(xs);
-            this.totalCount.set(xs.length);
-            const pages = Math.max(1, Math.ceil(xs.length / this.pageSize()));
-            this.totalPages.set(pages);
-            // Slice client-side to current page for display
-            const start = (this.page() - 1) * this.pageSize();
-            const end = start + this.pageSize();
-            this.allListings.set(xs.slice(start, end));
-            this.loading.set(false);
-          },
-          error: __ => { this.loading.set(false); }
-        });
-      }
-    });
+    // Variant dependency removed
   }
 
   private mapSort(v: string): ['price'|'year', 'asc'|'desc'] {
@@ -222,6 +186,18 @@ export class SearchComponent {
     }
   }
 
-  prevPage() { if (this.page() > 1) this.page.set(this.page() - 1); }
-  nextPage() { if (this.page() < this.totalPages()) this.page.set(this.page() + 1); }
+  prevPage() { combineLatest([this.page$, this.totalPages$]).pipe(take(1)).subscribe(([p]) => { if (p > 1) this.page$.next(p - 1); }); }
+  nextPage() { combineLatest([this.page$, this.totalPages$]).pipe(take(1)).subscribe(([p, t]) => { if (p < t) this.page$.next(p + 1); }); }
+
+  // Toggle helpers for multiselect checkboxes
+  private toggle(ids$: BehaviorSubject<number[]>, id: number) {
+    const curr = ids$.value;
+    ids$.next(curr.includes(id) ? curr.filter(x => x !== id) : [...curr, id]);
+  }
+  clear(ids$: BehaviorSubject<number[]>) { ids$.next([]); }
+  toggleMake(id: number) { this.toggle(this.selectedMakeIds$, id); }
+  toggleModel(id: number) { this.toggle(this.selectedModelIds$, id); }
+  toggleTransmission(id: number) { this.toggle(this.selectedTransmissionIds$, id); }
+  toggleBodyType(id: number) { this.toggle(this.selectedBodyTypeIds$, id); }
+  toggleFuelType(id: number) { this.toggle(this.selectedFuelTypeIds$, id); }
 }
