@@ -48,6 +48,12 @@ export class SearchComponent {
   readonly mileageMin$ = new BehaviorSubject<number | undefined>(undefined);
   readonly mileageMax$ = new BehaviorSubject<number | undefined>(undefined);
 
+  // Year dropdown options (1980..current)
+  readonly yearStart = 1980;
+  readonly yearEnd = new Date().getFullYear();
+  readonly yearOptionsAsc = Array.from({ length: (this.yearEnd - this.yearStart + 1) }, (_, i) => this.yearStart + i);
+  readonly yearOptionsDesc = [...this.yearOptionsAsc].reverse();
+
   // Sorting & pagination subjects
   readonly sort$ = new BehaviorSubject<string>('price-asc');
   readonly page$ = new BehaviorSubject<number>(1);
@@ -98,9 +104,9 @@ export class SearchComponent {
   // Results stream
   readonly results$ = this.query$.pipe(
     tap(() => this.loading$.next(true)),
-    switchMap(({ makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, sort, page, pageSize }) => {
+    switchMap(({ makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax, sort, page, pageSize }) => {
       const [sortBy, sortDirection] = this.mapSort(sort);
-      const params = { makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, page, pageSize, sortBy, sortDirection } as const;
+      const params = { makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax, page, pageSize, sortBy, sortDirection } as const;
       return this.api.searchListings(params).pipe(
         catchError(() => this.api.getListings({} as any).pipe(
           map(xs => ({ data: xs, totalCount: xs.length, totalPages: Math.max(1, Math.ceil(xs.length / pageSize)), currentPage: page, pageSize } as PaginationResponse<ListingDto>))
@@ -139,7 +145,12 @@ export class SearchComponent {
       models: new Map<number, number>(Object.entries(dto.models).map(([k,v]) => [Number(k), v as number])),
       transmissions: new Map<number, number>(Object.entries(dto.transmissions).map(([k,v]) => [Number(k), v as number])),
       bodies: new Map<number, number>(Object.entries(dto.bodies).map(([k,v]) => [Number(k), v as number])),
-      fuels: new Map<number, number>(Object.entries(dto.fuels).map(([k,v]) => [Number(k), v as number]))
+      fuels: new Map<number, number>(Object.entries(dto.fuels).map(([k,v]) => [Number(k), v as number])),
+      years: new Map<number, number>(Object.entries(dto.years).map(([k,v]) => [Number(k), v as number])),
+      prices: new Map<number, number>(Object.entries(dto.prices).map(([k,v]) => [Number(k), v as number])),
+      mileages: new Map<number, number>(Object.entries(dto.mileages).map(([k,v]) => [Number(k), v as number])),
+      priceStep: dto.priceStep,
+      mileageStep: dto.mileageStep
     })),
     shareReplay(1)
   );
@@ -215,6 +226,61 @@ export class SearchComponent {
   readonly transmissionCounts$ = this.facetCounts$.pipe(map(x => x.transmissions));
   readonly bodyCounts$ = this.facetCounts$.pipe(map(x => x.bodies));
   readonly fuelCounts$ = this.facetCounts$.pipe(map(x => x.fuels));
+
+  // Year counts and option lists derived from server
+  readonly yearCounts$ = this.facetCounts$.pipe(map(x => x.years));
+  readonly yearValues$ = this.yearCounts$.pipe(
+    map(mapper => Array.from(mapper.keys()).sort((a, b) => b - a)),
+    shareReplay(1)
+  );
+  readonly fromYearOptions$ = combineLatest([this.yearValues$, this.yearMax$]).pipe(
+    map(([vals, max]) => vals.filter(y => max == null || y <= max)),
+    shareReplay(1)
+  );
+  readonly toYearOptions$ = combineLatest([this.yearValues$, this.yearMin$]).pipe(
+    map(([vals, min]) => vals.filter(y => min == null || y >= min)),
+    shareReplay(1)
+  );
+
+  // Price counts and option lists derived from server buckets
+  readonly priceCounts$ = this.facetCounts$.pipe(map(x => x.prices));
+  readonly priceStep$ = this.facetCounts$.pipe(map(x => x.priceStep));
+  readonly priceValues$ = this.priceCounts$.pipe(
+    map(mapper => Array.from(mapper.keys()).sort((a, b) => a - b)),
+    shareReplay(1)
+  );
+  readonly fromPriceOptions$ = combineLatest([this.priceValues$, this.priceMax$, this.priceStep$]).pipe(
+    map(([vals, max, step]) => vals.filter(p => max == null || p <= max)),
+    shareReplay(1)
+  );
+  readonly toPriceOptions$ = combineLatest([this.priceValues$, this.priceMin$, this.priceStep$]).pipe(
+    map(([vals, min, step]) => vals.filter(p => {
+      if (min == null) return true;
+      const end = p + (step ?? 0) - 1;
+      return end >= min;
+    })),
+    shareReplay(1)
+  );
+
+  // Mileage counts and option lists derived from server buckets
+  readonly mileageCounts$ = this.facetCounts$.pipe(map(x => x.mileages));
+  readonly mileageStep$ = this.facetCounts$.pipe(map(x => x.mileageStep));
+  readonly mileageValues$ = this.mileageCounts$.pipe(
+    map(mapper => Array.from(mapper.keys()).sort((a, b) => a - b)),
+    shareReplay(1)
+  );
+  readonly fromMileageOptions$ = combineLatest([this.mileageValues$, this.mileageMax$, this.mileageStep$]).pipe(
+    map(([vals, max, step]) => vals.filter(m => max == null || m <= max)),
+    shareReplay(1)
+  );
+  readonly toMileageOptions$ = combineLatest([this.mileageValues$, this.mileageMin$, this.mileageStep$]).pipe(
+    map(([vals, min, step]) => vals.filter(m => {
+      if (min == null) return true;
+      const end = m + (step ?? 0) - 1;
+      return end >= min;
+    })),
+    shareReplay(1)
+  );
 
   // Active filter labels (for chips)
   readonly activeFilters$ = combineLatest([
@@ -347,4 +413,67 @@ export class SearchComponent {
 
   // Simple illustrative monthly price (placeholder UI affordance)
   monthly(price: number): number { return Math.round((price || 0) / 60); }
+
+  // Year range validation: ensure From <= To by adjusting the opposite side
+  onYearMinChange(v: any) {
+    const val = v === '' ? undefined : Number(v);
+    const currentMax = this.yearMax$.value;
+    this.yearMin$.next(val);
+    if (val != null && currentMax != null && val > currentMax) {
+      this.yearMax$.next(val);
+    }
+  }
+  onYearMaxChange(v: any) {
+    const val = v === '' ? undefined : Number(v);
+    const currentMin = this.yearMin$.value;
+    this.yearMax$.next(val);
+    if (val != null && currentMin != null && val < currentMin) {
+      this.yearMin$.next(val);
+    }
+  }
+
+  // Price range via bucketed selects: ensure From <= To
+  onPriceMinChange(v: any) {
+    const val = v === '' ? undefined : Number(v);
+    const currentMax = this.priceMax$.value;
+    this.priceMin$.next(val);
+    if (val != null && currentMax != null && val > currentMax) {
+      this.priceMax$.next(val);
+    }
+  }
+  onPriceMaxChange(v: any) {
+    const bucketStart = v === '' ? undefined : Number(v);
+    // Convert bucket start to bucket end using step
+    if (bucketStart == null) { this.priceMax$.next(undefined); return; }
+    combineLatest([this.priceStep$]).pipe(take(1)).subscribe(([step]) => {
+      const end = bucketStart + (step ?? 0) - 1;
+      const currentMin = this.priceMin$.value;
+      this.priceMax$.next(end);
+      if (currentMin != null && end < currentMin) {
+        this.priceMin$.next(bucketStart);
+      }
+    });
+  }
+
+  // Mileage range via bucketed selects: ensure From <= To
+  onMileageMinChange(v: any) {
+    const val = v === '' ? undefined : Number(v);
+    const currentMax = this.mileageMax$.value;
+    this.mileageMin$.next(val);
+    if (val != null && currentMax != null && val > currentMax) {
+      this.mileageMax$.next(val);
+    }
+  }
+  onMileageMaxChange(v: any) {
+    const bucketStart = v === '' ? undefined : Number(v);
+    if (bucketStart == null) { this.mileageMax$.next(undefined); return; }
+    combineLatest([this.mileageStep$]).pipe(take(1)).subscribe(([step]) => {
+      const end = bucketStart + (step ?? 0) - 1;
+      const currentMin = this.mileageMin$.value;
+      this.mileageMax$.next(end);
+      if (currentMin != null && end < currentMin) {
+        this.mileageMin$.next(bucketStart);
+      }
+    });
+  }
 }

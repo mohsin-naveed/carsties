@@ -9,4 +9,9 @@ public class FacetCountsDto
     public Dictionary<int, int> Transmissions { get; set; } = new();
     public Dictionary<int, int> Bodies { get; set; } = new();
     public Dictionary<int, int> Fuels { get; set; } = new();
+    public Dictionary<int, int> Years { get; set; } = new();
+    public Dictionary<int, int> Prices { get; set; } = new();
+    public Dictionary<int, int> Mileages { get; set; } = new();
+    public int PriceStep { get; set; }
+    public int MileageStep { get; set; }
 }

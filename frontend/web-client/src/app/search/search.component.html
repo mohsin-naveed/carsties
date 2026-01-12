@@ -78,9 +78,15 @@
             </div>
             <div class="section-content" [class.expanded]="(priceOpen$ | async)">
               <div class="range-row">
-                <input type="number" class="range-input" placeholder="Min" [ngModel]="(priceMin$ | async)" (ngModelChange)="priceMin$.next($event === '' ? undefined : +$event)" />
+                <select class="range-select" [ngModel]="((priceMin$ | async) ?? '')" (ngModelChange)="onPriceMinChange($event)">
+                  <option value="">Any</option>
+                  <option *ngFor="let p of (fromPriceOptions$ | async) ?? []" [value]="p">£{{ p | number:'1.0-0' }} – £{{ (p + ((priceStep$ | async) ?? 0) - 1) | number:'1.0-0' }} ({{ (priceCounts$ | async)?.get(p) ?? 0 }})</option>
+                </select>
                 <span class="range-sep">–</span>
-                <input type="number" class="range-input" placeholder="Max" [ngModel]="(priceMax$ | async)" (ngModelChange)="priceMax$.next($event === '' ? undefined : +$event)" />
+                <select class="range-select" [ngModel]="(((priceMax$ | async) != null) ? ((priceMax$ | async) - (((priceStep$ | async) ?? 0) - 1)) : '')" (ngModelChange)="onPriceMaxChange($event)">
+                  <option value="">Any</option>
+                  <option *ngFor="let p of (toPriceOptions$ | async) ?? []" [value]="p">£{{ p | number:'1.0-0' }} – £{{ (p + ((priceStep$ | async) ?? 0) - 1) | number:'1.0-0' }} ({{ (priceCounts$ | async)?.get(p) ?? 0 }})</option>
+                </select>
               </div>
             </div>
           </div>
@@ -96,9 +102,15 @@
             </div>
             <div class="section-content" [class.expanded]="(yearOpen$ | async)">
               <div class="range-row">
-                <input type="number" class="range-input" placeholder="From" [ngModel]="(yearMin$ | async)" (ngModelChange)="yearMin$.next($event === '' ? undefined : +$event)" />
+                <select class="range-select" [ngModel]="((yearMin$ | async) ?? '')" (ngModelChange)="onYearMinChange($event)">
+                  <option value="">Any</option>
+                  <option *ngFor="let y of (fromYearOptions$ | async) ?? []" [value]="y">{{ y }} ({{ (yearCounts$ | async)?.get(y) ?? 0 }})</option>
+                </select>
                 <span class="range-sep">–</span>
-                <input type="number" class="range-input" placeholder="To" [ngModel]="(yearMax$ | async)" (ngModelChange)="yearMax$.next($event === '' ? undefined : +$event)" />
+                <select class="range-select" [ngModel]="((yearMax$ | async) ?? '')" (ngModelChange)="onYearMaxChange($event)">
+                  <option value="">Any</option>
+                  <option *ngFor="let y of (toYearOptions$ | async) ?? []" [value]="y">{{ y }} ({{ (yearCounts$ | async)?.get(y) ?? 0 }})</option>
+                </select>
               </div>
             </div>
           </div>
@@ -114,9 +126,15 @@
             </div>
             <div class="section-content" [class.expanded]="(mileageOpen$ | async)">
               <div class="range-row">
-                <input type="number" class="range-input" placeholder="Min" [ngModel]="(mileageMin$ | async)" (ngModelChange)="mileageMin$.next($event === '' ? undefined : +$event)" />
+                <select class="range-select" [ngModel]="((mileageMin$ | async) ?? '')" (ngModelChange)="onMileageMinChange($event)">
+                  <option value="">Any</option>
+                  <option *ngFor="let m of (fromMileageOptions$ | async) ?? []" [value]="m">{{ m | number:'1.0-0' }} – {{ (m + ((mileageStep$ | async) ?? 0) - 1) | number:'1.0-0' }} miles ({{ (mileageCounts$ | async)?.get(m) ?? 0 }})</option>
+                </select>
                 <span class="range-sep">–</span>
-                <input type="number" class="range-input" placeholder="Max" [ngModel]="(mileageMax$ | async)" (ngModelChange)="mileageMax$.next($event === '' ? undefined : +$event)" />
+                <select class="range-select" [ngModel]="(((mileageMax$ | async) != null) ? ((mileageMax$ | async) - (((mileageStep$ | async) ?? 0) - 1)) : '')" (ngModelChange)="onMileageMaxChange($event)">
+                  <option value="">Any</option>
+                  <option *ngFor="let m of (toMileageOptions$ | async) ?? []" [value]="m">{{ m | number:'1.0-0' }} – {{ (m + ((mileageStep$ | async) ?? 0) - 1) | number:'1.0-0' }} miles ({{ (mileageCounts$ | async)?.get(m) ?? 0 }})</option>
+                </select>
               </div>
             </div>
           </div>

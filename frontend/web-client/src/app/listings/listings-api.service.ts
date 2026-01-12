@@ -75,6 +75,11 @@ export interface FacetCountsDto {
   transmissions: Record<number, number>;
   bodies: Record<number, number>;
   fuels: Record<number, number>;
+  years: Record<number, number>;
+  prices: Record<number, number>;
+  mileages: Record<number, number>;
+  priceStep: number;
+  mileageStep: number;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -105,6 +105,30 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             if (mileageMax is not null) q = q.Where(l => l.Mileage <= mileageMax);
             return q;
         }
+        IQueryable<Listing> BaseWithoutYear() {
+            var q = context.Listings.AsNoTracking();
+            if (priceMin is not null) q = q.Where(l => l.Price >= priceMin);
+            if (priceMax is not null) q = q.Where(l => l.Price <= priceMax);
+            if (mileageMin is not null) q = q.Where(l => l.Mileage >= mileageMin);
+            if (mileageMax is not null) q = q.Where(l => l.Mileage <= mileageMax);
+            return q;
+        }
+        IQueryable<Listing> BaseWithoutPrice() {
+            var q = context.Listings.AsNoTracking();
+            if (yearMin is not null) q = q.Where(l => l.Year >= yearMin);
+            if (yearMax is not null) q = q.Where(l => l.Year <= yearMax);
+            if (mileageMin is not null) q = q.Where(l => l.Mileage >= mileageMin);
+            if (mileageMax is not null) q = q.Where(l => l.Mileage <= mileageMax);
+            return q;
+        }
+        IQueryable<Listing> BaseWithoutMileage() {
+            var q = context.Listings.AsNoTracking();
+            if (priceMin is not null) q = q.Where(l => l.Price >= priceMin);
+            if (priceMax is not null) q = q.Where(l => l.Price <= priceMax);
+            if (yearMin is not null) q = q.Where(l => l.Year >= yearMin);
+            if (yearMax is not null) q = q.Where(l => l.Year <= yearMax);
+            return q;
+        }
 
         // Apply filters except the facet under evaluation
         IQueryable<Listing> ApplyWithoutMake(IQueryable<Listing> q) {
@@ -172,6 +196,59 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
             return q;
         }
+        IQueryable<Listing> ApplyWithoutYear(IQueryable<Listing> q) {
+            if (makeId is not null) q = q.Where(l => l.MakeId == makeId);
+            else if (makeIds is not null && makeIds.Length > 0) q = q.Where(l => makeIds.Contains(l.MakeId));
+            if (modelId is not null) q = q.Where(l => l.ModelId == modelId);
+            else if (modelIds is not null && modelIds.Length > 0) q = q.Where(l => modelIds.Contains(l.ModelId));
+            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
+            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
+            if (transmissionId is not null) q = q.Where(l => l.TransmissionId == transmissionId);
+            else if (transmissionIds is not null && transmissionIds.Length > 0) q = q.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
+            if (bodyTypeId is not null) q = q.Where(l => l.BodyTypeId == bodyTypeId);
+            else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
+            if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
+            else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
+            return q;
+        }
+        IQueryable<Listing> ApplyWithoutPrice(IQueryable<Listing> q) {
+            if (makeId is not null) q = q.Where(l => l.MakeId == makeId);
+            else if (makeIds is not null && makeIds.Length > 0) q = q.Where(l => makeIds.Contains(l.MakeId));
+            if (modelId is not null) q = q.Where(l => l.ModelId == modelId);
+            else if (modelIds is not null && modelIds.Length > 0) q = q.Where(l => modelIds.Contains(l.ModelId));
+            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
+            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
+            if (transmissionId is not null) q = q.Where(l => l.TransmissionId == transmissionId);
+            else if (transmissionIds is not null && transmissionIds.Length > 0) q = q.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
+            if (bodyTypeId is not null) q = q.Where(l => l.BodyTypeId == bodyTypeId);
+            else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
+            if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
+            else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
+            if (yearMin is not null) q = q.Where(l => l.Year >= yearMin);
+            if (yearMax is not null) q = q.Where(l => l.Year <= yearMax);
+            if (mileageMin is not null) q = q.Where(l => l.Mileage >= mileageMin);
+            if (mileageMax is not null) q = q.Where(l => l.Mileage <= mileageMax);
+            return q;
+        }
+        IQueryable<Listing> ApplyWithoutMileage(IQueryable<Listing> q) {
+            if (makeId is not null) q = q.Where(l => l.MakeId == makeId);
+            else if (makeIds is not null && makeIds.Length > 0) q = q.Where(l => makeIds.Contains(l.MakeId));
+            if (modelId is not null) q = q.Where(l => l.ModelId == modelId);
+            else if (modelIds is not null && modelIds.Length > 0) q = q.Where(l => modelIds.Contains(l.ModelId));
+            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
+            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
+            if (transmissionId is not null) q = q.Where(l => l.TransmissionId == transmissionId);
+            else if (transmissionIds is not null && transmissionIds.Length > 0) q = q.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
+            if (bodyTypeId is not null) q = q.Where(l => l.BodyTypeId == bodyTypeId);
+            else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
+            if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
+            else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
+            if (priceMin is not null) q = q.Where(l => l.Price >= priceMin);
+            if (priceMax is not null) q = q.Where(l => l.Price <= priceMax);
+            if (yearMin is not null) q = q.Where(l => l.Year >= yearMin);
+            if (yearMax is not null) q = q.Where(l => l.Year <= yearMax);
+            return q;
+        }
 
         var makeCounts = await ApplyWithoutMake(Base())
             .GroupBy(l => l.MakeId)
@@ -195,6 +272,22 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             .GroupBy(l => l.FuelTypeId!.Value)
             .Select(g => new { Id = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Id, x => x.Count);
+        var yearCounts = await ApplyWithoutYear(BaseWithoutYear())
+            .GroupBy(l => l.Year)
+            .Select(g => new { Id = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Id, x => x.Count);
+        // Bucketed price counts (step = 1000)
+        const int priceStep = 1000;
+        var priceCounts = await ApplyWithoutPrice(BaseWithoutPrice())
+            .GroupBy(l => ((int)l.Price / priceStep) * priceStep)
+            .Select(g => new { Id = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Id, x => x.Count);
+        // Bucketed mileage counts (step = 5000)
+        const int mileageStep = 5000;
+        var mileageCounts = await ApplyWithoutMileage(BaseWithoutMileage())
+            .GroupBy(l => (l.Mileage / mileageStep) * mileageStep)
+            .Select(g => new { Id = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Id, x => x.Count);
 
         var dto = new FacetCountsDto
         {
@@ -202,7 +295,12 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             Models = modelCounts,
             Transmissions = transCounts,
             Bodies = bodyCounts,
-            Fuels = fuelCounts
+            Fuels = fuelCounts,
+            Years = yearCounts,
+            Prices = priceCounts,
+            Mileages = mileageCounts,
+            PriceStep = priceStep,
+            MileageStep = mileageStep
         };
         return dto;
     }
