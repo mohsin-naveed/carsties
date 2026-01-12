@@ -48,7 +48,7 @@
                   <label class="option-label">
                     <input type="checkbox" class="filter-checkbox" [checked]="(selectedMakeIds$ | async)?.includes(m.id)" (change)="toggleMake(m.id)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    <span class="option-text">{{ m.name }}</span>
+                    <span class="option-text">{{ m.name }} <span class="count">({{ (makeCounts$ | async)?.get(m.id) ?? 0 }})</span></span>
                   </label>
                 </div>
               </div>
@@ -66,11 +66,11 @@
                     <span class="option-text">All</span>
                   </label>
                 </div>
-                <div class="filter-option" *ngFor="let m of (models$ | async) ?? []">
+                <div class="filter-option" *ngFor="let m of (filteredModels$ | async) ?? []">
                   <label class="option-label">
                     <input type="checkbox" class="filter-checkbox" [checked]="(selectedModelIds$ | async)?.includes(m.id)" (change)="toggleModel(m.id)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    <span class="option-text">{{ m.name }}</span>
+                    <span class="option-text">{{ m.name }} <span class="count">({{ (modelCounts$ | async)?.get(m.id) ?? 0 }})</span></span>
                   </label>
                 </div>
               </div>
@@ -94,7 +94,7 @@
                   <label class="option-label">
                     <input type="checkbox" class="filter-checkbox" [checked]="(selectedTransmissionIds$ | async)?.includes(t.id)" (change)="toggleTransmission(t.id)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    <span class="option-text">{{ t.name }}</span>
+                    <span class="option-text">{{ t.name }} <span class="count">({{ (transmissionCounts$ | async)?.get(t.id) ?? 0 }})</span></span>
                   </label>
                 </div>
               </div>
@@ -116,7 +116,7 @@
                   <label class="option-label">
                     <input type="checkbox" class="filter-checkbox" [checked]="(selectedBodyTypeIds$ | async)?.includes(b.id)" (change)="toggleBodyType(b.id)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    <span class="option-text">{{ b.name }}</span>
+                    <span class="option-text">{{ b.name }} <span class="count">({{ (bodyCounts$ | async)?.get(b.id) ?? 0 }})</span></span>
                   </label>
                 </div>
               </div>
@@ -138,7 +138,7 @@
                   <label class="option-label">
                     <input type="checkbox" class="filter-checkbox" [checked]="(selectedFuelTypeIds$ | async)?.includes(f.id)" (change)="toggleFuelType(f.id)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    <span class="option-text">{{ f.name }}</span>
+                    <span class="option-text">{{ f.name }} <span class="count">({{ (fuelCounts$ | async)?.get(f.id) ?? 0 }})</span></span>
                   </label>
                 </div>
               </div>

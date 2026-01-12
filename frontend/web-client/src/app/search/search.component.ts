@@ -49,15 +49,16 @@ export class SearchComponent {
   readonly loading$ = new BehaviorSubject<boolean>(true);
 
   // Reference data
-  readonly makes$ = this.api.getMakes().pipe(shareReplay(1));
+  private readonly allMakes$ = this.api.getMakes().pipe(shareReplay(1));
   private readonly options$ = this.api.getOptions().pipe(shareReplay(1));
-  readonly transmissions$ = this.options$.pipe(map(o => o.transmissions));
-  readonly bodyTypes$ = this.options$.pipe(map(o => o.bodyTypes));
-  readonly fuelTypes$ = this.options$.pipe(map(o => o.fuelTypes));
+  private readonly allTransmissions$ = this.options$.pipe(map(o => o.transmissions));
+  private readonly allBodyTypes$ = this.options$.pipe(map(o => o.bodyTypes));
+  private readonly allFuelTypes$ = this.options$.pipe(map(o => o.fuelTypes));
 
-  // Models depend on selected make
-  readonly models$ = this.api.getModels().pipe(
-    switchMap(all => this.selectedMakeIds$.pipe(map(ids => ids.length ? all.filter(m => ids.includes(m.makeId)) : all))),
+  // Models depend on selected make (unfiltered)
+  private readonly allModels$ = this.api.getModels().pipe(shareReplay(1));
+  readonly models$ = combineLatest([this.allModels$, this.selectedMakeIds$]).pipe(
+    map(([all, ids]) => ids.length ? all.filter(m => ids.includes(m.makeId)) : all),
     shareReplay(1)
   );
 
@@ -73,16 +74,19 @@ export class SearchComponent {
     this.sort$,
     this.page$,
     this.pageSize$
-  ]).pipe(debounceTime(25), shareReplay(1));
+  ]).pipe(
+    debounceTime(100),
+    map(([makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, sort, page, pageSize]) => ({ makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, sort, page, pageSize })),
+    distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
+    shareReplay(1)
+  );
 
   // Results stream
   readonly results$ = this.query$.pipe(
     tap(() => this.loading$.next(true)),
-    switchMap(([makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, sort, page, pageSize]) => {
+    switchMap(({ makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, sort, page, pageSize }) => {
       const [sortBy, sortDirection] = this.mapSort(sort);
-      const params = { makeIds, modelIds,
-        transmissionIds, bodyTypeIds, fuelTypeIds,
-        page, pageSize, sortBy, sortDirection } as const;
+      const params = { makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, page, pageSize, sortBy, sortDirection } as const;
       return this.api.searchListings(params).pipe(
         catchError(() => this.api.getListings({} as any).pipe(
           map(xs => ({ data: xs, totalCount: xs.length, totalPages: Math.max(1, Math.ceil(xs.length / pageSize)), currentPage: page, pageSize } as PaginationResponse<ListingDto>))
@@ -98,10 +102,63 @@ export class SearchComponent {
   readonly totalCount$ = this.results$.pipe(map(r => r.totalCount));
   readonly totalPages$ = this.results$.pipe(map(r => r.totalPages));
 
+  // Facet counts: for each facet, compute counts based on listings matching other filters
+  private readonly facetCounts$ = this.listings$.pipe(
+    map(list => {
+      const countBy = (listings: ListingDto[], key: (l: ListingDto) => number | undefined | null) => {
+        const m = new Map<number, number>();
+        for (const l of listings) {
+          const k = key(l);
+          if (!k || k <= 0) continue;
+          m.set(k, (m.get(k) ?? 0) + 1);
+        }
+        return m;
+      };
+      return {
+        makes: countBy(list, l => l.makeId),
+        models: countBy(list, l => l.modelId),
+        transmissions: countBy(list, l => l.transmissionId ?? undefined),
+        bodies: countBy(list, l => l.bodyTypeId),
+        fuels: countBy(list, l => l.fuelTypeId ?? undefined)
+      } as const;
+    }),
+    shareReplay(1)
+  );
+
+  // Filtered facet option streams (only show options with count > 0)
+  readonly makes$ = combineLatest([this.allMakes$, this.facetCounts$]).pipe(
+    map(([makes, counts]) => makes.filter(m => (counts.makes.get(m.id) ?? 0) > 0)),
+    shareReplay(1)
+  );
+  readonly transmissions$ = combineLatest([this.allTransmissions$, this.facetCounts$]).pipe(
+    map(([opts, counts]) => opts.filter(t => (counts.transmissions.get(t.id) ?? 0) > 0)),
+    shareReplay(1)
+  );
+  readonly bodyTypes$ = combineLatest([this.allBodyTypes$, this.facetCounts$]).pipe(
+    map(([opts, counts]) => opts.filter(b => (counts.bodies.get(b.id) ?? 0) > 0)),
+    shareReplay(1)
+  );
+  readonly fuelTypes$ = combineLatest([this.allFuelTypes$, this.facetCounts$]).pipe(
+    map(([opts, counts]) => opts.filter(f => (counts.fuels.get(f.id) ?? 0) > 0)),
+    shareReplay(1)
+  );
+  // Models already depend on selected make; apply counts filter too
+  readonly filteredModels$ = combineLatest([this.models$, this.facetCounts$]).pipe(
+    map(([models, counts]) => models.filter(m => (counts.models.get(m.id) ?? 0) > 0)),
+    shareReplay(1)
+  );
+
+  // Facet count maps for template usage
+  readonly makeCounts$ = this.facetCounts$.pipe(map(x => x.makes));
+  readonly modelCounts$ = this.facetCounts$.pipe(map(x => x.models));
+  readonly transmissionCounts$ = this.facetCounts$.pipe(map(x => x.transmissions));
+  readonly bodyCounts$ = this.facetCounts$.pipe(map(x => x.bodies));
+  readonly fuelCounts$ = this.facetCounts$.pipe(map(x => x.fuels));
+
   // Active filter labels (for chips)
   readonly activeFilters$ = combineLatest([
     this.selectedMakeIds$, this.makes$.pipe(startWith([] as MakeDto[])),
-    this.selectedModelIds$, this.models$.pipe(startWith([] as ModelDto[])),
+    this.selectedModelIds$, this.filteredModels$.pipe(startWith([] as ModelDto[])),
     this.selectedTransmissionIds$, this.transmissions$.pipe(startWith([] as OptionDto[])),
     this.selectedBodyTypeIds$, this.bodyTypes$.pipe(startWith([] as OptionDto[])),
     this.selectedFuelTypeIds$, this.fuelTypes$.pipe(startWith([] as OptionDto[]))
@@ -124,8 +181,8 @@ export class SearchComponent {
     // Seed from URL using names (comma-separated)
     combineLatest([
       this.route.queryParamMap,
-      this.makes$.pipe(startWith([] as MakeDto[])),
-      this.api.getModels().pipe(startWith([] as ModelDto[])),
+      this.allMakes$.pipe(startWith([] as MakeDto[])),
+      this.allModels$.pipe(startWith([] as ModelDto[])),
       this.transmissions$.pipe(startWith([] as OptionDto[])),
       this.bodyTypes$.pipe(startWith([] as OptionDto[])),
       this.fuelTypes$.pipe(startWith([] as OptionDto[]))
@@ -146,8 +203,8 @@ export class SearchComponent {
 
     // Persist to URL on changes
     combineLatest([
-      this.selectedMakeIds$, this.makes$.pipe(startWith([] as MakeDto[])),
-      this.selectedModelIds$, this.api.getModels().pipe(startWith([] as ModelDto[])),
+      this.selectedMakeIds$, this.allMakes$.pipe(startWith([] as MakeDto[])),
+      this.selectedModelIds$, this.allModels$.pipe(startWith([] as ModelDto[])),
       this.selectedTransmissionIds$, this.transmissions$.pipe(startWith([] as OptionDto[])),
       this.selectedBodyTypeIds$, this.bodyTypes$.pipe(startWith([] as OptionDto[])),
       this.selectedFuelTypeIds$, this.fuelTypes$.pipe(startWith([] as OptionDto[])),
