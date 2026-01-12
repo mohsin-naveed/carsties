@@ -185,9 +185,11 @@ export class AddListingComponent {
       generationName: this.generations.find(x => x.id === raw.generationId!)?.name,
       derivativeName: this.derivatives.find(x => x.id === raw.derivativeId!)?.name,
       variantName: this.variants.find(x => x.id === raw.variantId!)?.name,
-      bodyTypeName: this.derivatives.find(x => x.id === raw.derivativeId!)?.bodyType ?? this.bodyTypes.find(x => x.id === raw.bodyTypeId!)?.name,
-      transmissionName: this.derivatives.find(x => x.id === raw.derivativeId!)?.transmission ?? this.transmissions.find(x => x.id === raw.transmissionId!)?.name,
-      fuelTypeName: this.derivatives.find(x => x.id === raw.derivativeId!)?.fuelType ?? this.fuelTypes.find(x => x.id === raw.fuelTypeId!)?.name,
+      bodyTypeName: this.bodyTypes.find(x => x.id === raw.bodyTypeId!)?.name ?? this.derivatives.find(x => x.id === raw.derivativeId!)?.bodyType,
+      transmissionName: (raw.transmissionId ? this.transmissions.find(x => x.id === raw.transmissionId)?.name : undefined)
+        ?? this.derivatives.find(x => x.id === raw.derivativeId!)?.transmission,
+      fuelTypeName: (raw.fuelTypeId ? this.fuelTypes.find(x => x.id === raw.fuelTypeId)?.name : undefined)
+        ?? this.derivatives.find(x => x.id === raw.derivativeId!)?.fuelType,
       seatsSnapshot: this.derivatives.find(x => x.id === raw.derivativeId!)?.seats,
       doorsSnapshot: this.derivatives.find(x => x.id === raw.derivativeId!)?.doors,
       engineSnapshot: this.derivatives.find(x => x.id === raw.derivativeId!)?.engine,

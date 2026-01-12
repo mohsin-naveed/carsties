@@ -197,7 +197,21 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         var listing = await context.Listings.FindAsync(id);
         if (listing is null) return NotFound();
         mapper.Map(dto, listing);
-        // Refresh snapshots if core identifiers changed and client did not supply new snapshots
+        // Refresh option snapshots if explicitly changed
+        if (dto.TransmissionId.HasValue)
+        {
+            listing.TransmissionName = await catalog.GetTransmissionNameAsync(dto.TransmissionId.Value) ?? listing.TransmissionName;
+        }
+        if (dto.FuelTypeId.HasValue)
+        {
+            listing.FuelTypeName = await catalog.GetFuelTypeNameAsync(dto.FuelTypeId.Value) ?? listing.FuelTypeName;
+        }
+        if (dto.BodyTypeId.HasValue)
+        {
+            listing.BodyTypeName = await catalog.GetBodyTypeNameAsync(dto.BodyTypeId.Value) ?? listing.BodyTypeName;
+        }
+
+        // Refresh other snapshots if core identifiers changed and client did not supply new snapshots
         if (string.IsNullOrWhiteSpace(listing.MakeName) || string.IsNullOrWhiteSpace(listing.ModelName) || string.IsNullOrWhiteSpace(listing.VariantName))
         {
             await catalog.PopulateSnapshotsAsync(listing);

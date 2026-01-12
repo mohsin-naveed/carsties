@@ -5,6 +5,10 @@ namespace ListingService.Services;
 
 public class CatalogLookup(HttpClient http) : ICatalogLookup
 {
+    private IReadOnlyDictionary<int, string>? _transmissions;
+    private IReadOnlyDictionary<int, string>? _fuelTypes;
+    private IReadOnlyDictionary<int, string>? _bodyTypes;
+
     public async Task PopulateSnapshotsAsync(Listing listing)
     {
         // Derivative details (includes names for body/trans/fuel)
@@ -14,16 +18,16 @@ public class CatalogLookup(HttpClient http) : ICatalogLookup
             listing.DerivativeName = derivative.Name ?? string.Empty;
             listing.ModelId = derivative.ModelId;
             if (derivative.GenerationId.HasValue) listing.GenerationId = derivative.GenerationId.Value;
-            listing.BodyTypeId = derivative.BodyTypeId;
+            if (listing.BodyTypeId == 0) listing.BodyTypeId = derivative.BodyTypeId;
             listing.SeatsSnapshot = derivative.Seats;
             listing.DoorsSnapshot = derivative.Doors;
             listing.EngineSnapshot = derivative.Engine;
-            listing.TransmissionId = derivative.TransmissionId;
-            listing.FuelTypeId = derivative.FuelTypeId;
+            if (listing.TransmissionId is null) listing.TransmissionId = derivative.TransmissionId;
+            if (listing.FuelTypeId is null) listing.FuelTypeId = derivative.FuelTypeId;
             listing.BatteryCapacityKWhSnapshot = derivative.BatteryCapacityKWh;
-            listing.BodyTypeName = derivative.BodyType;
-            listing.TransmissionName = derivative.Transmission;
-            listing.FuelTypeName = derivative.FuelType;
+            if (string.IsNullOrWhiteSpace(listing.BodyTypeName)) listing.BodyTypeName = derivative.BodyType;
+            if (string.IsNullOrWhiteSpace(listing.TransmissionName)) listing.TransmissionName = derivative.Transmission;
+            if (string.IsNullOrWhiteSpace(listing.FuelTypeName)) listing.FuelTypeName = derivative.FuelType;
         }
 
         // Model and Make
@@ -58,6 +62,41 @@ public class CatalogLookup(HttpClient http) : ICatalogLookup
         return f is null ? null : new FeatureBasic(f.Id, f.Name, f.Description);
     }
 
+    public async Task<string?> GetTransmissionNameAsync(int transmissionId)
+    {
+        await EnsureVariantOptionsAsync();
+        return _transmissions != null && _transmissions.TryGetValue(transmissionId, out var name) ? name : null;
+    }
+
+    public async Task<string?> GetFuelTypeNameAsync(int fuelTypeId)
+    {
+        await EnsureVariantOptionsAsync();
+        return _fuelTypes != null && _fuelTypes.TryGetValue(fuelTypeId, out var name) ? name : null;
+    }
+
+    public async Task<string?> GetBodyTypeNameAsync(int bodyTypeId)
+    {
+        await EnsureDerivativeOptionsAsync();
+        return _bodyTypes != null && _bodyTypes.TryGetValue(bodyTypeId, out var name) ? name : null;
+    }
+
+    private async Task EnsureVariantOptionsAsync()
+    {
+        if (_transmissions != null && _fuelTypes != null) return;
+        var opts = await http.GetFromJsonAsync<VariantOptionsDto>("variants/options");
+        var transmissions = opts?.Transmissions ?? new List<OptionDto>();
+        var fuelTypes = opts?.FuelTypes ?? new List<OptionDto>();
+        _transmissions = transmissions.ToDictionary(o => o.Id, o => o.Name);
+        _fuelTypes = fuelTypes.ToDictionary(o => o.Id, o => o.Name);
+    }
+
+    private async Task EnsureDerivativeOptionsAsync()
+    {
+        if (_bodyTypes != null) return;
+        var bodies = await http.GetFromJsonAsync<List<OptionDto>>("derivatives/options");
+        _bodyTypes = (bodies ?? new List<OptionDto>()).ToDictionary(o => o.Id, o => o.Name);
+    }
+
     // Minimal internal DTOs matching CatalogService outputs
     private record MakeDto(int Id, string Name);
     private record ModelDto(int Id, string Name, int MakeId);
@@ -66,5 +105,7 @@ public class CatalogLookup(HttpClient http) : ICatalogLookup
     private record DerivativeDto(int Id, string? Name, int ModelId, int? GenerationId, int BodyTypeId, string? BodyType, short Seats, short Doors, string? Engine, int? TransmissionId, string? Transmission, int? FuelTypeId, string? FuelType, decimal? BatteryCapacityKWh);
     private record VariantFeatureDto(int VariantId, int FeatureId, bool IsStandard, DateTime AddedDate);
     private record FeatureDto(int Id, string Name, string? Description);
+    private record OptionDto(int Id, string Name);
+    private record VariantOptionsDto(List<OptionDto> Transmissions, List<OptionDto> FuelTypes);
     
 }

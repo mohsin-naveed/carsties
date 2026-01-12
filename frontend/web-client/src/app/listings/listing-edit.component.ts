@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { ListingsApiService, ListingDto, UpdateListingDto, OptionDto, MakeDto, ModelDto, GenerationDto, DerivativeDto, VariantDto, FeatureDto, VariantFeatureSnapshot } from './listings-api.service';
+import { NotificationService } from '../core/notification.service';
 import { BehaviorSubject, forkJoin } from 'rxjs';
 import { map, distinctUntilChanged, shareReplay } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -122,6 +123,7 @@ export class ListingEditComponent {
   private api = inject(ListingsApiService);
   private fb = inject(FormBuilder);
   private destroyRef = inject(DestroyRef);
+  private notify = inject(NotificationService);
 
   id!: number;
   saving = false;
@@ -231,7 +233,11 @@ export class ListingEditComponent {
       featureIds: Array.from(this.selectedFeatureIds)
     };
     this.api.updateListing(this.id, dto).subscribe({
-      next: () => { this.saving = false; this.router.navigate(['/listings']); },
+      next: () => {
+        this.saving = false;
+        this.notify.success('Listing updated');
+        this.refreshListing();
+      },
       error: () => { this.saving = false; }
     });
   }
@@ -277,7 +283,24 @@ export class ListingEditComponent {
   }
 
   private refreshListing() {
-    this.api.getListing(this.id).subscribe(l => this.listing = l);
+    this.api.getListing(this.id).subscribe(l => {
+      this.listing = l;
+      this.form.patchValue({
+        title: l.title,
+        year: l.year,
+        mileage: l.mileage,
+        price: l.price,
+        description: l.description ?? '',
+        transmissionId: l.transmissionId ?? null,
+        fuelTypeId: l.fuelTypeId ?? null,
+        bodyTypeId: l.bodyTypeId,
+        makeId: l.makeId,
+        modelId: l.modelId,
+        generationId: l.generationId,
+        derivativeId: l.derivativeId,
+        variantId: l.variantId
+      }, { emitEvent: false });
+    });
   }
 
   toggleFeature(featureId: number, checked: boolean) {

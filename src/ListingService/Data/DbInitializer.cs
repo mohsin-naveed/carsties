@@ -13,13 +13,16 @@ public class DbInitializer
         var context = scope.ServiceProvider.GetRequiredService<ListingDbContext>();
         if (app.Environment.IsDevelopment())
         {
-            // Recreate schema based on current model (Listings only)
-            ResetDatabase(context);
-            context.Database.EnsureCreated();
+            var resetRequested = string.Equals(Environment.GetEnvironmentVariable("RESET_DB"), "true", StringComparison.OrdinalIgnoreCase);
+            if (resetRequested)
+            {
+                ResetDatabase(context);
+            }
+            context.Database.Migrate();
             return;
         }
-        // In non-dev, ensure DB exists
-        context.Database.EnsureCreated();
+        // In non-dev, apply migrations (no destructive reset)
+        context.Database.Migrate();
     }
 
     private static void ResetDatabase(ListingDbContext context)
