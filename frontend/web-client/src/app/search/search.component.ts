@@ -249,6 +249,21 @@ export class SearchComponent {
     map(mapper => Array.from(mapper.keys()).sort((a, b) => a - b)),
     shareReplay(1)
   );
+  // For "From" price, show cumulative counts for >= bucket start
+  readonly fromPriceCumulativeCounts$ = combineLatest([this.priceCounts$, this.priceValues$]).pipe(
+    map(([counts, vals]) => {
+      const sorted = [...vals].sort((a, b) => a - b);
+      const result = new Map<number, number>();
+      let running = 0;
+      for (let i = sorted.length - 1; i >= 0; i--) {
+        const start = sorted[i];
+        running += counts.get(start) ?? 0;
+        result.set(start, running);
+      }
+      return result;
+    }),
+    shareReplay(1)
+  );
   readonly fromPriceOptions$ = combineLatest([this.priceValues$, this.priceMax$, this.priceStep$]).pipe(
     map(([vals, max, step]) => vals.filter(p => max == null || p <= max)),
     shareReplay(1)
@@ -259,6 +274,20 @@ export class SearchComponent {
       const end = p + (step ?? 0) - 1;
       return end >= min;
     })),
+    shareReplay(1)
+  );
+  // For "To" price, show cumulative counts for <= bucket end
+  readonly toPriceCumulativeCounts$ = combineLatest([this.priceCounts$, this.priceValues$]).pipe(
+    map(([counts, vals]) => {
+      const sorted = [...vals].sort((a, b) => a - b);
+      const result = new Map<number, number>();
+      let running = 0;
+      for (const start of sorted) {
+        running += counts.get(start) ?? 0;
+        result.set(start, running);
+      }
+      return result;
+    }),
     shareReplay(1)
   );
 

@@ -80,12 +80,12 @@
               <div class="range-row">
                 <select class="range-select" [ngModel]="((priceMin$ | async) ?? '')" (ngModelChange)="onPriceMinChange($event)">
                   <option value="">Any</option>
-                  <option *ngFor="let p of (fromPriceOptions$ | async) ?? []" [value]="p">£{{ p | number:'1.0-0' }} ({{ (priceCounts$ | async)?.get(p) ?? 0 }})</option>
+                  <option *ngFor="let p of (fromPriceOptions$ | async) ?? []" [value]="p">£{{ p | number:'1.0-0' }} ({{ (fromPriceCumulativeCounts$ | async)?.get(p) ?? 0 }})</option>
                 </select>
                 <span class="range-sep">–</span>
                 <select class="range-select" [ngModel]="(((priceMax$ | async) != null) ? ((priceMax$ | async) - (((priceStep$ | async) ?? 0) - 1)) : '')" (ngModelChange)="onPriceMaxChange($event)">
                   <option value="">Any</option>
-                  <option *ngFor="let p of (toPriceOptions$ | async) ?? []" [value]="p">£{{ p | number:'1.0-0' }} ({{ (priceCounts$ | async)?.get(p) ?? 0 }})</option>
+                  <option *ngFor="let p of (toPriceOptions$ | async) ?? []" [value]="p">£{{ p | number:'1.0-0' }} ({{ (toPriceCumulativeCounts$ | async)?.get(p) ?? 0 }})</option>
                 </select>
               </div>
             </div>
