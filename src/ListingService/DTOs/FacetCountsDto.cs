@@ -14,4 +14,6 @@ public class FacetCountsDto
     public Dictionary<int, int> Mileages { get; set; } = new();
     public int PriceStep { get; set; }
     public int MileageStep { get; set; }
+    public int? MinMileage { get; set; }
+    public Dictionary<int, int> MileageExact { get; set; } = new();
 }

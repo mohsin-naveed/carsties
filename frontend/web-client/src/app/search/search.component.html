@@ -78,15 +78,20 @@
             </div>
             <div class="section-content" [class.expanded]="(priceOpen$ | async)">
               <div class="range-row">
-                <select class="range-select" [ngModel]="((priceMin$ | async) ?? '')" (ngModelChange)="onPriceMinChange($event)">
+                <div class="range-input">
+                  <label class="range-mini-label">From</label>
+                  <select class="range-select" [ngModel]="((priceMin$ | async) ?? '')" (ngModelChange)="onPriceMinChange($event)">
                   <option value="">Any</option>
                   <option *ngFor="let p of (fromPriceOptions$ | async) ?? []" [value]="p">£{{ p | number:'1.0-0' }} ({{ (fromPriceCumulativeCounts$ | async)?.get(p) ?? 0 }})</option>
-                </select>
-                <span class="range-sep">–</span>
-                <select class="range-select" [ngModel]="(((priceMax$ | async) != null) ? ((priceMax$ | async) - (((priceStep$ | async) ?? 0) - 1)) : '')" (ngModelChange)="onPriceMaxChange($event)">
-                  <option value="">Any</option>
-                  <option *ngFor="let p of (toPriceOptions$ | async) ?? []" [value]="p">£{{ p | number:'1.0-0' }} ({{ (toPriceCumulativeCounts$ | async)?.get(p) ?? 0 }})</option>
-                </select>
+                  </select>
+                </div>
+                <div class="range-input">
+                  <label class="range-mini-label">To</label>
+                  <select class="range-select" [ngModel]="(((priceMax$ | async) != null) ? ((priceMax$ | async) - (((priceStep$ | async) ?? 0) - 1)) : '')" (ngModelChange)="onPriceMaxChange($event)">
+                    <option value="">Any</option>
+                    <option *ngFor="let p of (toPriceOptions$ | async) ?? []" [value]="p">£{{ p | number:'1.0-0' }} ({{ (toPriceCumulativeCounts$ | async)?.get(p) ?? 0 }})</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -102,15 +107,20 @@
             </div>
             <div class="section-content" [class.expanded]="(yearOpen$ | async)">
               <div class="range-row">
-                <select class="range-select" [ngModel]="((yearMin$ | async) ?? '')" (ngModelChange)="onYearMinChange($event)">
-                  <option value="">Any</option>
-                  <option *ngFor="let y of (fromYearOptions$ | async) ?? []" [value]="y">{{ y }} ({{ (fromYearCumulativeCounts$ | async)?.get(y) ?? 0 }})</option>
-                </select>
-                <span class="range-sep">–</span>
-                <select class="range-select" [ngModel]="((yearMax$ | async) ?? '')" (ngModelChange)="onYearMaxChange($event)">
-                  <option value="">Any</option>
-                  <option *ngFor="let y of (toYearOptions$ | async) ?? []" [value]="y">{{ y }} ({{ (toYearCumulativeCounts$ | async)?.get(y) ?? 0 }})</option>
-                </select>
+                <div class="range-input">
+                  <label class="range-mini-label">From</label>
+                  <select class="range-select" [ngModel]="((yearMin$ | async) ?? '')" (ngModelChange)="onYearMinChange($event)">
+                    <option value="">Any</option>
+                    <option *ngFor="let y of (fromYearOptions$ | async) ?? []" [value]="y">{{ y }} ({{ (fromYearCumulativeCounts$ | async)?.get(y) ?? 0 }})</option>
+                  </select>
+                </div>
+                <div class="range-input">
+                  <label class="range-mini-label">To</label>
+                  <select class="range-select" [ngModel]="((yearMax$ | async) ?? '')" (ngModelChange)="onYearMaxChange($event)">
+                    <option value="">Any</option>
+                    <option *ngFor="let y of (toYearOptions$ | async) ?? []" [value]="y">{{ y }} ({{ (toYearCumulativeCounts$ | async)?.get(y) ?? 0 }})</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -126,15 +136,20 @@
             </div>
             <div class="section-content" [class.expanded]="(mileageOpen$ | async)">
               <div class="range-row">
-                <select class="range-select" [ngModel]="((mileageMin$ | async) ?? '')" (ngModelChange)="onMileageMinChange($event)">
-                  <option value="">Any</option>
-                  <option *ngFor="let m of (fromMileageOptions$ | async) ?? []" [value]="m">{{ m | number:'1.0-0' }} miles ({{ (fromMileageCumulativeCounts$ | async)?.get(m) ?? 0 }})</option>
-                </select>
-                <span class="range-sep">–</span>
-                <select class="range-select" [ngModel]="(((mileageMax$ | async) != null) ? ((mileageMax$ | async) - (((mileageStep$ | async) ?? 0) - 1)) : '')" (ngModelChange)="onMileageMaxChange($event)">
-                  <option value="">Any</option>
-                  <option *ngFor="let m of (toMileageOptions$ | async) ?? []" [value]="m">{{ m | number:'1.0-0' }} miles ({{ (toMileageCumulativeCounts$ | async)?.get(m) ?? 0 }})</option>
-                </select>
+                <div class="range-input">
+                  <label class="range-mini-label">From</label>
+                  <select class="range-select" [ngModel]="((mileageMin$ | async) ?? '')" (ngModelChange)="onMileageMinChange($event)">
+                    <option value="">Any</option>
+                    <option *ngFor="let m of (fromMileageOptionsVisible$ | async) ?? []" [value]="m">{{ m | number:'1.0-0' }} miles ({{ (fromMileageDisplayCounts$ | async)?.get(m) ?? 0 }})</option>
+                  </select>
+                </div>
+                <div class="range-input">
+                  <label class="range-mini-label">To</label>
+                  <select class="range-select" [ngModel]="(((mileageMax$ | async) != null) ? ((mileageMax$ | async) - (((mileageStep$ | async) ?? 0) - 1)) : '')" (ngModelChange)="onMileageMaxChange($event)">
+                    <option value="">Any</option>
+                    <option *ngFor="let m of (toMileageOptionsStepped$ | async) ?? []" [value]="m">{{ m | number:'1.0-0' }} miles ({{ (toMileageDisplayCounts$ | async)?.get(m) ?? 0 }})</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>

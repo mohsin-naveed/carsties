@@ -150,7 +150,9 @@ export class SearchComponent {
       prices: new Map<number, number>(Object.entries(dto.prices).map(([k,v]) => [Number(k), v as number])),
       mileages: new Map<number, number>(Object.entries(dto.mileages).map(([k,v]) => [Number(k), v as number])),
       priceStep: dto.priceStep,
-      mileageStep: dto.mileageStep
+      mileageStep: dto.mileageStep,
+      minMileage: dto.minMileage,
+      mileageExact: new Map<number, number>(Object.entries(dto.mileageExact ?? {}).map(([k,v]) => [Number(k), v as number]))
     })),
     shareReplay(1)
   );
@@ -384,20 +386,51 @@ export class SearchComponent {
   // Mileage counts and option lists derived from server buckets
   readonly mileageCounts$ = this.facetCounts$.pipe(map(x => x.mileages));
   readonly mileageStep$ = this.facetCounts$.pipe(map(x => x.mileageStep));
+  readonly minMileage$ = this.facetCounts$.pipe(map(x => x.minMileage));
+  readonly mileageExact$ = this.facetCounts$.pipe(map(x => x.mileageExact ?? new Map<number, number>()));
   readonly mileageValues$ = this.mileageCounts$.pipe(
     map(mapper => Array.from(mapper.keys()).sort((a, b) => a - b)),
     shareReplay(1)
   );
-  readonly fromMileageOptions$ = combineLatest([this.mileageValues$, this.mileageMax$]).pipe(
+  // Overall max mileage cap (max exact or bucket end)
+  private readonly maxMileageOverall$ = combineLatest([this.mileageExact$, this.mileageValues$, this.mileageStep$]).pipe(
+    map(([exact, bucketStarts, step]) => {
+      const maxExact = Array.from(exact.keys()).reduce((mx, k) => Math.max(mx, k), 0);
+      const lastStart = bucketStarts.length ? bucketStarts[bucketStarts.length - 1] : 0;
+      const maxBucketEnd = (step ?? 0) > 0 ? (lastStart + (step ?? 0) - 1) : lastStart;
+      return Math.max(maxExact, maxBucketEnd);
+    }),
+    shareReplay(1)
+  );
+  // Mileage option sequence includes seeds, step increments, and exact mileages present
+  readonly mileageOptionValues$ = combineLatest([this.mileageValues$, this.mileageStep$, this.mileageExact$]).pipe(
+    map(([bucketStarts, step, exact]) => {
+      const inc = step || 5000;
+      const maxStart = bucketStarts.length ? bucketStarts[bucketStarts.length - 1] : 0;
+      const maxEnd = maxStart + inc - 1;
+      const vals: number[] = [];
+      const seed = [0, 100, 500, 1000, 2000, 3000, 4000];
+      for (const v of seed) { if (v <= maxEnd) vals.push(v); }
+      let cur = inc; // start at step (e.g., 5000)
+      while (cur <= maxEnd) { vals.push(cur); cur += inc; }
+      for (const v of Array.from(exact.keys())) { if (v <= maxEnd) vals.push(v); }
+      return Array.from(new Set(vals)).sort((a, b) => a - b);
+    }),
+    shareReplay(1)
+  );
+  readonly fromMileageOptions$ = combineLatest([this.mileageOptionValues$, this.mileageMax$]).pipe(
     map(([vals, max]) => vals.filter(m => max == null || m <= max)),
     shareReplay(1)
   );
-  readonly toMileageOptions$ = combineLatest([this.mileageValues$, this.mileageMin$, this.mileageStep$]).pipe(
-    map(([vals, min, step]) => vals.filter(m => {
-      if (min == null) return true;
-      const end = m + (step ?? 0) - 1;
-      return end >= min;
-    })),
+  // To mileage thousand-step options: start at lowest available thousand (>= minMileage), exclude 0
+  readonly toMileageOptions$ = combineLatest([this.minMileage$, this.maxMileageOverall$]).pipe(
+    map(([minAvail, overallMax]) => {
+      const start = Math.max(1000, Math.ceil(((minAvail ?? 1)) / 1000) * 1000);
+      const cap = Math.max(start, Math.ceil((overallMax ?? 0) / 1000) * 1000);
+      const arr: number[] = [];
+      for (let v = start; v <= cap; v += 1000) arr.push(v);
+      return arr;
+    }),
     shareReplay(1)
   );
 
@@ -461,6 +494,122 @@ export class SearchComponent {
         }
       }
       return res;
+    }),
+    shareReplay(1)
+  );
+  // Exact mileage prefix sums for thousand-rounded counts
+  private readonly mileageExactPrefix$ = this.mileageExact$.pipe(
+    map(exact => {
+      const sorted = Array.from(exact.keys()).sort((a, b) => a - b);
+      const prefix: number[] = [];
+      let sum = 0;
+      for (const m of sorted) { sum += exact.get(m) ?? 0; prefix.push(sum); }
+      return { sorted, prefix } as const;
+    }),
+    shareReplay(1)
+  );
+  // Total cars ignoring mileage (for 0 option on From)
+  private readonly totalMileageAll$ = this.mileageExactPrefix$.pipe(
+    map(prep => prep.prefix[prep.prefix.length - 1] ?? 0),
+    shareReplay(1)
+  );
+  // Display counts for From-mileage options using thousand-rounded end; override 0 => total
+  readonly fromMileageDisplayCounts$ = combineLatest([
+    this.mileageExactPrefix$,
+    this.mileageMax$,
+    this.fromMileageOptions$,
+    this.totalMileageAll$
+  ]).pipe(
+    map(([prep, maxSel, opts, totalAll]) => {
+      const res = new Map<number, number>();
+      const sumUpTo = (x: number) => {
+        const arr = prep.sorted;
+        let lo = 0, hi = arr.length - 1, ans = -1;
+        while (lo <= hi) {
+          const mid = (lo + hi) >> 1;
+          if (arr[mid] <= x) { ans = mid; lo = mid + 1; } else { hi = mid - 1; }
+        }
+        return ans >= 0 ? prep.prefix[ans] : 0;
+      };
+      const endRounded = (maxSel != null) ? Math.ceil(maxSel / 1000) * 1000 : (prep.sorted[prep.sorted.length - 1] ?? 0);
+      for (const v of opts) {
+        const fromVal = v || 0;
+        const c = Math.max(0, sumUpTo(endRounded) - sumUpTo(fromVal - 1));
+        res.set(v, c);
+      }
+      // 0 shows all cars ignoring To
+      res.set(0, totalAll);
+      return res;
+    }),
+    shareReplay(1)
+  );
+  readonly toMileageDisplayCounts$ = combineLatest([
+    this.mileageExactPrefix$,
+    this.mileageMin$,
+    this.toMileageOptions$
+  ]).pipe(
+    map(([prep, min, opts]) => {
+      const res = new Map<number, number>();
+      const sumUpTo = (x: number) => {
+        const arr = prep.sorted;
+        let lo = 0, hi = arr.length - 1, ans = -1;
+        while (lo <= hi) {
+          const mid = (lo + hi) >> 1;
+          if (arr[mid] <= x) { ans = mid; lo = mid + 1; } else { hi = mid - 1; }
+        }
+        return ans >= 0 ? prep.prefix[ans] : 0;
+      };
+      const minLess = (min != null) ? sumUpTo(min - 1) : 0;
+      for (const v of opts) {
+        const endRounded = Math.ceil((v || 0) / 1000) * 1000;
+        const c = Math.max(0, sumUpTo(endRounded) - minLess);
+        res.set(v, c);
+      }
+      return res;
+    }),
+    shareReplay(1)
+  );
+
+  // From mileage options filtered to those with non-zero counts (0 included)
+  readonly fromMileageOptionsFiltered$ = combineLatest([this.fromMileageOptions$, this.fromMileageDisplayCounts$]).pipe(
+    map(([opts, counts]) => opts.filter(o => (counts.get(o) ?? 0) > 0)),
+    shareReplay(1)
+  );
+  readonly toMileageOptionsFiltered$ = combineLatest([this.toMileageOptions$, this.toMileageDisplayCounts$, this.minMileage$]).pipe(
+    map(([opts, counts, min]) => {
+      const minVal = (min ?? 0);
+      return opts.filter(o => o > 0 && o >= minVal && (counts.get(o) ?? 0) > 0);
+    }),
+    shareReplay(1)
+  );
+
+  // Show stepped From options where counts decrease (plus 0)
+  readonly fromMileageOptionsStepped$ = combineLatest([this.fromMileageOptionsFiltered$, this.fromMileageDisplayCounts$]).pipe(
+    map(([opts, counts]) => {
+      const sorted = [...opts].sort((a, b) => a - b);
+      const result: number[] = [];
+      let last: number | undefined = undefined;
+      for (const v of sorted) {
+        const c = counts.get(v) ?? 0;
+        if (result.length === 0) { result.push(v); last = c; continue; }
+        if (last == null || c < last) { result.push(v); last = c; }
+      }
+      return result;
+    }),
+    shareReplay(1)
+  );
+  readonly fromMileageOptionsVisible$ = this.fromMileageOptionsStepped$;
+  readonly toMileageOptionsStepped$ = combineLatest([this.toMileageOptionsFiltered$, this.toMileageDisplayCounts$]).pipe(
+    map(([opts, counts]) => {
+      const sorted = [...opts].sort((a, b) => a - b);
+      const result: number[] = [];
+      let last = -1;
+      for (const v of sorted) {
+        const c = counts.get(v) ?? 0;
+        if (result.length === 0) { result.push(v); last = c; continue; }
+        if (c > last) { result.push(v); last = c; }
+      }
+      return result;
     }),
     shareReplay(1)
   );

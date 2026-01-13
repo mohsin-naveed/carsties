@@ -113,7 +113,8 @@
 .chevron mat-icon { transition: opacity .2s ease; }
 
 /* Range inputs */
-.range-row { display: flex; align-items: center; gap: 8px; padding: 12px 20px; }
-.range-input { width: 100%; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px; }
+.range-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 20px; }
+.range-input { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.range-mini-label { font-size: 14px; font-weight: 600; color: #374151; }
 .range-select { width: 100%; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px; background: #fff; }
 .range-sep { color: #6b7280; }

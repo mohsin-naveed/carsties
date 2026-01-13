@@ -289,6 +289,20 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             .Select(g => new { Id = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Id, x => x.Count);
 
+        // Exact mileage counts for From dropdown increments
+        var mileageExactCounts = await ApplyWithoutMileage(BaseWithoutMileage())
+            .GroupBy(l => l.Mileage)
+            .Select(g => new { Id = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Id, x => x.Count);
+
+        // Compute minimum mileage across current filters (excluding mileage itself)
+        int? minMileage = null;
+        var qForMinMileage = ApplyWithoutMileage(BaseWithoutMileage());
+        if (await qForMinMileage.AnyAsync())
+        {
+            minMileage = await qForMinMileage.MinAsync(l => (int?)l.Mileage);
+        }
+
         var dto = new FacetCountsDto
         {
             Makes = makeCounts,
@@ -300,7 +314,9 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             Prices = priceCounts,
             Mileages = mileageCounts,
             PriceStep = priceStep,
-            MileageStep = mileageStep
+            MileageStep = mileageStep,
+            MinMileage = minMileage,
+            MileageExact = mileageExactCounts
         };
         return dto;
     }

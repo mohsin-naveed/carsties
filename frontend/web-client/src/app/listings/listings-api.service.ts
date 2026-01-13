@@ -80,6 +80,8 @@ export interface FacetCountsDto {
   mileages: Record<number, number>;
   priceStep: number;
   mileageStep: number;
+  minMileage?: number;
+  mileageExact?: Record<number, number>;
 }
 
 @Injectable({ providedIn: 'root' })
