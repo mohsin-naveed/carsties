@@ -797,15 +797,12 @@ export class SearchComponent {
     }
   }
   onMileageMaxChange(v: any) {
-    const bucketStart = v === '' ? undefined : Number(v);
-    if (bucketStart == null) { this.mileageMax$.next(undefined); return; }
-    combineLatest([this.mileageStep$]).pipe(take(1)).subscribe(([step]) => {
-      const end = bucketStart + (step ?? 0) - 1;
-      const currentMin = this.mileageMin$.value;
-      this.mileageMax$.next(end);
-      if (currentMin != null && end < currentMin) {
-        this.mileageMin$.next(bucketStart);
-      }
-    });
+    const val = v === '' ? undefined : Number(v);
+    if (val == null) { this.mileageMax$.next(undefined); return; }
+    const currentMin = this.mileageMin$.value;
+    this.mileageMax$.next(val);
+    if (currentMin != null && val < currentMin) {
+      this.mileageMin$.next(val);
+    }
   }
 }

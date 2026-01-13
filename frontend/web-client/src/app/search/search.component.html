@@ -145,7 +145,7 @@
                 </div>
                 <div class="range-input">
                   <label class="range-mini-label">To</label>
-                  <select class="range-select" [ngModel]="(((mileageMax$ | async) != null) ? ((mileageMax$ | async) - (((mileageStep$ | async) ?? 0) - 1)) : '')" (ngModelChange)="onMileageMaxChange($event)">
+                  <select class="range-select" [ngModel]="((mileageMax$ | async) ?? '')" (ngModelChange)="onMileageMaxChange($event)">
                     <option value="">Any</option>
                     <option *ngFor="let m of (toMileageOptionsStepped$ | async) ?? []" [value]="m">{{ m | number:'1.0-0' }} miles ({{ (toMileageDisplayCounts$ | async)?.get(m) ?? 0 }})</option>
                   </select>
