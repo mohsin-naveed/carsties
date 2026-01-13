@@ -241,6 +241,66 @@ export class SearchComponent {
     map(([vals, min]) => vals.filter(y => min == null || y >= min)),
     shareReplay(1)
   );
+  // Year prefix sums for dynamic range counts (ascending order)
+  private readonly yearPrefixSums$ = combineLatest([
+    this.yearCounts$,
+    this.yearCounts$.pipe(map(m => Array.from(m.keys()).sort((a, b) => a - b)))
+  ]).pipe(
+    map(([counts, ascYears]) => {
+      const prefix: number[] = [];
+      const index = new Map<number, number>();
+      let sum = 0;
+      ascYears.forEach((y, i) => {
+        index.set(y, i);
+        sum += counts.get(y) ?? 0;
+        prefix.push(sum);
+      });
+      return { sorted: ascYears, prefix, index } as const;
+    }),
+    shareReplay(1)
+  );
+  // From Year counts reflect [from .. currentMax] or >= from
+  readonly fromYearCumulativeCounts$ = combineLatest([this.yearPrefixSums$, this.yearMax$]).pipe(
+    map(([prep, maxYear]) => {
+      const res = new Map<number, number>();
+      const j = (maxYear != null) ? (prep.index.get(maxYear) ?? -1) : -1;
+      for (let i = 0; i < prep.sorted.length; i++) {
+        const y = prep.sorted[i];
+        if (j >= 0) {
+          if (i > j) { res.set(y, 0); continue; }
+          const left = i > 0 ? prep.prefix[i - 1] : 0;
+          const right = prep.prefix[j];
+          res.set(y, right - left);
+        } else {
+          const left = i > 0 ? prep.prefix[i - 1] : 0;
+          const total = prep.prefix[prep.prefix.length - 1] ?? 0;
+          res.set(y, total - left);
+        }
+      }
+      return res;
+    }),
+    shareReplay(1)
+  );
+  // To Year counts reflect [currentMin .. to] or <= to
+  readonly toYearCumulativeCounts$ = combineLatest([this.yearPrefixSums$, this.yearMin$]).pipe(
+    map(([prep, minYear]) => {
+      const res = new Map<number, number>();
+      const iMin = (minYear != null) ? (prep.index.get(minYear) ?? -1) : -1;
+      for (let i = 0; i < prep.sorted.length; i++) {
+        const y = prep.sorted[i];
+        if (iMin >= 0) {
+          if (i < iMin) { res.set(y, 0); continue; }
+          const left = iMin > 0 ? prep.prefix[iMin - 1] : 0;
+          const right = prep.prefix[i];
+          res.set(y, right - left);
+        } else {
+          res.set(y, prep.prefix[i]);
+        }
+      }
+      return res;
+    }),
+    shareReplay(1)
+  );
 
   // Price counts and option lists derived from server buckets
   readonly priceCounts$ = this.facetCounts$.pipe(map(x => x.prices));
@@ -344,6 +404,64 @@ export class SearchComponent {
   // Derive selected 'To' bucket start from max using fixed step
   readonly mileageMaxStart$ = combineLatest([this.mileageMax$, this.mileageStep$]).pipe(
     map(([end, step]) => (end == null || !step) ? undefined : (end - (step - 1))),
+    shareReplay(1)
+  );
+  // Mileage prefix sums for dynamic range counts
+  private readonly mileagePrefixSums$ = combineLatest([this.mileageCounts$, this.mileageValues$]).pipe(
+    map(([counts, vals]) => {
+      const sorted = [...vals].sort((a, b) => a - b);
+      const prefix: number[] = [];
+      const index = new Map<number, number>();
+      let sum = 0;
+      sorted.forEach((start, i) => {
+        index.set(start, i);
+        sum += counts.get(start) ?? 0;
+        prefix.push(sum);
+      });
+      return { sorted, prefix, index } as const;
+    }),
+    shareReplay(1)
+  );
+  // From Mileage counts reflect [from .. currentMax] or >= from (using bucket start for max)
+  readonly fromMileageCumulativeCounts$ = combineLatest([this.mileagePrefixSums$, this.mileageMaxStart$]).pipe(
+    map(([prep, maxStart]) => {
+      const res = new Map<number, number>();
+      const j = (maxStart != null) ? (prep.index.get(maxStart) ?? -1) : -1;
+      for (let i = 0; i < prep.sorted.length; i++) {
+        const m = prep.sorted[i];
+        if (j >= 0) {
+          if (i > j) { res.set(m, 0); continue; }
+          const left = i > 0 ? prep.prefix[i - 1] : 0;
+          const right = prep.prefix[j];
+          res.set(m, right - left);
+        } else {
+          const left = i > 0 ? prep.prefix[i - 1] : 0;
+          const total = prep.prefix[prep.prefix.length - 1] ?? 0;
+          res.set(m, total - left);
+        }
+      }
+      return res;
+    }),
+    shareReplay(1)
+  );
+  // To Mileage counts reflect [currentMin .. to] or <= to
+  readonly toMileageCumulativeCounts$ = combineLatest([this.mileagePrefixSums$, this.mileageMin$]).pipe(
+    map(([prep, minStart]) => {
+      const res = new Map<number, number>();
+      const iMin = (minStart != null) ? (prep.index.get(minStart) ?? -1) : -1;
+      for (let i = 0; i < prep.sorted.length; i++) {
+        const m = prep.sorted[i];
+        if (iMin >= 0) {
+          if (i < iMin) { res.set(m, 0); continue; }
+          const left = iMin > 0 ? prep.prefix[iMin - 1] : 0;
+          const right = prep.prefix[i];
+          res.set(m, right - left);
+        } else {
+          res.set(m, prep.prefix[i]);
+        }
+      }
+      return res;
+    }),
     shareReplay(1)
   );
 
