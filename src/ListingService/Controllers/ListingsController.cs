@@ -92,7 +92,9 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         [FromQuery] int? yearMin,
         [FromQuery] int? yearMax,
         [FromQuery] int? mileageMin,
-        [FromQuery] int? mileageMax)
+        [FromQuery] int? mileageMax,
+        [FromQuery(Name = "seats")] int[]? seats,
+        [FromQuery(Name = "doors")] int[]? doors)
     {
         // Base query for counts
         IQueryable<Listing> Base() {
@@ -103,6 +105,8 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             if (yearMax is not null) q = q.Where(l => l.Year <= yearMax);
             if (mileageMin is not null) q = q.Where(l => l.Mileage >= mileageMin);
             if (mileageMax is not null) q = q.Where(l => l.Mileage <= mileageMax);
+            if (seats is not null && seats.Length > 0) q = q.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
+            if (doors is not null && doors.Length > 0) q = q.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
             return q;
         }
         IQueryable<Listing> BaseWithoutYear() {
@@ -111,6 +115,8 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             if (priceMax is not null) q = q.Where(l => l.Price <= priceMax);
             if (mileageMin is not null) q = q.Where(l => l.Mileage >= mileageMin);
             if (mileageMax is not null) q = q.Where(l => l.Mileage <= mileageMax);
+            if (seats is not null && seats.Length > 0) q = q.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
+            if (doors is not null && doors.Length > 0) q = q.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
             return q;
         }
         IQueryable<Listing> BaseWithoutPrice() {
@@ -119,6 +125,8 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             if (yearMax is not null) q = q.Where(l => l.Year <= yearMax);
             if (mileageMin is not null) q = q.Where(l => l.Mileage >= mileageMin);
             if (mileageMax is not null) q = q.Where(l => l.Mileage <= mileageMax);
+            if (seats is not null && seats.Length > 0) q = q.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
+            if (doors is not null && doors.Length > 0) q = q.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
             return q;
         }
         IQueryable<Listing> BaseWithoutMileage() {
@@ -127,6 +135,8 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             if (priceMax is not null) q = q.Where(l => l.Price <= priceMax);
             if (yearMin is not null) q = q.Where(l => l.Year >= yearMin);
             if (yearMax is not null) q = q.Where(l => l.Year <= yearMax);
+            if (seats is not null && seats.Length > 0) q = q.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
+            if (doors is not null && doors.Length > 0) q = q.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
             return q;
         }
 
@@ -142,6 +152,8 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
             if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
             else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
+            if (seats is not null && seats.Length > 0) q = q.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
+            if (doors is not null && doors.Length > 0) q = q.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
             return q;
         }
         IQueryable<Listing> ApplyWithoutModel(IQueryable<Listing> q) {
@@ -155,6 +167,8 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
             if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
             else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
+            if (seats is not null && seats.Length > 0) q = q.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
+            if (doors is not null && doors.Length > 0) q = q.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
             return q;
         }
         IQueryable<Listing> ApplyWithoutTransmission(IQueryable<Listing> q) {
@@ -168,6 +182,8 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
             if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
             else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
+            if (seats is not null && seats.Length > 0) q = q.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
+            if (doors is not null && doors.Length > 0) q = q.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
             return q;
         }
         IQueryable<Listing> ApplyWithoutBody(IQueryable<Listing> q) {
@@ -272,6 +288,25 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             .GroupBy(l => l.FuelTypeId!.Value)
             .Select(g => new { Id = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Id, x => x.Count);
+        // Seats and Doors (exclude filtering by the facet under evaluation)
+        IQueryable<Listing> ApplyWithoutSeats(IQueryable<Listing> q) {
+            if (doors is not null && doors.Length > 0) q = q.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
+            return q;
+        }
+        IQueryable<Listing> ApplyWithoutDoors(IQueryable<Listing> q) {
+            if (seats is not null && seats.Length > 0) q = q.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
+            return q;
+        }
+        var seatCounts = await ApplyWithoutSeats(Base())
+            .Where(l => l.SeatsSnapshot != null && l.SeatsSnapshot.Value > 0)
+            .GroupBy(l => l.SeatsSnapshot!.Value)
+            .Select(g => new { Id = (int)g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Id, x => x.Count);
+        var doorCounts = await ApplyWithoutDoors(Base())
+            .Where(l => l.DoorsSnapshot != null && l.DoorsSnapshot.Value > 0)
+            .GroupBy(l => l.DoorsSnapshot!.Value)
+            .Select(g => new { Id = (int)g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Id, x => x.Count);
         var yearCounts = await ApplyWithoutYear(BaseWithoutYear())
             .GroupBy(l => l.Year)
             .Select(g => new { Id = g.Key, Count = g.Count() })
@@ -310,6 +345,8 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             Transmissions = transCounts,
             Bodies = bodyCounts,
             Fuels = fuelCounts,
+            Seats = seatCounts,
+            Doors = doorCounts,
             Years = yearCounts,
             Prices = priceCounts,
             Mileages = mileageCounts,
@@ -344,7 +381,9 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         [FromQuery] int? yearMin = null,
         [FromQuery] int? yearMax = null,
         [FromQuery] int? mileageMin = null,
-        [FromQuery] int? mileageMax = null)
+        [FromQuery] int? mileageMax = null,
+        [FromQuery(Name = "seats")] int[]? seats = null,
+        [FromQuery(Name = "doors")] int[]? doors = null)
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 12;
@@ -356,6 +395,8 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         if (yearMax is not null) query = query.Where(l => l.Year <= yearMax);
         if (mileageMin is not null) query = query.Where(l => l.Mileage >= mileageMin);
         if (mileageMax is not null) query = query.Where(l => l.Mileage <= mileageMax);
+        if (seats is not null && seats.Length > 0) query = query.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
+        if (doors is not null && doors.Length > 0) query = query.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
         if (makeId is not null) query = query.Where(l => l.MakeId == makeId);
         else if (makeIds is not null && makeIds.Length > 0) query = query.Where(l => makeIds.Contains(l.MakeId));
 

@@ -218,6 +218,50 @@
               </div>
             </div>
           </div>
+
+          <!-- Seats -->
+          <div class="filter-section">
+            <div class="section-header" role="button" [attr.aria-expanded]="(seatsOpen$ | async) ? 'true' : 'false'" (click)="toggleSeatsFacet()">
+              <div class="section-title-container"><h4 class="section-title">Seats</h4></div>
+              <span class="chevron">
+                <mat-icon *ngIf="!(seatsOpen$ | async)">expand_more</mat-icon>
+                <mat-icon *ngIf="(seatsOpen$ | async)">expand_less</mat-icon>
+              </span>
+            </div>
+            <div class="section-content" [class.expanded]="(seatsOpen$ | async)">
+              <div class="options-container">
+                <div class="filter-option" *ngFor="let s of (seats$ | async) ?? []">
+                  <label class="option-label">
+                    <input type="checkbox" class="filter-checkbox" [checked]="(selectedSeats$ | async)?.includes(s)" (change)="toggleSeat(s)" />
+                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <span class="option-text">{{ s }} <span class="count">({{ (seatsCounts$ | async)?.get(s) ?? 0 }})</span></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Doors -->
+          <div class="filter-section">
+            <div class="section-header" role="button" [attr.aria-expanded]="(doorsOpen$ | async) ? 'true' : 'false'" (click)="toggleDoorsFacet()">
+              <div class="section-title-container"><h4 class="section-title">Doors</h4></div>
+              <span class="chevron">
+                <mat-icon *ngIf="!(doorsOpen$ | async)">expand_more</mat-icon>
+                <mat-icon *ngIf="(doorsOpen$ | async)">expand_less</mat-icon>
+              </span>
+            </div>
+            <div class="section-content" [class.expanded]="(doorsOpen$ | async)">
+              <div class="options-container">
+                <div class="filter-option" *ngFor="let d of (doors$ | async) ?? []">
+                  <label class="option-label">
+                    <input type="checkbox" class="filter-checkbox" [checked]="(selectedDoors$ | async)?.includes(d)" (change)="toggleDoor(d)" />
+                    <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <span class="option-text">{{ d }} <span class="count">({{ (doorsCounts$ | async)?.get(d) ?? 0 }})</span></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </aside>

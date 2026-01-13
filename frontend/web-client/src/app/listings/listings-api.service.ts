@@ -27,6 +27,7 @@ export interface ListingDto {
 export interface ListingSearchParams {
   makeId?: number; modelId?: number; variantId?: number; transmissionId?: number; bodyTypeId?: number; fuelTypeId?: number;
   makeIds?: number[]; modelIds?: number[]; variantIds?: number[]; transmissionIds?: number[]; bodyTypeIds?: number[]; fuelTypeIds?: number[];
+  seats?: number[]; doors?: number[];
   // Ranges
   priceMin?: number; priceMax?: number;
   yearMin?: number; yearMax?: number;
@@ -75,6 +76,8 @@ export interface FacetCountsDto {
   transmissions: Record<number, number>;
   bodies: Record<number, number>;
   fuels: Record<number, number>;
+  seats: Record<number, number>;
+  doors: Record<number, number>;
   years: Record<number, number>;
   prices: Record<number, number>;
   mileages: Record<number, number>;

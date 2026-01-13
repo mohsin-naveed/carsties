@@ -39,6 +39,8 @@ export class SearchComponent {
   readonly selectedTransmissionIds$ = new BehaviorSubject<number[]>([]);
   readonly selectedBodyTypeIds$ = new BehaviorSubject<number[]>([]);
   readonly selectedFuelTypeIds$ = new BehaviorSubject<number[]>([]);
+  readonly selectedSeats$ = new BehaviorSubject<number[]>([]);
+  readonly selectedDoors$ = new BehaviorSubject<number[]>([]);
 
   // Range filters
   readonly priceMin$ = new BehaviorSubject<number | undefined>(undefined);
@@ -85,6 +87,8 @@ export class SearchComponent {
     this.selectedTransmissionIds$,
     this.selectedBodyTypeIds$,
     this.selectedFuelTypeIds$,
+    this.selectedSeats$,
+    this.selectedDoors$,
     this.priceMin$,
     this.priceMax$,
     this.yearMin$,
@@ -96,7 +100,7 @@ export class SearchComponent {
     this.pageSize$
   ]).pipe(
     debounceTime(100),
-    map(([makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax, sort, page, pageSize]) => ({ makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax, sort, page, pageSize })),
+    map(([makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, seats, doors, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax, sort, page, pageSize]) => ({ makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, seats, doors, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax, sort, page, pageSize })),
     distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
     shareReplay(1)
   );
@@ -104,9 +108,9 @@ export class SearchComponent {
   // Results stream
   readonly results$ = this.query$.pipe(
     tap(() => this.loading$.next(true)),
-    switchMap(({ makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax, sort, page, pageSize }) => {
+    switchMap(({ makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, seats, doors, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax, sort, page, pageSize }) => {
       const [sortBy, sortDirection] = this.mapSort(sort);
-      const params = { makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax, page, pageSize, sortBy, sortDirection } as const;
+      const params = { makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, seats, doors, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax, page, pageSize, sortBy, sortDirection } as const;
       return this.api.searchListings(params).pipe(
         catchError(() => this.api.getListings({} as any).pipe(
           map(xs => ({ data: xs, totalCount: xs.length, totalPages: Math.max(1, Math.ceil(xs.length / pageSize)), currentPage: page, pageSize } as PaginationResponse<ListingDto>))
@@ -129,6 +133,8 @@ export class SearchComponent {
     this.selectedTransmissionIds$,
     this.selectedBodyTypeIds$,
     this.selectedFuelTypeIds$,
+    this.selectedSeats$,
+    this.selectedDoors$,
     this.priceMin$,
     this.priceMax$,
     this.yearMin$,
@@ -137,7 +143,7 @@ export class SearchComponent {
     this.mileageMax$
   ]).pipe(
     debounceTime(100),
-    map(([makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax]) => ({ makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax })),
+    map(([makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, seats, doors, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax]) => ({ makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, seats, doors, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax })),
     distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
     switchMap(params => this.api.getFacetCounts(params)),
     map(dto => ({
@@ -146,6 +152,8 @@ export class SearchComponent {
       transmissions: new Map<number, number>(Object.entries(dto.transmissions).map(([k,v]) => [Number(k), v as number])),
       bodies: new Map<number, number>(Object.entries(dto.bodies).map(([k,v]) => [Number(k), v as number])),
       fuels: new Map<number, number>(Object.entries(dto.fuels).map(([k,v]) => [Number(k), v as number])),
+      seats: new Map<number, number>(Object.entries(dto.seats ?? {}).map(([k,v]) => [Number(k), v as number])),
+      doors: new Map<number, number>(Object.entries(dto.doors ?? {}).map(([k,v]) => [Number(k), v as number])),
       years: new Map<number, number>(Object.entries(dto.years).map(([k,v]) => [Number(k), v as number])),
       prices: new Map<number, number>(Object.entries(dto.prices).map(([k,v]) => [Number(k), v as number])),
       mileages: new Map<number, number>(Object.entries(dto.mileages).map(([k,v]) => [Number(k), v as number])),
@@ -174,6 +182,11 @@ export class SearchComponent {
     map(([opts, counts]) => opts.filter(f => (counts.fuels.get(f.id) ?? 0) > 0)),
     shareReplay(1)
   );
+  // Seats and Doors options derived from facet keys
+  readonly seatsCounts$ = this.facetCounts$.pipe(map(x => x.seats));
+  readonly doorsCounts$ = this.facetCounts$.pipe(map(x => x.doors));
+  readonly seats$ = this.seatsCounts$.pipe(map(m => Array.from(m.keys()).sort((a,b)=>a-b)), shareReplay(1));
+  readonly doors$ = this.doorsCounts$.pipe(map(m => Array.from(m.keys()).sort((a,b)=>a-b)), shareReplay(1));
   // Models already depend on selected make; apply counts filter too
   readonly filteredModels$ = combineLatest([this.models$, this.facetCounts$]).pipe(
     map(([models, counts]) => models.filter(m => (counts.models.get(m.id) ?? 0) > 0)),
@@ -187,18 +200,24 @@ export class SearchComponent {
   readonly transPref$ = new BehaviorSubject<boolean>(false);
   readonly bodyPref$ = new BehaviorSubject<boolean>(false);
   readonly fuelPref$ = new BehaviorSubject<boolean>(false);
+  readonly seatsPref$ = new BehaviorSubject<boolean>(false);
+  readonly doorsPref$ = new BehaviorSubject<boolean>(false);
 
   readonly makeOpen$ = combineLatest([this.selectedMakeIds$, this.makePref$]).pipe(map(([ids, pref]) => (ids.length > 0) ? true : pref), shareReplay(1));
   readonly modelOpen$ = combineLatest([this.selectedModelIds$, this.modelPref$]).pipe(map(([ids, pref]) => (ids.length > 0) ? true : pref), shareReplay(1));
   readonly transOpen$ = combineLatest([this.selectedTransmissionIds$, this.transPref$]).pipe(map(([ids, pref]) => (ids.length > 0) ? true : pref), shareReplay(1));
   readonly bodyOpen$ = combineLatest([this.selectedBodyTypeIds$, this.bodyPref$]).pipe(map(([ids, pref]) => (ids.length > 0) ? true : pref), shareReplay(1));
   readonly fuelOpen$ = combineLatest([this.selectedFuelTypeIds$, this.fuelPref$]).pipe(map(([ids, pref]) => (ids.length > 0) ? true : pref), shareReplay(1));
+  readonly seatsOpen$ = combineLatest([this.selectedSeats$, this.seatsPref$]).pipe(map(([ids, pref]) => (ids.length > 0) ? true : pref), shareReplay(1));
+  readonly doorsOpen$ = combineLatest([this.selectedDoors$, this.doorsPref$]).pipe(map(([ids, pref]) => (ids.length > 0) ? true : pref), shareReplay(1));
 
   toggleMakeFacet() { this.makePref$.next(!this.makePref$.value); }
   toggleModelFacet() { this.modelPref$.next(!this.modelPref$.value); }
   toggleTransmissionFacet() { this.transPref$.next(!this.transPref$.value); }
   toggleBodyFacet() { this.bodyPref$.next(!this.bodyPref$.value); }
   toggleFuelFacet() { this.fuelPref$.next(!this.fuelPref$.value); }
+  toggleSeatsFacet() { this.seatsPref$.next(!this.seatsPref$.value); }
+  toggleDoorsFacet() { this.doorsPref$.next(!this.doorsPref$.value); }
 
   // Range facet collapse preferences and open states
   readonly pricePref$ = new BehaviorSubject<boolean>(false);
@@ -620,16 +639,21 @@ export class SearchComponent {
     this.selectedModelIds$, this.filteredModels$.pipe(startWith([] as ModelDto[])),
     this.selectedTransmissionIds$, this.transmissions$.pipe(startWith([] as OptionDto[])),
     this.selectedBodyTypeIds$, this.bodyTypes$.pipe(startWith([] as OptionDto[])),
-    this.selectedFuelTypeIds$, this.fuelTypes$.pipe(startWith([] as OptionDto[]))
+    this.selectedFuelTypeIds$, this.fuelTypes$.pipe(startWith([] as OptionDto[])),
+    this.selectedSeats$, this.seats$.pipe(startWith([] as number[])),
+    this.selectedDoors$, this.doors$.pipe(startWith([] as number[]))
   ]).pipe(
-    map(([mkIds, makes, mdIds, models, trIds, transmissions, btIds, bodies, fuIds, fuels]) => {
+    map(([mkIds, makes, mdIds, models, trIds, transmissions, btIds, bodies, fuIds, fuels, seatVals, seatOpts, doorVals, doorOpts]) => {
       const namesFor = (ids: number[], list: { id: number; name: string }[]) => ids.map(id => list.find(x => x.id === id)?.name).filter(Boolean) as string[];
+      const formatVals = (vals: number[], suffix: string) => vals.map(v => `${v} ${suffix}`);
       const labels = [
         ...namesFor(mkIds, makes),
         ...namesFor(mdIds, models),
         ...namesFor(trIds, transmissions),
         ...namesFor(btIds, bodies),
-        ...namesFor(fuIds, fuels)
+        ...namesFor(fuIds, fuels),
+        ...formatVals(seatVals, 'seats'),
+        ...formatVals(doorVals, 'doors')
       ];
       return labels;
     }),
@@ -742,6 +766,8 @@ export class SearchComponent {
   toggleTransmission(id: number) { this.toggle(this.selectedTransmissionIds$, id); }
   toggleBodyType(id: number) { this.toggle(this.selectedBodyTypeIds$, id); }
   toggleFuelType(id: number) { this.toggle(this.selectedFuelTypeIds$, id); }
+  toggleSeat(v: number) { this.toggle(this.selectedSeats$, v); }
+  toggleDoor(v: number) { this.toggle(this.selectedDoors$, v); }
 
   // Simple illustrative monthly price (placeholder UI affordance)
   monthly(price: number): number { return Math.round((price || 0) / 60); }
