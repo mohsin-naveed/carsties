@@ -249,18 +249,42 @@ export class SearchComponent {
     map(mapper => Array.from(mapper.keys()).sort((a, b) => a - b)),
     shareReplay(1)
   );
-  // For "From" price, show cumulative counts for >= bucket start
-  readonly fromPriceCumulativeCounts$ = combineLatest([this.priceCounts$, this.priceValues$]).pipe(
+  // Precompute prefix sums to support dynamic range counts
+  private readonly pricePrefixSums$ = combineLatest([this.priceCounts$, this.priceValues$]).pipe(
     map(([counts, vals]) => {
       const sorted = [...vals].sort((a, b) => a - b);
-      const result = new Map<number, number>();
-      let running = 0;
-      for (let i = sorted.length - 1; i >= 0; i--) {
-        const start = sorted[i];
-        running += counts.get(start) ?? 0;
-        result.set(start, running);
+      const prefix: number[] = [];
+      const index = new Map<number, number>();
+      let sum = 0;
+      sorted.forEach((start, i) => {
+        index.set(start, i);
+        sum += counts.get(start) ?? 0;
+        prefix.push(sum);
+      });
+      return { sorted, prefix, index } as const;
+    }),
+    shareReplay(1)
+  );
+  // For "From" price, show counts within [from .. currentMax] if max set, else >= from
+  readonly fromPriceCumulativeCounts$ = combineLatest([this.pricePrefixSums$, this.priceMax$, this.priceStep$]).pipe(
+    map(([prep, maxEnd, step]) => {
+      const res = new Map<number, number>();
+      const maxStart = (maxEnd != null && step) ? (maxEnd - (step - 1)) : undefined;
+      const j = (maxStart != null) ? prep.index.get(maxStart) ?? -1 : -1;
+      for (let i = 0; i < prep.sorted.length; i++) {
+        const start = prep.sorted[i];
+        if (j >= 0) {
+          if (i > j) { res.set(start, 0); continue; }
+          const left = i > 0 ? prep.prefix[i - 1] : 0;
+          const right = prep.prefix[j];
+          res.set(start, right - left);
+        } else {
+          const left = i > 0 ? prep.prefix[i - 1] : 0;
+          const total = prep.prefix[prep.prefix.length - 1] ?? 0;
+          res.set(start, total - left);
+        }
       }
-      return result;
+      return res;
     }),
     shareReplay(1)
   );
@@ -276,17 +300,23 @@ export class SearchComponent {
     })),
     shareReplay(1)
   );
-  // For "To" price, show cumulative counts for <= bucket end
-  readonly toPriceCumulativeCounts$ = combineLatest([this.priceCounts$, this.priceValues$]).pipe(
-    map(([counts, vals]) => {
-      const sorted = [...vals].sort((a, b) => a - b);
-      const result = new Map<number, number>();
-      let running = 0;
-      for (const start of sorted) {
-        running += counts.get(start) ?? 0;
-        result.set(start, running);
+  // For "To" price, show counts within [currentMin .. to] if min set, else <= to
+  readonly toPriceCumulativeCounts$ = combineLatest([this.pricePrefixSums$, this.priceMin$]).pipe(
+    map(([prep, minStart]) => {
+      const res = new Map<number, number>();
+      const iMin = (minStart != null) ? (prep.index.get(minStart) ?? -1) : -1;
+      for (let i = 0; i < prep.sorted.length; i++) {
+        const start = prep.sorted[i];
+        if (iMin >= 0) {
+          if (i < iMin) { res.set(start, 0); continue; }
+          const left = iMin > 0 ? prep.prefix[iMin - 1] : 0;
+          const right = prep.prefix[i];
+          res.set(start, right - left);
+        } else {
+          res.set(start, prep.prefix[i]);
+        }
       }
-      return result;
+      return res;
     }),
     shareReplay(1)
   );
