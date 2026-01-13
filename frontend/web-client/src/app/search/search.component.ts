@@ -691,11 +691,25 @@ export class SearchComponent {
         const wanted = param.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
         return list.filter(x => wanted.includes((x.name ?? '').toLowerCase())).map(x => x.id);
       };
+      const numbersFromCsv = (param: string | null) => {
+        if (!param) return [] as number[];
+        return param.split(',').map(s => Number(s.trim())).filter(n => !Number.isNaN(n));
+      };
       this.selectedMakeIds$.next(namesToIds(q.get('make'), makes));
       this.selectedModelIds$.next(namesToIds(q.get('model'), models));
       this.selectedTransmissionIds$.next(namesToIds(q.get('trans'), transmissions));
       this.selectedBodyTypeIds$.next(namesToIds(q.get('body'), bodies));
       this.selectedFuelTypeIds$.next(namesToIds(q.get('fuel'), fuels));
+      // Numeric facets and ranges
+      this.selectedSeats$.next(numbersFromCsv(q.get('seats')));
+      this.selectedDoors$.next(numbersFromCsv(q.get('doors')));
+      const toNum = (v: string | null) => (v == null || v === '') ? undefined : Number(v);
+      this.priceMin$.next(toNum(q.get('pmin')));
+      this.priceMax$.next(toNum(q.get('pmax')));
+      this.yearMin$.next(toNum(q.get('ymin')));
+      this.yearMax$.next(toNum(q.get('ymax')));
+      this.mileageMin$.next(toNum(q.get('mmin')));
+      this.mileageMax$.next(toNum(q.get('mmax')));
       const s = q.get('sort'); if (s) this.sort$.next(s);
       const p = q.get('page'); this.page$.next(p ? Number(p) : 1);
     });
@@ -707,8 +721,12 @@ export class SearchComponent {
       this.selectedTransmissionIds$, this.transmissions$.pipe(startWith([] as OptionDto[])),
       this.selectedBodyTypeIds$, this.bodyTypes$.pipe(startWith([] as OptionDto[])),
       this.selectedFuelTypeIds$, this.fuelTypes$.pipe(startWith([] as OptionDto[])),
+      this.selectedSeats$, this.selectedDoors$,
+      this.priceMin$, this.priceMax$,
+      this.yearMin$, this.yearMax$,
+      this.mileageMin$, this.mileageMax$,
       this.sort$, this.page$
-    ]).pipe(debounceTime(50)).subscribe(([mkIds, makes, mdIds, models, trIds, transmissions, btIds, bodies, fuIds, fuels, sort, page]) => {
+    ]).pipe(debounceTime(50)).subscribe(([mkIds, makes, mdIds, models, trIds, transmissions, btIds, bodies, fuIds, fuels, seats, doors, pmin, pmax, ymin, ymax, mmin, mmax, sort, page]) => {
       const namesFor = (ids: number[], list: { id: number; name: string }[]) => ids.map(id => list.find(x => x.id === id)?.name).filter(Boolean) as string[];
       const qp: any = {
         make: namesFor(mkIds, makes).join(',') || undefined,
@@ -716,13 +734,26 @@ export class SearchComponent {
         trans: namesFor(trIds, transmissions).join(',') || undefined,
         body: namesFor(btIds, bodies).join(',') || undefined,
         fuel: namesFor(fuIds, fuels).join(',') || undefined,
+        seats: (seats?.length ? seats.join(',') : undefined),
+        doors: (doors?.length ? doors.join(',') : undefined),
+        pmin: (pmin != null ? pmin : undefined),
+        pmax: (pmax != null ? pmax : undefined),
+        ymin: (ymin != null ? ymin : undefined),
+        ymax: (ymax != null ? ymax : undefined),
+        mmin: (mmin != null ? mmin : undefined),
+        mmax: (mmax != null ? mmax : undefined),
         sort, page
       };
       this.router.navigate([], { queryParams: qp, queryParamsHandling: 'merge' });
     });
 
     // Reset to first page when filters or sort change
-    combineLatest([this.selectedMakeIds$, this.selectedModelIds$, this.selectedTransmissionIds$, this.selectedBodyTypeIds$, this.selectedFuelTypeIds$, this.sort$])
+    combineLatest([
+      this.selectedMakeIds$, this.selectedModelIds$, this.selectedTransmissionIds$, this.selectedBodyTypeIds$, this.selectedFuelTypeIds$,
+      this.selectedSeats$, this.selectedDoors$,
+      this.priceMin$, this.priceMax$, this.yearMin$, this.yearMax$, this.mileageMin$, this.mileageMax$,
+      this.sort$
+    ])
       .pipe(debounceTime(50)).subscribe(() => this.page$.next(1));
 
     // Reset dependent selections to avoid stale combos
@@ -757,6 +788,8 @@ export class SearchComponent {
     this.selectedTransmissionIds$.next([]);
     this.selectedBodyTypeIds$.next([]);
     this.selectedFuelTypeIds$.next([]);
+    this.selectedSeats$.next([]);
+    this.selectedDoors$.next([]);
     this.priceMin$.next(undefined); this.priceMax$.next(undefined);
     this.yearMin$.next(undefined); this.yearMax$.next(undefined);
     this.mileageMin$.next(undefined); this.mileageMax$.next(undefined);
