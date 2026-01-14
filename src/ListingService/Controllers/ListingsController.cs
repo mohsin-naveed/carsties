@@ -290,11 +290,63 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             .ToDictionaryAsync(x => x.Id, x => x.Count);
         // Seats and Doors (exclude filtering by the facet under evaluation)
         IQueryable<Listing> ApplyWithoutSeats(IQueryable<Listing> q) {
+            if (makeId is not null) q = q.Where(l => l.MakeId == makeId);
+            else if (makeIds is not null && makeIds.Length > 0) q = q.Where(l => makeIds.Contains(l.MakeId));
+
+            if (modelId is not null) q = q.Where(l => l.ModelId == modelId);
+            else if (modelIds is not null && modelIds.Length > 0) q = q.Where(l => modelIds.Contains(l.ModelId));
+
+            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
+            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
+
+            if (transmissionId is not null) q = q.Where(l => l.TransmissionId == transmissionId);
+            else if (transmissionIds is not null && transmissionIds.Length > 0) q = q.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
+
+            if (bodyTypeId is not null) q = q.Where(l => l.BodyTypeId == bodyTypeId);
+            else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
+
+            if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
+            else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
+
             if (doors is not null && doors.Length > 0) q = q.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
+
+            if (priceMin is not null) q = q.Where(l => l.Price >= priceMin);
+            if (priceMax is not null) q = q.Where(l => l.Price <= priceMax);
+            if (yearMin is not null) q = q.Where(l => l.Year >= yearMin);
+            if (yearMax is not null) q = q.Where(l => l.Year <= yearMax);
+            if (mileageMin is not null) q = q.Where(l => l.Mileage >= mileageMin);
+            if (mileageMax is not null) q = q.Where(l => l.Mileage <= mileageMax);
+
             return q;
         }
         IQueryable<Listing> ApplyWithoutDoors(IQueryable<Listing> q) {
+            if (makeId is not null) q = q.Where(l => l.MakeId == makeId);
+            else if (makeIds is not null && makeIds.Length > 0) q = q.Where(l => makeIds.Contains(l.MakeId));
+
+            if (modelId is not null) q = q.Where(l => l.ModelId == modelId);
+            else if (modelIds is not null && modelIds.Length > 0) q = q.Where(l => modelIds.Contains(l.ModelId));
+
+            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
+            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
+
+            if (transmissionId is not null) q = q.Where(l => l.TransmissionId == transmissionId);
+            else if (transmissionIds is not null && transmissionIds.Length > 0) q = q.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
+
+            if (bodyTypeId is not null) q = q.Where(l => l.BodyTypeId == bodyTypeId);
+            else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
+
+            if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
+            else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
+
             if (seats is not null && seats.Length > 0) q = q.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
+
+            if (priceMin is not null) q = q.Where(l => l.Price >= priceMin);
+            if (priceMax is not null) q = q.Where(l => l.Price <= priceMax);
+            if (yearMin is not null) q = q.Where(l => l.Year >= yearMin);
+            if (yearMax is not null) q = q.Where(l => l.Year <= yearMax);
+            if (mileageMin is not null) q = q.Where(l => l.Mileage >= mileageMin);
+            if (mileageMax is not null) q = q.Where(l => l.Mileage <= mileageMax);
+
             return q;
         }
         var seatCounts = await ApplyWithoutSeats(Base())
