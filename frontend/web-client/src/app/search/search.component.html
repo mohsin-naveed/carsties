@@ -312,8 +312,13 @@
       </div>
       <mat-progress-bar *ngIf="(loading$ | async)" mode="indeterminate"></mat-progress-bar>
       <!-- Active filters chips -->
-      <div class="active-filters" *ngIf="(activeFilters$ | async)?.length">
-        <span class="chip" *ngFor="let f of (activeFilters$ | async)">{{ f }}</span>
+      <div class="active-filters" *ngIf="(activeFilterChips$ | async)?.length">
+        <span class="chip" *ngFor="let c of (activeFilterChips$ | async)">
+          <span class="chip-label">{{ c.label }}</span>
+          <button class="chip-close" title="Remove" (click)="removeChip(c)">
+            <mat-icon>close</mat-icon>
+          </button>
+        </span>
         <button class="clear-filters" (click)="clearAll()">Clear all</button>
       </div>
     </main>

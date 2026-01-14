@@ -22,7 +22,9 @@
 .page-btn { padding:8px 12px; border:1px solid #ddd; background:#fff; border-radius:6px; }
 .page-btn[disabled] { opacity:.5; }
 .active-filters { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:12px 0; }
-.chip { background:#eef2ff; color:#3730a3; padding:4px 10px; border-radius:999px; font-size:12px; border:1px solid #c7d2fe; }
+.chip { background:#eef2ff; color:#3730a3; padding:4px 10px; border-radius:999px; font-size:12px; border:1px solid #c7d2fe; display:inline-flex; align-items:center; gap:6px; }
+.chip-close { border:none; background:transparent; color:inherit; cursor:pointer; padding:0; display:inline-flex; align-items:center; }
+.chip-close mat-icon { font-size:14px; height:14px; width:14px; line-height:14px; }
 .clear-filters { background:transparent; border:none; color:#2563eb; cursor:pointer; }
 .find-car-container { max-width: 1400px; margin: 0 auto; padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 .mobile-header-buttons { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 0 8px; }

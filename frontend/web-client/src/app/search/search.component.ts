@@ -12,6 +12,9 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
+// Chip model for active filters
+interface ActiveFilterChip { kind: 'make'|'model'|'transmission'|'body'|'fuel'|'seats'|'doors'; id?: number; value?: number; label: string }
+
 @Component({
   selector: 'app-search',
   standalone: true,
@@ -682,8 +685,8 @@ export class SearchComponent {
     shareReplay(1)
   );
 
-  // Active filter labels (for chips)
-  readonly activeFilters$ = combineLatest([
+  // Active filter chips (kind + id/value for removal)
+  readonly activeFilterChips$ = combineLatest([
     this.selectedMakeIds$, this.makes$.pipe(startWith([] as MakeDto[])),
     this.selectedModelIds$, this.filteredModels$.pipe(startWith([] as ModelDto[])),
     this.selectedTransmissionIds$, this.transmissions$.pipe(startWith([] as OptionDto[])),
@@ -693,35 +696,38 @@ export class SearchComponent {
     this.selectedDoors$, this.doors$.pipe(startWith([] as number[]))
   ]).pipe(
     map(([mkIds, makes, mdIds, models, trIds, transmissions, btIds, bodies, fuIds, fuels, seatVals, seatOpts, doorVals, doorOpts]) => {
-      const namesFor = (ids: number[], list: { id: number; name: string }[]) => ids.map(id => list.find(x => x.id === id)?.name).filter(Boolean) as string[];
-      const formatVals = (vals: number[], suffix: string) => vals.map(v => `${v} ${suffix}`);
-      const labels = [
-        ...namesFor(mkIds, makes),
-        ...namesFor(mdIds, models),
-        ...namesFor(trIds, transmissions),
-        ...namesFor(btIds, bodies),
-        ...namesFor(fuIds, fuels),
-        ...formatVals(seatVals, 'seats'),
-        ...formatVals(doorVals, 'doors')
-      ];
-      return labels;
+      const chips: ActiveFilterChip[] = [];
+      const pushNameChips = (ids: number[], list: { id: number; name: string }[], kind: ActiveFilterChip['kind']) => {
+        ids.forEach(id => {
+          const nm = list.find(x => x.id === id)?.name;
+          if (nm) chips.push({ kind, id, label: nm });
+        });
+      };
+      pushNameChips(mkIds, makes as any, 'make');
+      pushNameChips(mdIds, models as any, 'model');
+      pushNameChips(trIds, transmissions as any, 'transmission');
+      pushNameChips(btIds, bodies as any, 'body');
+      pushNameChips(fuIds, fuels as any, 'fuel');
+      seatVals.forEach(v => chips.push({ kind: 'seats', value: v, label: `${v} seats` }));
+      doorVals.forEach(v => chips.push({ kind: 'doors', value: v, label: `${v} doors` }));
+      return chips;
     }),
     shareReplay(1)
   );
 
   // Count of active filters for quick display (include ranges)
   readonly activeFilterCount$ = combineLatest([
-    this.activeFilters$,
+    this.activeFilterChips$,
     this.priceMin$, this.priceMax$,
     this.yearMin$, this.yearMax$,
     this.mileageMin$, this.mileageMax$
   ]).pipe(
-    map(([labels, pmin, pmax, ymin, ymax, mmin, mmax]) => {
+    map(([chips, pmin, pmax, ymin, ymax, mmin, mmax]) => {
       let extra = 0;
       if (pmin != null || pmax != null) extra++;
       if (ymin != null || ymax != null) extra++;
       if (mmin != null || mmax != null) extra++;
-      return labels.length + extra;
+      return (chips?.length ?? 0) + extra;
     })
   );
 
@@ -831,6 +837,7 @@ export class SearchComponent {
     ids$.next(curr.includes(id) ? curr.filter(x => x !== id) : [...curr, id]);
   }
   clear(ids$: BehaviorSubject<number[]>) { ids$.next([]); }
+  private removeFrom(ids$: BehaviorSubject<number[]>, id: number) { ids$.next(ids$.value.filter(x => x !== id)); }
   clearAll() {
     this.selectedMakeIds$.next([]);
     this.selectedModelIds$.next([]);
@@ -850,6 +857,19 @@ export class SearchComponent {
   toggleFuelType(id: number) { this.toggle(this.selectedFuelTypeIds$, id); }
   toggleSeat(v: number) { this.toggle(this.selectedSeats$, v); }
   toggleDoor(v: number) { this.toggle(this.selectedDoors$, v); }
+
+  // Remove a single active filter via chip close
+  removeChip(c: { kind: 'make'|'model'|'transmission'|'body'|'fuel'|'seats'|'doors'; id?: number; value?: number }) {
+    switch (c.kind) {
+      case 'make': if (c.id != null) this.removeFrom(this.selectedMakeIds$, c.id); break;
+      case 'model': if (c.id != null) this.removeFrom(this.selectedModelIds$, c.id); break;
+      case 'transmission': if (c.id != null) this.removeFrom(this.selectedTransmissionIds$, c.id); break;
+      case 'body': if (c.id != null) this.removeFrom(this.selectedBodyTypeIds$, c.id); break;
+      case 'fuel': if (c.id != null) this.removeFrom(this.selectedFuelTypeIds$, c.id); break;
+      case 'seats': if (c.value != null) this.removeFrom(this.selectedSeats$, c.value); break;
+      case 'doors': if (c.value != null) this.removeFrom(this.selectedDoors$, c.value); break;
+    }
+  }
 
   // Simple illustrative monthly price (placeholder UI affordance)
   monthly(price: number): number { return Math.round((price || 0) / 60); }
