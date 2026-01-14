@@ -211,17 +211,17 @@ export class SearchComponent {
     map(([makes, counts]) => makes.filter(m => (counts.makes.get(m.id) ?? 0) > 0)),
     shareReplay(1)
   );
-  // Keep Transmissions/Body/Fuel options visible; counts ignore their own selection
-  readonly transmissions$ = combineLatest([this.allTransmissions$, this.facetCountsIgnoreTrans$]).pipe(
-    map(([opts]) => opts),
+  // Show only options with count > 0 (but keep currently selected visible)
+  readonly transmissions$ = combineLatest([this.allTransmissions$, this.facetCountsIgnoreTrans$, this.selectedTransmissionIds$]).pipe(
+    map(([opts, counts, selected]) => opts.filter(t => selected.includes(t.id) || ((counts.transmissions.get(t.id) ?? 0) > 0))),
     shareReplay(1)
   );
-  readonly bodyTypes$ = combineLatest([this.allBodyTypes$, this.facetCountsIgnoreBodies$]).pipe(
-    map(([opts]) => opts),
+  readonly bodyTypes$ = combineLatest([this.allBodyTypes$, this.facetCountsIgnoreBodies$, this.selectedBodyTypeIds$]).pipe(
+    map(([opts, counts, selected]) => opts.filter(b => selected.includes(b.id) || ((counts.bodies.get(b.id) ?? 0) > 0))),
     shareReplay(1)
   );
-  readonly fuelTypes$ = combineLatest([this.allFuelTypes$, this.facetCountsIgnoreFuels$]).pipe(
-    map(([opts]) => opts),
+  readonly fuelTypes$ = combineLatest([this.allFuelTypes$, this.facetCountsIgnoreFuels$, this.selectedFuelTypeIds$]).pipe(
+    map(([opts, counts, selected]) => opts.filter(f => selected.includes(f.id) || ((counts.fuels.get(f.id) ?? 0) > 0))),
     shareReplay(1)
   );
   // Seats and Doors counts ignore their own selection so options don't disappear
