@@ -212,28 +212,28 @@ export class SearchComponent {
     shareReplay(1)
   );
   // Show only options with count > 0 (but keep currently selected visible)
-  readonly transmissions$ = combineLatest([this.allTransmissions$, this.facetCountsIgnoreTrans$, this.selectedTransmissionIds$]).pipe(
-    map(([opts, counts, selected]) => opts.filter(t => selected.includes(t.id) || ((counts.transmissions.get(t.id) ?? 0) > 0))),
+  readonly transmissions$ = combineLatest([this.allTransmissions$, this.facetCountsIgnoreTrans$]).pipe(
+    map(([opts, counts]) => opts.filter(t => (counts.transmissions.get(t.id) ?? 0) > 0)),
     shareReplay(1)
   );
-  readonly bodyTypes$ = combineLatest([this.allBodyTypes$, this.facetCountsIgnoreBodies$, this.selectedBodyTypeIds$]).pipe(
-    map(([opts, counts, selected]) => opts.filter(b => selected.includes(b.id) || ((counts.bodies.get(b.id) ?? 0) > 0))),
+  readonly bodyTypes$ = combineLatest([this.allBodyTypes$, this.facetCountsIgnoreBodies$]).pipe(
+    map(([opts, counts]) => opts.filter(b => (counts.bodies.get(b.id) ?? 0) > 0)),
     shareReplay(1)
   );
-  readonly fuelTypes$ = combineLatest([this.allFuelTypes$, this.facetCountsIgnoreFuels$, this.selectedFuelTypeIds$]).pipe(
-    map(([opts, counts, selected]) => opts.filter(f => selected.includes(f.id) || ((counts.fuels.get(f.id) ?? 0) > 0))),
+  readonly fuelTypes$ = combineLatest([this.allFuelTypes$, this.facetCountsIgnoreFuels$]).pipe(
+    map(([opts, counts]) => opts.filter(f => (counts.fuels.get(f.id) ?? 0) > 0)),
     shareReplay(1)
   );
   // Seats and Doors counts ignore their own selection so options don't disappear
   readonly seatsCounts$ = this.facetCountsIgnoreSeats$.pipe(map(x => x.seats));
   readonly doorsCounts$ = this.facetCountsIgnoreDoors$.pipe(map(x => x.doors));
-  // Options are the union of available keys and currently selected values
-  readonly seats$ = combineLatest([this.seatsCounts$, this.selectedSeats$]).pipe(
-    map(([m, sel]) => Array.from(new Set<number>([...Array.from(m.keys()), ...sel])).sort((a,b)=>a-b)),
+  // Options show only values with count > 0 (self-excluding counts already applied)
+  readonly seats$ = this.seatsCounts$.pipe(
+    map(m => Array.from(m.entries()).filter(([_,c]) => (c ?? 0) > 0).map(([v]) => v).sort((a,b)=>a-b)),
     shareReplay(1)
   );
-  readonly doors$ = combineLatest([this.doorsCounts$, this.selectedDoors$]).pipe(
-    map(([m, sel]) => Array.from(new Set<number>([...Array.from(m.keys()), ...sel])).sort((a,b)=>a-b)),
+  readonly doors$ = this.doorsCounts$.pipe(
+    map(m => Array.from(m.entries()).filter(([_,c]) => (c ?? 0) > 0).map(([v]) => v).sort((a,b)=>a-b)),
     shareReplay(1)
   );
   // Models already depend on selected make; apply counts filter too
