@@ -270,6 +270,16 @@
       <div class="results-header">
         We have found {{ (totalCount$ | async) ?? 0 }} vehicles
       </div>
+      <!-- Active filters chips shown under results label -->
+      <div class="active-filters" *ngIf="(activeFilterChips$ | async)?.length">
+        <span class="filter-chip" *ngFor="let c of (activeFilterChips$ | async)">
+          <span class="chip-label">{{ c.label }}</span>
+          <button class="chip-close" title="Remove" (click)="removeChip(c)">
+            <mat-icon>close</mat-icon>
+          </button>
+        </span>
+        <button class="clear-filters" (click)="clearAll()">Clear all</button>
+      </div>
       <div class="car-grid">
         <div class="car-card" *ngFor="let car of (listings$ | async) ?? []">
           <div class="card-media" [routerLink]="['/listings', car.id]" [queryParamsHandling]="'preserve'" title="View details">
@@ -311,16 +321,6 @@
         <button class="page-btn" [disabled]="((page$ | async) ?? 1) === ((totalPages$ | async) ?? 1) || (loading$ | async)" (click)="nextPage()">Next</button>
       </div>
       <mat-progress-bar *ngIf="(loading$ | async)" mode="indeterminate"></mat-progress-bar>
-      <!-- Active filters chips -->
-      <div class="active-filters" *ngIf="(activeFilterChips$ | async)?.length">
-        <span class="chip" *ngFor="let c of (activeFilterChips$ | async)">
-          <span class="chip-label">{{ c.label }}</span>
-          <button class="chip-close" title="Remove" (click)="removeChip(c)">
-            <mat-icon>close</mat-icon>
-          </button>
-        </span>
-        <button class="clear-filters" (click)="clearAll()">Clear all</button>
-      </div>
     </main>
   </div>
 </div>
