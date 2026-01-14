@@ -126,8 +126,8 @@ export class SearchComponent {
   readonly totalCount$ = this.results$.pipe(map(r => r.totalCount));
   readonly totalPages$ = this.results$.pipe(map(r => r.totalPages));
 
-  // Facet counts: for each facet, compute counts based on listings matching other filters
-  private readonly facetCounts$ = combineLatest([
+  // Facet params and counts
+  private readonly facetParams$ = combineLatest([
     this.selectedMakeIds$,
     this.selectedModelIds$,
     this.selectedTransmissionIds$,
@@ -145,8 +145,11 @@ export class SearchComponent {
     debounceTime(100),
     map(([makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, seats, doors, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax]) => ({ makeIds, modelIds, transmissionIds, bodyTypeIds, fuelTypeIds, seats, doors, priceMin, priceMax, yearMin, yearMax, mileageMin, mileageMax })),
     distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
-    switchMap(params => this.api.getFacetCounts(params)),
-    map(dto => ({
+    shareReplay(1)
+  );
+
+  private mapFacetDto(dto: any) {
+    return {
       makes: new Map<number, number>(Object.entries(dto.makes).map(([k,v]) => [Number(k), v as number])),
       models: new Map<number, number>(Object.entries(dto.models).map(([k,v]) => [Number(k), v as number])),
       transmissions: new Map<number, number>(Object.entries(dto.transmissions).map(([k,v]) => [Number(k), v as number])),
@@ -161,7 +164,45 @@ export class SearchComponent {
       mileageStep: dto.mileageStep,
       minMileage: dto.minMileage,
       mileageExact: new Map<number, number>(Object.entries(dto.mileageExact ?? {}).map(([k,v]) => [Number(k), v as number]))
-    })),
+    } as const;
+  }
+
+  // Facet counts: for each facet, compute counts based on listings matching other filters
+  private readonly facetCounts$ = this.facetParams$.pipe(
+    switchMap(params => this.api.getFacetCounts(params)),
+    map(dto => this.mapFacetDto(dto)),
+    shareReplay(1)
+  );
+
+  // Self-excluding facet counts to keep options visible for Seats/Doors
+  private readonly facetCountsIgnoreSeats$ = this.facetParams$.pipe(
+    map(p => ({ ...p, seats: [] as number[] })),
+    switchMap(params => this.api.getFacetCounts(params)),
+    map(dto => this.mapFacetDto(dto)),
+    shareReplay(1)
+  );
+  private readonly facetCountsIgnoreDoors$ = this.facetParams$.pipe(
+    map(p => ({ ...p, doors: [] as number[] })),
+    switchMap(params => this.api.getFacetCounts(params)),
+    map(dto => this.mapFacetDto(dto)),
+    shareReplay(1)
+  );
+  private readonly facetCountsIgnoreTrans$ = this.facetParams$.pipe(
+    map(p => ({ ...p, transmissionIds: [] as number[] })),
+    switchMap(params => this.api.getFacetCounts(params)),
+    map(dto => this.mapFacetDto(dto)),
+    shareReplay(1)
+  );
+  private readonly facetCountsIgnoreBodies$ = this.facetParams$.pipe(
+    map(p => ({ ...p, bodyTypeIds: [] as number[] })),
+    switchMap(params => this.api.getFacetCounts(params)),
+    map(dto => this.mapFacetDto(dto)),
+    shareReplay(1)
+  );
+  private readonly facetCountsIgnoreFuels$ = this.facetParams$.pipe(
+    map(p => ({ ...p, fuelTypeIds: [] as number[] })),
+    switchMap(params => this.api.getFacetCounts(params)),
+    map(dto => this.mapFacetDto(dto)),
     shareReplay(1)
   );
 
@@ -170,23 +211,31 @@ export class SearchComponent {
     map(([makes, counts]) => makes.filter(m => (counts.makes.get(m.id) ?? 0) > 0)),
     shareReplay(1)
   );
-  readonly transmissions$ = combineLatest([this.allTransmissions$, this.facetCounts$]).pipe(
-    map(([opts, counts]) => opts.filter(t => (counts.transmissions.get(t.id) ?? 0) > 0)),
+  // Keep Transmissions/Body/Fuel options visible; counts ignore their own selection
+  readonly transmissions$ = combineLatest([this.allTransmissions$, this.facetCountsIgnoreTrans$]).pipe(
+    map(([opts]) => opts),
     shareReplay(1)
   );
-  readonly bodyTypes$ = combineLatest([this.allBodyTypes$, this.facetCounts$]).pipe(
-    map(([opts, counts]) => opts.filter(b => (counts.bodies.get(b.id) ?? 0) > 0)),
+  readonly bodyTypes$ = combineLatest([this.allBodyTypes$, this.facetCountsIgnoreBodies$]).pipe(
+    map(([opts]) => opts),
     shareReplay(1)
   );
-  readonly fuelTypes$ = combineLatest([this.allFuelTypes$, this.facetCounts$]).pipe(
-    map(([opts, counts]) => opts.filter(f => (counts.fuels.get(f.id) ?? 0) > 0)),
+  readonly fuelTypes$ = combineLatest([this.allFuelTypes$, this.facetCountsIgnoreFuels$]).pipe(
+    map(([opts]) => opts),
     shareReplay(1)
   );
-  // Seats and Doors options derived from facet keys
-  readonly seatsCounts$ = this.facetCounts$.pipe(map(x => x.seats));
-  readonly doorsCounts$ = this.facetCounts$.pipe(map(x => x.doors));
-  readonly seats$ = this.seatsCounts$.pipe(map(m => Array.from(m.keys()).sort((a,b)=>a-b)), shareReplay(1));
-  readonly doors$ = this.doorsCounts$.pipe(map(m => Array.from(m.keys()).sort((a,b)=>a-b)), shareReplay(1));
+  // Seats and Doors counts ignore their own selection so options don't disappear
+  readonly seatsCounts$ = this.facetCountsIgnoreSeats$.pipe(map(x => x.seats));
+  readonly doorsCounts$ = this.facetCountsIgnoreDoors$.pipe(map(x => x.doors));
+  // Options are the union of available keys and currently selected values
+  readonly seats$ = combineLatest([this.seatsCounts$, this.selectedSeats$]).pipe(
+    map(([m, sel]) => Array.from(new Set<number>([...Array.from(m.keys()), ...sel])).sort((a,b)=>a-b)),
+    shareReplay(1)
+  );
+  readonly doors$ = combineLatest([this.doorsCounts$, this.selectedDoors$]).pipe(
+    map(([m, sel]) => Array.from(new Set<number>([...Array.from(m.keys()), ...sel])).sort((a,b)=>a-b)),
+    shareReplay(1)
+  );
   // Models already depend on selected make; apply counts filter too
   readonly filteredModels$ = combineLatest([this.models$, this.facetCounts$]).pipe(
     map(([models, counts]) => models.filter(m => (counts.models.get(m.id) ?? 0) > 0)),
@@ -244,9 +293,9 @@ export class SearchComponent {
   // Facet count maps for template usage
   readonly makeCounts$ = this.facetCounts$.pipe(map(x => x.makes));
   readonly modelCounts$ = this.facetCounts$.pipe(map(x => x.models));
-  readonly transmissionCounts$ = this.facetCounts$.pipe(map(x => x.transmissions));
-  readonly bodyCounts$ = this.facetCounts$.pipe(map(x => x.bodies));
-  readonly fuelCounts$ = this.facetCounts$.pipe(map(x => x.fuels));
+  readonly transmissionCounts$ = this.facetCountsIgnoreTrans$.pipe(map(x => x.transmissions));
+  readonly bodyCounts$ = this.facetCountsIgnoreBodies$.pipe(map(x => x.bodies));
+  readonly fuelCounts$ = this.facetCountsIgnoreFuels$.pipe(map(x => x.fuels));
 
   // Year counts and option lists derived from server
   readonly yearCounts$ = this.facetCounts$.pipe(map(x => x.years));
