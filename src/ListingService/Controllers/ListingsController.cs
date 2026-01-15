@@ -390,6 +390,39 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             minMileage = await qForMinMileage.MinAsync(l => (int?)l.Mileage);
         }
 
+        // Labels & parent mappings derived from current filtered dataset
+        var makeLabels = await Base()
+            .GroupBy(l => new { l.MakeId, l.MakeName })
+            .Select(g => new { g.Key.MakeId, g.Key.MakeName })
+            .ToDictionaryAsync(x => x.MakeId, x => x.MakeName ?? string.Empty);
+
+        var modelLabels = await Base()
+            .GroupBy(l => new { l.ModelId, l.ModelName })
+            .Select(g => new { g.Key.ModelId, g.Key.ModelName })
+            .ToDictionaryAsync(x => x.ModelId, x => x.ModelName ?? string.Empty);
+
+        var modelMakeIds = await Base()
+            .GroupBy(l => new { l.ModelId, l.MakeId })
+            .Select(g => new { g.Key.ModelId, g.Key.MakeId })
+            .ToDictionaryAsync(x => x.ModelId, x => x.MakeId);
+
+        var transmissionLabels = await Base()
+            .Where(l => l.TransmissionId != null)
+            .GroupBy(l => new { l.TransmissionId, l.TransmissionName })
+            .Select(g => new { Id = g.Key.TransmissionId!.Value, Name = g.Key.TransmissionName })
+            .ToDictionaryAsync(x => x.Id, x => x.Name ?? string.Empty);
+
+        var bodyLabels = await Base()
+            .GroupBy(l => new { l.BodyTypeId, l.BodyTypeName })
+            .Select(g => new { Id = g.Key.BodyTypeId, Name = g.Key.BodyTypeName })
+            .ToDictionaryAsync(x => x.Id, x => x.Name ?? string.Empty);
+
+        var fuelLabels = await Base()
+            .Where(l => l.FuelTypeId != null)
+            .GroupBy(l => new { l.FuelTypeId, l.FuelTypeName })
+            .Select(g => new { Id = g.Key.FuelTypeId!.Value, Name = g.Key.FuelTypeName })
+            .ToDictionaryAsync(x => x.Id, x => x.Name ?? string.Empty);
+
         var dto = new FacetCountsDto
         {
             Makes = makeCounts,
@@ -405,7 +438,13 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             PriceStep = priceStep,
             MileageStep = mileageStep,
             MinMileage = minMileage,
-            MileageExact = mileageExactCounts
+            MileageExact = mileageExactCounts,
+            MakeLabels = makeLabels,
+            ModelLabels = modelLabels,
+            ModelMakeIds = modelMakeIds,
+            TransmissionLabels = transmissionLabels,
+            BodyLabels = bodyLabels,
+            FuelLabels = fuelLabels
         };
         return dto;
     }

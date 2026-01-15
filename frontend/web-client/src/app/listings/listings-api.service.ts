@@ -85,6 +85,13 @@ export interface FacetCountsDto {
   mileageStep: number;
   minMileage?: number;
   mileageExact?: Record<number, number>;
+  // Labels and parent mapping from ListingService (snapshots)
+  makeLabels?: Record<number, string>;
+  modelLabels?: Record<number, string>;
+  modelMakeIds?: Record<number, number>;
+  transmissionLabels?: Record<number, string>;
+  bodyLabels?: Record<number, string>;
+  fuelLabels?: Record<number, string>;
 }
 
 @Injectable({ providedIn: 'root' })

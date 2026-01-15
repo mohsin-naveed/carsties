@@ -18,4 +18,13 @@ public class FacetCountsDto
     public int MileageStep { get; set; }
     public int? MinMileage { get; set; }
     public Dictionary<int, int> MileageExact { get; set; } = new();
+
+    // Labels for facets derived from Listing snapshots to avoid Catalog dependency
+    public Dictionary<int, string> MakeLabels { get; set; } = new();
+    public Dictionary<int, string> ModelLabels { get; set; } = new();
+    // Map modelId -> makeId for parent filtering on the client
+    public Dictionary<int, int> ModelMakeIds { get; set; } = new();
+    public Dictionary<int, string> TransmissionLabels { get; set; } = new();
+    public Dictionary<int, string> BodyLabels { get; set; } = new();
+    public Dictionary<int, string> FuelLabels { get; set; } = new();
 }
