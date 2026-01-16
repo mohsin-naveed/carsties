@@ -7,11 +7,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { CatalogApiService, MakeDto, ModelDto, OptionDto, GenerationDto } from '../catalog-api.service';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 @Component({
   selector: 'app-derivative-edit-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatSlideToggleModule],
   styles: [
     `.form { display:flex; flex-direction:column; gap:12px; }
      .form mat-form-field { width:100%; }`
@@ -71,8 +72,10 @@ import { CatalogApiService, MakeDto, ModelDto, OptionDto, GenerationDto } from '
         </mat-form-field>
       </div>
       <mat-form-field appearance="outline">
-        <mat-label>Body Code</mat-label>
-        <input matInput type="text" formControlName="code" placeholder="e.g. E90" />
+        <mat-label>Drive Type</mat-label>
+        <mat-select formControlName="driveTypeId" required>
+          <mat-option *ngFor="let dt of driveTypes" [value]="dt.id">{{ dt.name }}</mat-option>
+        </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Seats</mat-label>
@@ -82,6 +85,7 @@ import { CatalogApiService, MakeDto, ModelDto, OptionDto, GenerationDto } from '
         <mat-label>Doors</mat-label>
         <input matInput type="number" formControlName="doors" required min="2" max="5" />
       </mat-form-field>
+      <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
     </form>
   </div>
   <div mat-dialog-actions align="end">
@@ -95,6 +99,7 @@ export class DerivativeEditDialogComponent {
   private readonly api = inject(CatalogApiService);
   private readonly ref = inject(MatDialogRef<DerivativeEditDialogComponent>);
   bodyTypes: OptionDto[] = [];
+  driveTypes: OptionDto[] = [];
   filteredModels: ModelDto[] = [];
   generations: GenerationDto[] = [];
   transmissions: OptionDto[] = [];
@@ -108,13 +113,14 @@ export class DerivativeEditDialogComponent {
     modelId: [null as number | null, Validators.required],
     generationId: [null as number | null, Validators.required],
     bodyTypeId: [null as number | null, Validators.required],
+    driveTypeId: [null as number | null, Validators.required],
     engine: ['' as string | null],
     transmissionId: [null as number | null],
     fuelTypeId: [null as number | null],
     batteryCapacityKWh: [null as number | null],
-    code: ['' as string | null],
     seats: [5, [Validators.required, Validators.min(2), Validators.max(9)]],
-    doors: [4, [Validators.required, Validators.min(2), Validators.max(5)]]
+    doors: [4, [Validators.required, Validators.min(2), Validators.max(5)]],
+    isActive: [true]
   });
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: { title: string; makes: MakeDto[]; models: ModelDto[]; modelId?: number; generationId?: number | null; bodyTypeId?: number; seats?: number; doors?: number; code?: string; engine?: string; transmissionId?: number | null; fuelTypeId?: number | null; batteryCapacityKWh?: number | null }){
@@ -125,6 +131,7 @@ export class DerivativeEditDialogComponent {
       this.electricIds = names.filter(f => f.name === 'electric').map(f => f.id);
       this.hybridIds = names.filter(f => f.name.includes('hybrid') && f.name.includes('plug')).map(f => f.id);
     } });
+    this.api.getDriveTypeOptions().subscribe({ next: (opts) => this.driveTypes = opts });
     // Pre-populate make based on model
     const model = this.data.modelId ? this.data.models.find(m => m.id === this.data.modelId) : undefined;
     if (model) this.form.patchValue({ makeId: model.makeId });
@@ -147,7 +154,8 @@ export class DerivativeEditDialogComponent {
     if (this.data.bodyTypeId !== undefined) this.form.patchValue({ bodyTypeId: this.data.bodyTypeId ?? null });
     if (this.data.seats !== undefined) this.form.patchValue({ seats: this.data.seats ?? 5 });
     if (this.data.doors !== undefined) this.form.patchValue({ doors: this.data.doors ?? 4 });
-    if (this.data.code !== undefined) this.form.patchValue({ code: this.data.code ?? '' });
+    if ((this as any).data && (this as any).data['driveTypeId'] !== undefined) this.form.patchValue({ driveTypeId: (this as any).data['driveTypeId'] ?? null });
+    if ((this as any).data && (this as any).data['isActive'] !== undefined) this.form.patchValue({ isActive: !!(this as any).data['isActive'] });
     this.onFuelChange();
   }
 

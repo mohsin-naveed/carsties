@@ -6,13 +6,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { A11yModule } from '@angular/cdk/a11y';
 import { MakeDto } from '../catalog-api.service';
 
 @Component({
   selector: 'app-model-edit-dialog',
   standalone: true,
-  imports: [CommonModule, A11yModule, MatDialogModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule],
+  imports: [CommonModule, A11yModule, MatDialogModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule, MatSlideToggleModule],
   template: `
     <h2 mat-dialog-title>{{ data.title }}</h2>
     <div mat-dialog-content>
@@ -27,6 +28,10 @@ import { MakeDto } from '../catalog-api.service';
           <mat-label>Name</mat-label>
           <input matInput formControlName="name" placeholder="e.g. 3 Series" />
         </mat-form-field>
+        <div class="toggles">
+          <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
+          <mat-slide-toggle formControlName="isPopular">Popular</mat-slide-toggle>
+        </div>
       </form>
     </div>
     <div mat-dialog-actions align="end">
@@ -36,21 +41,24 @@ import { MakeDto } from '../catalog-api.service';
   `,
   styles: [`
     .form { display:flex; flex-direction:column; gap:1rem; }
+    .toggles { display:flex; gap:1rem; }
   `]
 })
 export class ModelEditDialogComponent {
   private readonly fb = inject(FormBuilder);
-  public ref: MatDialogRef<ModelEditDialogComponent, { name: string; makeId: number }> = inject(MatDialogRef);
-  public data: { title: string; name?: string; makeId?: number; makes: MakeDto[] } = inject(MAT_DIALOG_DATA);
+  public ref: MatDialogRef<ModelEditDialogComponent, { name: string; makeId: number; isActive?: boolean; isPopular?: boolean }> = inject(MatDialogRef);
+  public data: { title: string; name?: string; makeId?: number; isActive?: boolean; isPopular?: boolean; makes: MakeDto[] } = inject(MAT_DIALOG_DATA);
 
 
   readonly form = this.fb.group({
     name: [this.data.name ?? '', [Validators.required, Validators.maxLength(100)]],
-    makeId: [this.data.makeId ?? null as number | null, [Validators.required]]
+    makeId: [this.data.makeId ?? null as number | null, [Validators.required]],
+    isActive: [this.data.isActive ?? true],
+    isPopular: [this.data.isPopular ?? false]
   });
 
   save(){
     const raw = this.form.getRawValue();
-    this.ref.close({ name: raw.name!, makeId: raw.makeId! });
+    this.ref.close({ name: raw.name!, makeId: raw.makeId!, isActive: raw.isActive ?? undefined, isPopular: raw.isPopular ?? undefined });
   }
 }

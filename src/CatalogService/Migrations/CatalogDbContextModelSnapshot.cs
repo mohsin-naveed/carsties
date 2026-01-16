@@ -57,8 +57,16 @@ namespace CatalogService.Migrations
                     b.Property<int>("BodyTypeId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
                     b.Property<short>("Doors")
                         .HasColumnType("smallint");
+
+                    b.Property<int>("DriveTypeId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Engine")
                         .HasMaxLength(100)
@@ -69,6 +77,11 @@ namespace CatalogService.Migrations
 
                     b.Property<int>("GenerationId")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
 
                     b.Property<int>("ModelId")
                         .HasColumnType("integer");
@@ -88,6 +101,11 @@ namespace CatalogService.Migrations
 
                     b.HasIndex("BodyTypeId");
 
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("DriveTypeId");
+
                     b.HasIndex("FuelTypeId");
 
                     b.HasIndex("GenerationId");
@@ -102,6 +120,42 @@ namespace CatalogService.Migrations
 
                             t.HasCheckConstraint("CK_Derivatives_Seats", "\"Seats\" BETWEEN 2 AND 9");
                         });
+                });
+
+            modelBuilder.Entity("CatalogService.Entities.DriveType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("DriveTypes", (string)null);
                 });
 
             modelBuilder.Entity("CatalogService.Entities.Feature", b =>
@@ -187,12 +241,34 @@ namespace CatalogService.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Country")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsPopular")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
 
                     b.HasIndex("Name")
                         .IsUnique();
@@ -208,6 +284,21 @@ namespace CatalogService.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsPopular")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<int>("MakeId")
                         .HasColumnType("integer");
 
@@ -217,6 +308,9 @@ namespace CatalogService.Migrations
                         .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
 
                     b.HasIndex("MakeId");
 
@@ -252,6 +346,11 @@ namespace CatalogService.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
                     b.Property<int>("DerivativeId")
                         .HasColumnType("integer");
 
@@ -265,6 +364,16 @@ namespace CatalogService.Migrations
                     b.Property<int?>("GenerationId")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("IsImported")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsPopular")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -274,6 +383,9 @@ namespace CatalogService.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
 
                     b.HasIndex("DerivativeId");
 
@@ -319,6 +431,12 @@ namespace CatalogService.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("CatalogService.Entities.DriveType", "DriveTypeRef")
+                        .WithMany()
+                        .HasForeignKey("DriveTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("CatalogService.Entities.FuelType", "FuelTypeRef")
                         .WithMany()
                         .HasForeignKey("FuelTypeId")
@@ -342,6 +460,8 @@ namespace CatalogService.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("BodyTypeRef");
+
+                    b.Navigation("DriveTypeRef");
 
                     b.Navigation("FuelTypeRef");
 

@@ -3,6 +3,7 @@ using AutoMapper.QueryableExtensions;
 using CatalogService.Data;
 using CatalogService.DTOs;
 using CatalogService.Entities;
+using CatalogService.RequestHelpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -109,6 +110,9 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
                 case "bodytype":
                     ordered = desc ? baseQuery.OrderByDescending(x => x.d.BodyTypeId) : baseQuery.OrderBy(x => x.d.BodyTypeId);
                     break;
+                case "drivetype":
+                    ordered = desc ? baseQuery.OrderByDescending(x => x.d.DriveTypeId) : baseQuery.OrderBy(x => x.d.DriveTypeId);
+                    break;
                 case "fuel":
                     ordered = desc ? baseQuery.OrderByDescending(x => x.d.FuelTypeId) : baseQuery.OrderBy(x => x.d.FuelTypeId);
                     break;
@@ -174,11 +178,38 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
             // Do not mutate init-only DTO; enforce on entity after mapping
         }
 
-        var entity = mapper.Map<Derivative>(dto);
-        if (fuel != null && string.Equals(fuel.Name, "Electric", StringComparison.OrdinalIgnoreCase))
+        if (!await context.BodyTypes.AnyAsync(x => x.Id == dto.BodyTypeId))
+            return BadRequest("Invalid BodyTypeId");
+        if (!await context.DriveTypes.AnyAsync(x => x.Id == dto.DriveTypeId))
+            return BadRequest("Invalid DriveTypeId");
+
+        var entity = new Derivative
         {
-            entity.Engine = null;
-        }
+            Name = dto.Name,
+            ModelId = dto.ModelId,
+            GenerationId = dto.GenerationId,
+            BodyTypeId = dto.BodyTypeId,
+            DriveTypeId = dto.DriveTypeId,
+            Seats = dto.Seats,
+            Doors = dto.Doors,
+            Engine = dto.Engine,
+            TransmissionId = dto.TransmissionId,
+            FuelTypeId = dto.FuelTypeId,
+            BatteryCapacityKWh = dto.BatteryCapacityKWh,
+            IsActive = dto.IsActive ?? true
+        };
+        if (fuel != null && string.Equals(fuel.Name, "Electric", StringComparison.OrdinalIgnoreCase)) entity.Engine = null;
+
+        // Build code from Make/Model/Generation/Body/Transmission
+        var model = await context.Models.Include(m => m.Make).FirstAsync(m => m.Id == dto.ModelId);
+        var gen = generation;
+        var body = await context.BodyTypes.FirstAsync(b => b.Id == dto.BodyTypeId);
+        var transName = dto.TransmissionId.HasValue ? (await context.Transmissions.FirstOrDefaultAsync(t => t.Id == dto.TransmissionId.Value))?.Name : null;
+        var makeCode = model.Make!.Code;
+        var modelCode = model.Code;
+        entity.Code = CodeGenerator.DerivativeCode(makeCode, modelCode, gen.Name, body.Name, transName);
+        if (!await CodeGenerator.IsCodeUniqueAsync(context, "Derivatives", entity.Code))
+            return Conflict($"Code '{entity.Code}' already exists");
         context.Derivatives.Add(entity);
         var ok = await context.SaveChangesAsync() > 0;
         if (!ok) return BadRequest("Failed to create derivative");
@@ -211,11 +242,19 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
                 return BadRequest("Generation must belong to the specified Model");
             entity.GenerationId = dto.GenerationId.Value;
         }
+        var changedForCode = false;
         if (dto.BodyTypeId.HasValue)
         {
             var exists = await context.BodyTypes.AnyAsync(x => x.Id == dto.BodyTypeId.Value);
             if (!exists) return BadRequest("Invalid BodyTypeId");
             entity.BodyTypeId = dto.BodyTypeId.Value;
+            changedForCode = true;
+        }
+        if (dto.DriveTypeId.HasValue)
+        {
+            var exists = await context.DriveTypes.AnyAsync(x => x.Id == dto.DriveTypeId.Value);
+            if (!exists) return BadRequest("Invalid DriveTypeId");
+            entity.DriveTypeId = dto.DriveTypeId.Value;
         }
         if (dto.Engine is not null) entity.Engine = dto.Engine;
         if (dto.TransmissionId.HasValue)
@@ -223,6 +262,7 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
             var exists = await context.Transmissions.AnyAsync(x => x.Id == dto.TransmissionId.Value);
             if (!exists) return BadRequest("Invalid TransmissionId");
             entity.TransmissionId = dto.TransmissionId.Value;
+            changedForCode = true;
         }
         if (dto.FuelTypeId.HasValue)
         {
@@ -248,6 +288,21 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
         {
             if (dto.Doors.Value < 2 || dto.Doors.Value > 5) return BadRequest("Doors must be between 2 and 5");
             entity.Doors = dto.Doors.Value;
+        }
+        if (dto.IsActive.HasValue) entity.IsActive = dto.IsActive.Value;
+
+        // Recompute Code if any relevant piece changed
+        if (changedForCode || dto.ModelId.HasValue || dto.GenerationId.HasValue || dto.Name is not null)
+        {
+            var model = await context.Models.Include(m => m.Make).FirstAsync(m => m.Id == entity.ModelId);
+            var gen = await context.Generations.FirstAsync(g => g.Id == entity.GenerationId);
+            var body = await context.BodyTypes.FirstAsync(b => b.Id == entity.BodyTypeId);
+            var transName = entity.TransmissionId.HasValue ? (await context.Transmissions.FirstOrDefaultAsync(t => t.Id == entity.TransmissionId.Value))?.Name : null;
+            var makeCode = model.Make!.Code;
+            var modelCode = model.Code;
+            entity.Code = CodeGenerator.DerivativeCode(makeCode, modelCode, gen.Name, body.Name, transName);
+            if (!await CodeGenerator.IsCodeUniqueAsync(context, "Derivatives", entity.Code, id))
+                return Conflict($"Code '{entity.Code}' already exists");
         }
         var ok = await context.SaveChangesAsync() > 0;
         return ok ? Ok() : BadRequest("Failed to update derivative");

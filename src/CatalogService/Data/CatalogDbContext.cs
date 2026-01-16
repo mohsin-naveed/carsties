@@ -15,6 +15,7 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<FuelType> FuelTypes => Set<FuelType>();
     public DbSet<Derivative> Derivatives => Set<Derivative>();
     public DbSet<BodyType> BodyTypes => Set<BodyType>();
+    public DbSet<Entities.DriveType> DriveTypes => Set<Entities.DriveType>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -26,6 +27,11 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
             entity.HasIndex(x => x.Name).IsUnique();
+            entity.Property(x => x.Code).IsRequired().HasMaxLength(100);
+            entity.HasIndex(x => x.Code).IsUnique();
+            entity.Property(x => x.Country).HasMaxLength(100);
+            entity.Property(x => x.IsActive).HasDefaultValue(true);
+            entity.Property(x => x.IsPopular).HasDefaultValue(false);
         });
 
         modelBuilder.Entity<Model>(entity =>
@@ -33,6 +39,10 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.ToTable("Models");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.Code).IsRequired().HasMaxLength(100);
+            entity.HasIndex(x => x.Code).IsUnique();
+            entity.Property(x => x.IsActive).HasDefaultValue(true);
+            entity.Property(x => x.IsPopular).HasDefaultValue(false);
             entity.HasOne(x => x.Make)
                 .WithMany(x => x.Models)
                 .HasForeignKey(x => x.MakeId)
@@ -55,6 +65,10 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.ToTable("Variants");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.Code).IsRequired().HasMaxLength(150);
+            entity.HasIndex(x => x.Code).IsUnique();
+            entity.Property(x => x.IsPopular).HasDefaultValue(false);
+            entity.Property(x => x.IsImported).HasDefaultValue(false);
             entity.Property(x => x.Engine).HasMaxLength(100);
             entity.HasOne(x => x.Derivative)
                 .WithMany()
@@ -127,12 +141,15 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.ToTable("Derivatives");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.Code).IsRequired().HasMaxLength(150);
+            entity.HasIndex(x => x.Code).IsUnique();
             entity.Property(x => x.Seats).IsRequired();
             entity.Property(x => x.Doors).IsRequired();
             entity.HasCheckConstraint("CK_Derivatives_Seats", "\"Seats\" BETWEEN 2 AND 9");
             entity.HasCheckConstraint("CK_Derivatives_Doors", "\"Doors\" BETWEEN 2 AND 5");
             entity.Property(x => x.Engine).HasMaxLength(100);
             entity.Property(x => x.BatteryCapacityKWh);
+            entity.Property(x => x.IsActive).HasDefaultValue(true);
 
             entity.HasOne(x => x.Model)
                 .WithMany(x => x.Derivatives)
@@ -149,6 +166,11 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
                 .HasForeignKey(x => x.BodyTypeId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            entity.HasOne(x => x.DriveTypeRef)
+                .WithMany()
+                .HasForeignKey(x => x.DriveTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasOne(x => x.TransmissionRef)
                 .WithMany()
                 .HasForeignKey(x => x.TransmissionId)
@@ -157,6 +179,17 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
                 .WithMany()
                 .HasForeignKey(x => x.FuelTypeId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Entities.DriveType>(entity =>
+        {
+            entity.ToTable("DriveTypes");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Code).IsRequired().HasMaxLength(10);
+            entity.HasIndex(x => x.Code).IsUnique();
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
+            entity.Property(x => x.UpdatedAt).HasDefaultValueSql("now()");
         });
     }
 }

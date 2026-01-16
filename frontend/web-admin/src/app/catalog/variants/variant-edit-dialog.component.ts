@@ -8,11 +8,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { A11yModule } from '@angular/cdk/a11y';
 import { DerivativeDto, FeatureDto, GenerationDto, MakeDto, ModelDto, OptionDto, CatalogApiService } from '../catalog-api.service';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 @Component({
   selector: 'app-variant-edit-dialog',
   standalone: true,
-  imports: [CommonModule, A11yModule, MatDialogModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule],
+  imports: [CommonModule, A11yModule, MatDialogModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule, MatSlideToggleModule],
   template: `
     <h2 mat-dialog-title>{{ data.title }}</h2>
     <div mat-dialog-content>
@@ -39,6 +40,10 @@ import { DerivativeDto, FeatureDto, GenerationDto, MakeDto, ModelDto, OptionDto,
           <mat-label>Name</mat-label>
           <input #nameInput matInput formControlName="name" placeholder="e.g. 2.0 TDI" cdkFocusInitial />
         </mat-form-field>
+        <div class="toggles">
+          <mat-slide-toggle formControlName="isPopular">Popular</mat-slide-toggle>
+          <mat-slide-toggle formControlName="isImported">Imported</mat-slide-toggle>
+        </div>
         <mat-form-field appearance="outline" style="width:100%">
           <mat-label>Features</mat-label>
           <mat-select formControlName="featureIds" multiple>
@@ -56,14 +61,15 @@ import { DerivativeDto, FeatureDto, GenerationDto, MakeDto, ModelDto, OptionDto,
   styles: [`
     .form { display:flex; flex-direction:column; gap:1rem; }
     .grid { display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
+    .toggles{ display:flex; gap:1rem; }
     @media (max-width: 768px){ .grid { grid-template-columns: 1fr; } }
   `]
 })
 export class VariantEditDialogComponent implements AfterViewInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(CatalogApiService);
-  public ref: MatDialogRef<VariantEditDialogComponent, { name: string; derivativeId: number; featureIds: number[] }> = inject(MatDialogRef);
-  public data: { title: string; name?: string; derivativeId?: number; generations: GenerationDto[]; derivatives: DerivativeDto[]; models: ModelDto[]; makes: MakeDto[]; featureIds?: number[] } = inject(MAT_DIALOG_DATA);
+  public ref: MatDialogRef<VariantEditDialogComponent, { name: string; derivativeId: number; featureIds: number[]; isPopular?: boolean; isImported?: boolean }> = inject(MatDialogRef);
+  public data: { title: string; name?: string; derivativeId?: number; generations: GenerationDto[]; derivatives: DerivativeDto[]; models: ModelDto[]; makes: MakeDto[]; featureIds?: number[]; isPopular?: boolean; isImported?: boolean } = inject(MAT_DIALOG_DATA);
 
   @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
 
@@ -72,7 +78,9 @@ export class VariantEditDialogComponent implements AfterViewInit {
     makeId: [this.deriveMakeIdFromDerivative(this.data.derivativeId) ?? null as number | null, [Validators.required]],
     modelId: [this.deriveModelIdFromDerivative(this.data.derivativeId) ?? null as number | null, [Validators.required]],
     derivativeId: [this.data.derivativeId ?? null as number | null, [Validators.required]],
-    featureIds: [this.data.featureIds ?? [] as number[]]
+    featureIds: [this.data.featureIds ?? [] as number[]],
+    isPopular: [this.data.isPopular ?? false],
+    isImported: [this.data.isImported ?? false]
   });
 
   ngAfterViewInit(){ setTimeout(() => this.nameInput?.nativeElement.focus(), 0); }
@@ -107,6 +115,6 @@ export class VariantEditDialogComponent implements AfterViewInit {
 
   save(){
     const raw = this.form.getRawValue();
-    this.ref.close({ name: raw.name!, derivativeId: raw.derivativeId!, featureIds: raw.featureIds ?? [] });
+    this.ref.close({ name: raw.name!, derivativeId: raw.derivativeId!, featureIds: raw.featureIds ?? [], isPopular: raw.isPopular ?? undefined, isImported: raw.isImported ?? undefined });
   }
 }

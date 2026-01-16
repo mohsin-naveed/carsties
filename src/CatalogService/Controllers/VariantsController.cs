@@ -3,6 +3,7 @@ using AutoMapper.QueryableExtensions;
 using CatalogService.Data;
 using CatalogService.DTOs;
 using CatalogService.Entities;
+using CatalogService.RequestHelpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
@@ -75,7 +76,7 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(x => x.v)
-            .Select(v => new VariantDto(v.Id, v.Name, v.DerivativeId))
+            .Select(v => new VariantDto(v.Id, v.Name, v.Code, v.DerivativeId, v.IsPopular, v.IsImported))
             .ToListAsync();
 
         var result = new PagedResult<VariantDto>(pageItems, total, page, pageSize);
@@ -139,7 +140,10 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
             .Select(v => new VariantDto(
                 v.Id,
                 v.Name,
-                v.DerivativeId))
+                v.Code,
+                v.DerivativeId,
+                v.IsPopular,
+                v.IsImported))
             .ToListAsync();
 
         // Include derivatives to enable client-side mapping from generation -> model
@@ -169,7 +173,10 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
             .Select(v => new VariantDto(
                 v.Id,
                 v.Name,
-                v.DerivativeId))
+                v.Code,
+                v.DerivativeId,
+                v.IsPopular,
+                v.IsImported))
             .ToListAsync();
     }
 
@@ -185,7 +192,10 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
     {
         if (!await context.Derivatives.AnyAsync(x => x.Id == dto.DerivativeId))
             return BadRequest("Invalid DerivativeId");
-        var entity = mapper.Map<Variant>(dto);
+        var derivative = await context.Derivatives.FirstAsync(d => d.Id == dto.DerivativeId);
+        var entity = new Variant { Name = dto.Name, DerivativeId = dto.DerivativeId, IsPopular = dto.IsPopular ?? false, IsImported = dto.IsImported ?? false, Code = CodeGenerator.VariantCode(derivative.Code, dto.Name) };
+        if (!await CodeGenerator.IsCodeUniqueAsync(context, "Variants", entity.Code))
+            return Conflict($"Code '{entity.Code}' already exists");
         context.Variants.Add(entity);
         var ok = await context.SaveChangesAsync() > 0;
         if (!ok) return BadRequest("Failed to create variant");
@@ -198,12 +208,23 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
     {
         var entity = await context.Variants.FindAsync(id);
         if (entity is null) return NotFound();
-        if (!string.IsNullOrWhiteSpace(dto.Name)) entity.Name = dto.Name;
+        var codeNeedsUpdate = false;
+        if (!string.IsNullOrWhiteSpace(dto.Name)) { entity.Name = dto.Name; codeNeedsUpdate = true; }
         if (dto.DerivativeId.HasValue)
         {
             var exists = await context.Derivatives.AnyAsync(x => x.Id == dto.DerivativeId.Value);
             if (!exists) return BadRequest("Invalid DerivativeId");
             entity.DerivativeId = dto.DerivativeId.Value;
+            codeNeedsUpdate = true;
+        }
+        if (dto.IsPopular.HasValue) entity.IsPopular = dto.IsPopular.Value;
+        if (dto.IsImported.HasValue) entity.IsImported = dto.IsImported.Value;
+        if (codeNeedsUpdate)
+        {
+            var derivative = await context.Derivatives.FirstAsync(d => d.Id == entity.DerivativeId);
+            entity.Code = CodeGenerator.VariantCode(derivative.Code, entity.Name);
+            if (!await CodeGenerator.IsCodeUniqueAsync(context, "Variants", entity.Code, id))
+                return Conflict($"Code '{entity.Code}' already exists");
         }
         // Engine/Transmission/Fuel removed from Variants
         var ok = await context.SaveChangesAsync() > 0;

@@ -4,13 +4,14 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
-export interface MakeEditData { title: string; name?: string; }
+export interface MakeEditData { title: string; name?: string; country?: string; isActive?: boolean; isPopular?: boolean; }
 
 @Component({
   selector: 'app-make-edit-dialog',
   standalone: true,
-  imports: [MatDialogModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule],
+  imports: [MatDialogModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSlideToggleModule],
   template: `
     <h2 mat-dialog-title>{{ data.title }}</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
@@ -19,6 +20,14 @@ export interface MakeEditData { title: string; name?: string; }
           <mat-label>Name</mat-label>
           <input matInput formControlName="name" placeholder="e.g. BMW">
         </mat-form-field>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>Country</mat-label>
+          <input matInput formControlName="country" placeholder="e.g. Germany">
+        </mat-form-field>
+        <div class="toggles">
+          <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
+          <mat-slide-toggle formControlName="isPopular">Popular</mat-slide-toggle>
+        </div>
       </div>
       <div mat-dialog-actions align="end">
         <button mat-button type="button" (click)="ref.close()">Cancel</button>
@@ -26,10 +35,10 @@ export interface MakeEditData { title: string; name?: string; }
       </div>
     </form>
   `,
-  styles: [`.w-100{ width:100%; }`]
+  styles: [`.w-100{ width:100%; } .toggles{ display:flex; gap:1rem; }`]
 })
 export class MakeEditDialogComponent {
-  readonly form = this.fb.nonNullable.group({ name: ['', [Validators.required, Validators.maxLength(100)]] });
+  readonly form = this.fb.nonNullable.group({ name: ['', [Validators.required, Validators.maxLength(100)]], country: [''], isActive: [true], isPopular: [false] });
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: MakeEditData,
@@ -37,6 +46,9 @@ export class MakeEditDialogComponent {
     private fb: FormBuilder
   ){
     if (data.name){ this.form.patchValue({ name: data.name }); }
+    if (data.country !== undefined){ this.form.patchValue({ country: data.country ?? '' }); }
+    if (data.isActive !== undefined){ this.form.patchValue({ isActive: !!data.isActive }); }
+    if (data.isPopular !== undefined){ this.form.patchValue({ isPopular: !!data.isPopular }); }
   }
 
   save(){ if (this.form.valid){ this.ref.close(this.form.getRawValue()); } }

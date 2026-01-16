@@ -3,6 +3,7 @@ using AutoMapper.QueryableExtensions;
 using CatalogService.Data;
 using CatalogService.DTOs;
 using CatalogService.Entities;
+using CatalogService.RequestHelpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -97,7 +98,9 @@ public class ModelsController(CatalogDbContext context, IMapper mapper) : Contro
     {
         if (!await context.Makes.AnyAsync(x => x.Id == dto.MakeId))
             return BadRequest("Invalid MakeId");
-        var entity = mapper.Map<Model>(dto);
+        var entity = new Model { Name = dto.Name, MakeId = dto.MakeId, IsActive = dto.IsActive ?? true, IsPopular = dto.IsPopular ?? false, Code = CodeGenerator.ModelCode(dto.Name) };
+        if (!await CodeGenerator.IsCodeUniqueAsync(context, "Models", entity.Code))
+            return Conflict($"Code '{entity.Code}' already exists");
         context.Models.Add(entity);
         var ok = await context.SaveChangesAsync() > 0;
         if (!ok) return BadRequest("Failed to create model");
@@ -110,13 +113,21 @@ public class ModelsController(CatalogDbContext context, IMapper mapper) : Contro
     {
         var entity = await context.Models.FindAsync(id);
         if (entity is null) return NotFound();
-        if (!string.IsNullOrWhiteSpace(dto.Name)) entity.Name = dto.Name;
+        if (!string.IsNullOrWhiteSpace(dto.Name))
+        {
+            entity.Name = dto.Name;
+            entity.Code = CodeGenerator.ModelCode(dto.Name);
+            if (!await CodeGenerator.IsCodeUniqueAsync(context, "Models", entity.Code, id))
+                return Conflict($"Code '{entity.Code}' already exists");
+        }
         if (dto.MakeId.HasValue)
         {
             var exists = await context.Makes.AnyAsync(x => x.Id == dto.MakeId.Value);
             if (!exists) return BadRequest("Invalid MakeId");
             entity.MakeId = dto.MakeId.Value;
         }
+        if (dto.IsActive.HasValue) entity.IsActive = dto.IsActive.Value;
+        if (dto.IsPopular.HasValue) entity.IsPopular = dto.IsPopular.Value;
         var ok = await context.SaveChangesAsync() > 0;
         return ok ? Ok() : BadRequest("Failed to update model");
     }

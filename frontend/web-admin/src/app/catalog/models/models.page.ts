@@ -37,7 +37,7 @@ export class ModelsPage {
   private readonly notify = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
-  readonly displayedColumns = ['make','model','actions'];
+  readonly displayedColumns = ['make','model','popular','active','actions'];
 
   readonly items$ = new BehaviorSubject<ModelDto[]>([]);
   readonly makes$ = new BehaviorSubject<MakeDto[]>([]);
@@ -97,16 +97,16 @@ export class ModelsPage {
 
   openCreate(){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(ModelEditDialogComponent, { data: { title: 'Add Model', makes: this.makes$.value }, width: '480px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { name: string; makeId: number } | undefined) => {
+    const ref = this.dialog.open(ModelEditDialogComponent, { data: { title: 'Add Model', makes: this.makes$.value }, width: '520px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; makeId: number; isActive?: boolean; isPopular?: boolean } | undefined) => {
       if (res){ this.api.createModel(res).subscribe({ next: () => { this.notify.success('Model created'); this.loadContext(); } }); }
     });
   }
 
   openEdit(it: ModelDto){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(ModelEditDialogComponent, { data: { title: 'Edit Model', name: it.name, makeId: it.makeId, makes: this.makes$.value }, width: '480px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { name: string; makeId: number } | undefined) => {
+    const ref = this.dialog.open(ModelEditDialogComponent, { data: { title: 'Edit Model', name: it.name, makeId: it.makeId, isActive: it.isActive, isPopular: it.isPopular, makes: this.makes$.value }, width: '520px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name?: string; makeId?: number; isActive?: boolean; isPopular?: boolean } | undefined) => {
       if (res){ this.api.updateModel(it.id, res).subscribe({ next: () => { this.notify.success('Model updated'); this.loadContext(); } }); }
     });
   }

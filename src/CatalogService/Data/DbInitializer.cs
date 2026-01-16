@@ -49,6 +49,15 @@ public class DbInitializer
 
     public static void SeedPakistanMarket(CatalogDbContext context)
     {
+        // Seed DriveTypes
+        if (!context.DriveTypes.Any())
+        {
+            context.DriveTypes.AddRange(
+                new Entities.DriveType { Code = "FWD", Name = "Front Wheel Drive", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+                new Entities.DriveType { Code = "RWD", Name = "Rear Wheel Drive", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+                new Entities.DriveType { Code = "4WD", Name = "Four Wheel Drive", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }
+            );
+        }
         // Ensure reference data exists regardless of other data
         if (!context.Transmissions.Any())
         {
@@ -148,55 +157,55 @@ public class DbInitializer
         {
             new()
             {
-                Name = "Toyota",
+                Name = "Toyota", Code = RequestHelpers.CodeGenerator.MakeCode("Toyota"), IsActive = true, IsPopular = true,
                 Models =
                 {
-                    new Model { Name = "Corolla" },
-                    new Model { Name = "Yaris" },
-                    new Model { Name = "Fortuner" }
+                    new Model { Name = "Corolla", Code = RequestHelpers.CodeGenerator.ModelCode("Corolla"), IsActive = true, IsPopular = true },
+                    new Model { Name = "Yaris", Code = RequestHelpers.CodeGenerator.ModelCode("Yaris"), IsActive = true, IsPopular = true },
+                    new Model { Name = "Fortuner", Code = RequestHelpers.CodeGenerator.ModelCode("Fortuner"), IsActive = true, IsPopular = false }
                 }
             },
             new()
             {
-                Name = "Honda",
+                Name = "Honda", Code = RequestHelpers.CodeGenerator.MakeCode("Honda"), IsActive = true, IsPopular = true,
                 Models =
                 {
-                    new Model { Name = "Civic" },
-                    new Model { Name = "City" }
+                    new Model { Name = "Civic", Code = RequestHelpers.CodeGenerator.ModelCode("Civic"), IsActive = true, IsPopular = true },
+                    new Model { Name = "City", Code = RequestHelpers.CodeGenerator.ModelCode("City"), IsActive = true, IsPopular = false }
                 }
             },
             new()
             {
-                Name = "Suzuki",
+                Name = "Suzuki", Code = RequestHelpers.CodeGenerator.MakeCode("Suzuki"), IsActive = true, IsPopular = true,
                 Models =
                 {
-                    new Model { Name = "Alto" },
-                    new Model { Name = "Swift" }
+                    new Model { Name = "Alto", Code = RequestHelpers.CodeGenerator.ModelCode("Alto"), IsActive = true, IsPopular = true },
+                    new Model { Name = "Swift", Code = RequestHelpers.CodeGenerator.ModelCode("Swift"), IsActive = true, IsPopular = true }
                 }
             },
             new()
             {
-                Name = "Kia",
+                Name = "Kia", Code = RequestHelpers.CodeGenerator.MakeCode("Kia"), IsActive = true, IsPopular = false,
                 Models =
                 {
-                    new Model { Name = "Sportage" },
-                    new Model { Name = "Stonic" }
+                    new Model { Name = "Sportage", Code = RequestHelpers.CodeGenerator.ModelCode("Sportage"), IsActive = true, IsPopular = true },
+                    new Model { Name = "Stonic", Code = RequestHelpers.CodeGenerator.ModelCode("Stonic"), IsActive = true, IsPopular = false }
                 }
             },
             new()
             {
-                Name = "BMW",
+                Name = "BMW", Code = RequestHelpers.CodeGenerator.MakeCode("BMW"), IsActive = true, IsPopular = true,
                 Models =
                 {
-                    new Model { Name = "3 Series" }
+                    new Model { Name = "3 Series", Code = RequestHelpers.CodeGenerator.ModelCode("3 Series"), IsActive = true, IsPopular = false }
                 }
             },
             new()
             {
-                Name = "Audi",
+                Name = "Audi", Code = RequestHelpers.CodeGenerator.MakeCode("Audi"), IsActive = true, IsPopular = false,
                 Models =
                 {
-                    new Model { Name = "A4" }
+                    new Model { Name = "A4", Code = RequestHelpers.CodeGenerator.ModelCode("A4"), IsActive = true, IsPopular = false }
                 }
             }
         };
@@ -227,15 +236,17 @@ public class DbInitializer
 
         var derivatives = new List<Derivative>();
         var allModels = context.Models.Include(m => m.Make).ToList();
+        var driveMap = context.DriveTypes.ToDictionary(d => d.Code, d => d.Id);
         foreach (var m in allModels)
         {
             var bodyId = m.Name is "Alto" or "Swift" or "Yaris" ? hatchId : (m.Name is "Fortuner" or "Sportage" or "Stonic" ? suvId : saloonId);
-            derivatives.Add(new Derivative
+            var d = new Derivative
             {
                 Name = m.Name + " Standard",
                 ModelId = m.Id,
                 GenerationId = gen2ByModelId[m.Id],
                 BodyTypeId = bodyId,
+                DriveTypeId = (m.Name is "3 Series" or "A4") ? driveMap["RWD"] : driveMap["FWD"],
                 Seats = 5,
                 Doors = bodyId == suvId ? (short)5 : (short)4,
                 Engine = m.Name switch
@@ -255,25 +266,32 @@ public class DbInitializer
                 },
                 TransmissionId = transMap["Automatic"],
                 FuelTypeId = fuelMap["Petrol"],
-                BatteryCapacityKWh = null
-            });
+                BatteryCapacityKWh = null,
+                IsActive = true
+            };
+            d.Code = RequestHelpers.CodeGenerator.DerivativeCode(m.Make!.Code, m.Code, "Gen 2", context.BodyTypes.First(b => b.Id == bodyId).Name, context.Transmissions.First(t => t.Id == d.TransmissionId!).Name);
+            derivatives.Add(d);
 
             // Optional hybrid derivative for select models
             if (m.Name is "Corolla" or "Civic" or "Yaris")
             {
-                derivatives.Add(new Derivative
+                var dh = new Derivative
                 {
                     Name = m.Name + " Hybrid",
                     ModelId = m.Id,
                     GenerationId = gen2ByModelId[m.Id],
                     BodyTypeId = bodyId,
+                    DriveTypeId = driveMap["FWD"],
                     Seats = 5,
                     Doors = bodyId == suvId ? (short)5 : (short)4,
                     Engine = m.Name == "Civic" ? "2.0L" : "1.8L",
                     TransmissionId = transMap["CVT"],
                     FuelTypeId = fuelMap["Hybrid"],
-                    BatteryCapacityKWh = 1.2m
-                });
+                    BatteryCapacityKWh = 1.2m,
+                    IsActive = true
+                };
+                dh.Code = RequestHelpers.CodeGenerator.DerivativeCode(m.Make!.Code, m.Code, "Gen 2", context.BodyTypes.First(b => b.Id == bodyId).Name, "CVT");
+                derivatives.Add(dh);
             }
         }
         context.Derivatives.AddRange(derivatives);
@@ -294,6 +312,7 @@ public class DbInitializer
                 featureNames: new[] { "Air Conditioning", "ABS", "Bluetooth" }
             );
             baseVariant.DerivativeId = d.Id;
+            baseVariant.Code = RequestHelpers.CodeGenerator.VariantCode(d.Code, baseVariant.Name);
 
             var premiumVariant = BuildVariant(
                 name: "Premium",
@@ -305,6 +324,7 @@ public class DbInitializer
                 featureNames: new[] { "Air Conditioning", "ABS", "Bluetooth", "Cruise Control", "Sunroof" }
             );
             premiumVariant.DerivativeId = d.Id;
+            premiumVariant.Code = RequestHelpers.CodeGenerator.VariantCode(d.Code, premiumVariant.Name);
 
             variants.Add(baseVariant);
             variants.Add(premiumVariant);

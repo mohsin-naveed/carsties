@@ -33,7 +33,7 @@ export class MakesPage {
   private readonly notify = inject(NotificationService);
   private readonly dialog = inject(MatDialog);
 
-  readonly displayedColumns = ['make','actions'];
+  readonly displayedColumns = ['make','country','popular','active','actions'];
   readonly makes$ = new BehaviorSubject<MakeDto[]>([]);
   readonly filter$ = new BehaviorSubject<string>('');
   readonly filtered$ = combineLatest([this.makes$, this.filter$]).pipe(
@@ -56,8 +56,8 @@ export class MakesPage {
 
   openCreate(){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(MakeEditDialogComponent, { data: { title: 'Add Make' }, width: '400px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { name: string } | undefined) => {
+    const ref = this.dialog.open(MakeEditDialogComponent, { data: { title: 'Add Make' }, width: '480px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; country?: string; isActive?: boolean; isPopular?: boolean } | undefined) => {
       if (res){
         this.api.createMake(res).subscribe({ next: () => { this.notify.success('Make created'); this.load(); } });
       }
@@ -66,8 +66,8 @@ export class MakesPage {
 
   openEdit(m: MakeDto){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(MakeEditDialogComponent, { data: { title: 'Edit Make', name: m.name }, width: '400px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { name: string } | undefined) => {
+    const ref = this.dialog.open(MakeEditDialogComponent, { data: { title: 'Edit Make', name: m.name, country: m.country, isActive: m.isActive, isPopular: m.isPopular }, width: '480px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name?: string; country?: string; isActive?: boolean; isPopular?: boolean } | undefined) => {
       if (res){
         this.api.updateMake(m.id, res).subscribe({ next: () => { this.notify.success('Make updated'); this.load(); } });
       }

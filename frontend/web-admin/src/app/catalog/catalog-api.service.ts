@@ -3,21 +3,21 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 // DTO interfaces mirroring backend records
-export interface MakeDto { id: number; name: string; }
-export interface CreateMakeDto { name: string; }
-export interface UpdateMakeDto { name?: string; }
+export interface MakeDto { id: number; name: string; code: string; country?: string; isActive: boolean; isPopular: boolean; }
+export interface CreateMakeDto { name: string; country?: string; isActive?: boolean; isPopular?: boolean; }
+export interface UpdateMakeDto { name?: string; country?: string; isActive?: boolean; isPopular?: boolean; }
 
-export interface ModelDto { id: number; name: string; makeId: number; }
-export interface CreateModelDto { name: string; makeId: number; }
-export interface UpdateModelDto { name?: string; makeId?: number; }
+export interface ModelDto { id: number; name: string; code: string; makeId: number; isActive: boolean; isPopular: boolean; }
+export interface CreateModelDto { name: string; makeId: number; isActive?: boolean; isPopular?: boolean; }
+export interface UpdateModelDto { name?: string; makeId?: number; isActive?: boolean; isPopular?: boolean; }
 
 export interface GenerationDto { id: number; name: string; startYear?: number; endYear?: number; modelId: number; }
 export interface CreateGenerationDto { name: string; modelId: number; startYear?: number; endYear?: number; }
 export interface UpdateGenerationDto { name?: string; modelId?: number; startYear?: number; endYear?: number; }
 
-export interface VariantDto { id: number; name: string; derivativeId: number; }
-export interface CreateVariantDto { name: string; derivativeId: number; }
-export interface UpdateVariantDto { name?: string; derivativeId?: number; }
+export interface VariantDto { id: number; name: string; code: string; derivativeId: number; isPopular: boolean; isImported: boolean; }
+export interface CreateVariantDto { name: string; derivativeId: number; isPopular?: boolean; isImported?: boolean; }
+export interface UpdateVariantDto { name?: string; derivativeId?: number; isPopular?: boolean; isImported?: boolean; }
 
 export interface FeatureDto { id: number; name: string; description?: string; }
 export interface CreateFeatureDto { name: string; description?: string; }
@@ -52,9 +52,9 @@ export interface GenerationsContextDto {
 // VariantFeatures page removed; context DTO no longer needed
 
 // Derivatives
-export interface DerivativeDto { id: number; name?: string; modelId: number; generationId?: number; bodyTypeId: number; bodyType?: string; seats: number; doors: number; engine?: string; transmissionId?: number; transmission?: string; fuelTypeId?: number; fuelType?: string; batteryCapacityKWh?: number; }
-export interface CreateDerivativeDto { name: string; modelId: number; generationId: number; bodyTypeId: number; seats: number; doors: number; engine?: string; transmissionId?: number; fuelTypeId?: number; batteryCapacityKWh?: number; }
-export interface UpdateDerivativeDto { name?: string; modelId?: number; generationId?: number; bodyTypeId?: number; seats?: number; doors?: number; engine?: string; transmissionId?: number; fuelTypeId?: number; batteryCapacityKWh?: number; }
+export interface DerivativeDto { id: number; code: string; name?: string; modelId: number; generationId?: number; bodyTypeId: number; bodyType?: string; driveTypeId: number; driveType?: string; seats: number; doors: number; engine?: string; transmissionId?: number; transmission?: string; fuelTypeId?: number; fuelType?: string; batteryCapacityKWh?: number; isActive: boolean; }
+export interface CreateDerivativeDto { name: string; modelId: number; generationId: number; bodyTypeId: number; driveTypeId: number; seats: number; doors: number; engine?: string; transmissionId?: number; fuelTypeId?: number; batteryCapacityKWh?: number; isActive?: boolean; }
+export interface UpdateDerivativeDto { name?: string; modelId?: number; generationId?: number; bodyTypeId?: number; driveTypeId?: number; seats?: number; doors?: number; engine?: string; transmissionId?: number; fuelTypeId?: number; batteryCapacityKWh?: number; isActive?: boolean; }
 export interface DerivativesContextDto { makes: MakeDto[]; models: ModelDto[]; derivatives: DerivativeDto[]; }
 export interface PagedResult<T> { items: T[]; total: number; page: number; pageSize: number; }
 
@@ -170,6 +170,7 @@ export class CatalogApiService {
     return this.http.get<PagedResult<DerivativeDto>>(`${this.baseUrl}/derivatives/paged`, { params });
   }
   getBodyTypeOptions(): Observable<OptionDto[]> { return this.http.get<OptionDto[]>(`${this.baseUrl}/derivatives/options`); }
+  getDriveTypeOptions(): Observable<OptionDto[]> { return this.http.get<OptionDto[]>(`${this.baseUrl}/drivetypes/options`); }
   createDerivative(dto: CreateDerivativeDto): Observable<DerivativeDto> { return this.http.post<DerivativeDto>(`${this.baseUrl}/derivatives`, dto); }
   updateDerivative(id: number, dto: UpdateDerivativeDto) { return this.http.put(`${this.baseUrl}/derivatives/${id}`, dto); }
   deleteDerivative(id: number) { return this.http.delete(`${this.baseUrl}/derivatives/${id}`); }

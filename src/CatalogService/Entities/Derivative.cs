@@ -6,6 +6,8 @@ public class Derivative
 
     public string Name { get; set; } = string.Empty;
 
+    public string Code { get; set; } = string.Empty;
+
     public int ModelId { get; set; }
     public Model? Model { get; set; }
 
@@ -14,6 +16,9 @@ public class Derivative
 
     public int BodyTypeId { get; set; }
     public BodyType? BodyTypeRef { get; set; }
+
+    public int DriveTypeId { get; set; }
+    public DriveType? DriveTypeRef { get; set; }
 
     public short Seats { get; set; }
     public short Doors { get; set; }
@@ -24,4 +29,6 @@ public class Derivative
     public int? FuelTypeId { get; set; }
     public FuelType? FuelTypeRef { get; set; }
     public decimal? BatteryCapacityKWh { get; set; }
+
+    public bool IsActive { get; set; } = true;
 }
