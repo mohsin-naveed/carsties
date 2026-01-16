@@ -10,6 +10,7 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<Generation> Generations => Set<Generation>();
     public DbSet<Variant> Variants => Set<Variant>();
     public DbSet<Feature> Features => Set<Feature>();
+    public DbSet<FeatureCategory> FeatureCategories => Set<FeatureCategory>();
     public DbSet<VariantFeature> VariantFeatures => Set<VariantFeature>();
     public DbSet<Transmission> Transmissions => Set<Transmission>();
     public DbSet<FuelType> FuelTypes => Set<FuelType>();
@@ -91,7 +92,13 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
             entity.HasIndex(x => x.Name).IsUnique();
+            entity.Property(x => x.Code).IsRequired().HasMaxLength(120);
+            entity.HasIndex(x => x.Code).IsUnique();
             entity.Property(x => x.Description).HasMaxLength(250);
+            entity.HasOne(x => x.Category)
+                .WithMany(c => c.Features)
+                .HasForeignKey(x => x.FeatureCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<VariantFeature>(entity =>
@@ -186,6 +193,16 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.ToTable("DriveTypes");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Code).IsRequired().HasMaxLength(10);
+            entity.HasIndex(x => x.Code).IsUnique();
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
+            entity.Property(x => x.UpdatedAt).HasDefaultValueSql("now()");
+        });
+        modelBuilder.Entity<FeatureCategory>(entity =>
+        {
+            entity.ToTable("FeatureCategories");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Code).IsRequired().HasMaxLength(50);
             entity.HasIndex(x => x.Code).IsUnique();
             entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
             entity.Property(x => x.CreatedAt).HasDefaultValueSql("now()");

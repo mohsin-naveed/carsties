@@ -19,9 +19,9 @@ export interface VariantDto { id: number; name: string; code: string; derivative
 export interface CreateVariantDto { name: string; derivativeId: number; isPopular?: boolean; isImported?: boolean; }
 export interface UpdateVariantDto { name?: string; derivativeId?: number; isPopular?: boolean; isImported?: boolean; }
 
-export interface FeatureDto { id: number; name: string; description?: string; }
-export interface CreateFeatureDto { name: string; description?: string; }
-export interface UpdateFeatureDto { name?: string; description?: string; }
+export interface FeatureDto { id: number; name: string; description?: string; featureCategoryId: number; featureCategory?: string; }
+export interface CreateFeatureDto { name: string; description?: string; featureCategoryId: number; }
+export interface UpdateFeatureDto { name?: string; description?: string; featureCategoryId?: number; }
 
 export interface VariantFeatureDto { variantId: number; featureId: number; isStandard: boolean; addedDate: string; }
 export interface CreateVariantFeatureDto { variantId: number; featureId: number; isStandard: boolean; }
@@ -142,6 +142,7 @@ export class CatalogApiService {
     if (opts?.dir) params.dir = opts.dir;
     return this.http.get<PagedResult<FeatureDto>>(`${this.baseUrl}/features/paged`, { params });
   }
+  getFeatureCategoryOptions(): Observable<OptionDto[]> { return this.http.get<OptionDto[]>(`${this.baseUrl}/featurecategories/options`); }
   createFeature(dto: CreateFeatureDto): Observable<FeatureDto> { return this.http.post<FeatureDto>(`${this.baseUrl}/features`, dto); }
   updateFeature(id: number, dto: UpdateFeatureDto) { return this.http.put(`${this.baseUrl}/features/${id}`, dto); }
   deleteFeature(id: number) { return this.http.delete(`${this.baseUrl}/features/${id}`); }

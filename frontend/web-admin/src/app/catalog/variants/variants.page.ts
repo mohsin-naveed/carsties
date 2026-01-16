@@ -12,6 +12,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSortModule, Sort } from '@angular/material/sort';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDividerModule } from '@angular/material/divider';
 import { CatalogApiService, VariantDto, GenerationDto, ModelDto, MakeDto, OptionDto, DerivativeDto, FeatureDto, CreateVariantFeatureDto, UpdateVariantDto } from '../catalog-api.service';
 import { NotificationService } from '../../core/notification.service';
 import { BehaviorSubject, combineLatest } from 'rxjs';
@@ -20,7 +22,7 @@ import { map, shareReplay } from 'rxjs/operators';
 @Component({
   selector: 'app-variants-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, MatDialogModule, MatPaginatorModule, MatSortModule],
+  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, MatDialogModule, MatPaginatorModule, MatSortModule, MatTooltipModule, MatDividerModule],
   templateUrl: './variants.page.html',
   styles:[`
     .header { display:flex; align-items:center; gap:.75rem; margin-bottom:.5rem; }
@@ -30,6 +32,10 @@ import { map, shareReplay } from 'rxjs/operators';
     .controls-right { display:flex; align-items:end; }
     .search { width:320px; max-width:40vw; }
     table { width:100%; }
+    .actions-cell { display:flex; align-items:center; gap:.25rem; white-space:nowrap; }
+    tr.mat-row:hover { background: rgba(0,0,0,0.03); }
+    th.mat-header-cell { font-weight: 600; }
+    td.mat-cell, th.mat-header-cell { padding: .5rem .75rem; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -199,6 +205,47 @@ export class VariantsPage {
               });
             },
             error: () => { this.notify.error('Failed to update variant'); }
+          });
+        });
+      },
+      error: () => this.notify.error('Failed to load current features')
+    });
+  }
+  openCopy(it: VariantDto){
+    (document.activeElement as HTMLElement | null)?.blur();
+    this.api.getVariantFeatures(it.id).subscribe({
+      next: (existing) => {
+        const preselectedIds = existing.map(vf => vf.featureId);
+        const ref = this.dialog.open(VariantEditDialogComponent, {
+          data: {
+            title: 'Copy Variant',
+            copyMode: true,
+            name: it.name,
+            derivativeId: it.derivativeId,
+            generations: this.generationsCache,
+            derivatives: this.derivativesCache,
+            models: this.modelsCache,
+            makes: this.makesCache,
+            featureIds: preselectedIds,
+            isPopular: (it as any).isPopular ?? false,
+            isImported: (it as any).isImported ?? false
+          },
+          width: '600px', autoFocus: true, restoreFocus: true
+        });
+        ref.afterClosed().subscribe((res: { name: string; derivativeId: number; featureIds: number[] } | undefined) => {
+          if (!res) return;
+          this.api.createVariant({ name: res.name, derivativeId: res.derivativeId }).subscribe({
+            next: (variant) => {
+              const featureIds = res.featureIds ?? [];
+              if (featureIds.length === 0){ this.notify.success('Variant copied'); this.loadContext(); return; }
+              let remaining = featureIds.length;
+              featureIds.forEach(fid => {
+                this.api.createVariantFeature({ variantId: variant.id, featureId: fid, isStandard: true }).subscribe({ next: () => {
+                  remaining--; if (remaining === 0){ this.notify.success('Variant copied'); this.loadContext(); }
+                }, error: () => { remaining--; if (remaining === 0){ this.notify.success('Variant copied'); this.loadContext(); } } });
+              });
+            },
+            error: () => this.notify.error('Failed to copy variant')
           });
         });
       },

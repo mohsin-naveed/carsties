@@ -6,15 +6,24 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { A11yModule } from '@angular/cdk/a11y';
+import { MatSelectModule } from '@angular/material/select';
+import { CatalogApiService, OptionDto } from '../catalog-api.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-feature-edit-dialog',
   standalone: true,
-  imports: [CommonModule, A11yModule, MatDialogModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule],
+  imports: [CommonModule, A11yModule, MatDialogModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule],
   template: `
     <h2 mat-dialog-title>{{ data.title }}</h2>
     <div mat-dialog-content>
       <form [formGroup]="form" class="form">
+        <mat-form-field appearance="outline" style="width:100%">
+          <mat-label>Category</mat-label>
+          <mat-select formControlName="featureCategoryId" required>
+            <mat-option *ngFor="let opt of (categories$ | async) ?? []" [value]="opt.id">{{ opt.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
         <mat-form-field appearance="outline" style="width:100%">
           <mat-label>Name</mat-label>
           <input #nameInput matInput formControlName="name" placeholder="e.g. Sunroof" cdkFocusInitial />
@@ -36,12 +45,15 @@ import { A11yModule } from '@angular/cdk/a11y';
 })
 export class FeatureEditDialogComponent implements AfterViewInit {
   private readonly fb = inject(FormBuilder);
-  public ref: MatDialogRef<FeatureEditDialogComponent, { name: string; description?: string }> = inject(MatDialogRef);
-  public data: { title: string; name?: string; description?: string } = inject(MAT_DIALOG_DATA);
+  private readonly api = inject(CatalogApiService);
+  public ref: MatDialogRef<FeatureEditDialogComponent, { name: string; description?: string; featureCategoryId: number }> = inject(MatDialogRef);
+  public data: { title: string; name?: string; description?: string; featureCategoryId?: number } = inject(MAT_DIALOG_DATA);
 
   @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
+  readonly categories$: Observable<OptionDto[]> = this.api.getFeatureCategoryOptions();
 
   readonly form = this.fb.group({
+    featureCategoryId: [this.data.featureCategoryId ?? null, [Validators.required]],
     name: [this.data.name ?? '', [Validators.required, Validators.maxLength(100)]],
     description: [this.data.description ?? '']
   });
@@ -50,6 +62,6 @@ export class FeatureEditDialogComponent implements AfterViewInit {
 
   save(){
     const raw = this.form.getRawValue();
-    this.ref.close({ name: raw.name!, description: raw.description || undefined });
+    this.ref.close({ name: raw.name!, description: raw.description || undefined, featureCategoryId: raw.featureCategoryId! });
   }
 }

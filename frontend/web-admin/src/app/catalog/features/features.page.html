@@ -4,6 +4,7 @@
   <button mat-flat-button color="primary" (click)="openCreate()">Add Feature</button>
 </section>
 
+
 <section class="controls">
   <span class="spacer"></span>
   <div class="controls-right">
@@ -15,8 +16,10 @@
 </section>
 
 <table mat-table [dataSource]="(filtered$ | async) ?? []" matSort (matSortChange)="onSortChange($event)" class="mat-elevation-z1">
-  
-  
+  <ng-container matColumnDef="category">
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="featureCategory">Category</th>
+    <td mat-cell *matCellDef="let it">{{ it.featureCategory }}</td>
+  </ng-container>
   <ng-container matColumnDef="name">
     <th mat-header-cell *matHeaderCellDef mat-sort-header="name">Name</th>
     <td mat-cell *matCellDef="let it">{{ it.name }}</td>
@@ -27,9 +30,9 @@
   </ng-container>
   <ng-container matColumnDef="actions">
     <th mat-header-cell *matHeaderCellDef>Actions</th>
-    <td mat-cell *matCellDef="let it">
-      <button mat-icon-button color="primary" (click)="openEdit(it)"><mat-icon>edit</mat-icon></button>
-      <button mat-icon-button color="warn" (click)="remove(it)"><mat-icon>delete</mat-icon></button>
+    <td mat-cell *matCellDef="let it" class="actions-cell">
+      <button mat-icon-button color="primary" (click)="openEdit(it)" matTooltip="Edit"><mat-icon>edit</mat-icon></button>
+      <button mat-icon-button color="warn" (click)="remove(it)" matTooltip="Delete"><mat-icon>delete</mat-icon></button>
     </td>
   </ng-container>
   <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>

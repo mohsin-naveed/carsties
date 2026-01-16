@@ -1,4 +1,4 @@
-import { Component, Inject, inject } from '@angular/core';
+import { Component, Inject, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -8,6 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { CatalogApiService, MakeDto, ModelDto, OptionDto, GenerationDto } from '../catalog-api.service';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { Subscription, combineLatest, startWith } from 'rxjs';
 
 @Component({
   selector: 'app-derivative-edit-dialog',
@@ -18,9 +19,13 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
      .form mat-form-field { width:100%; }`
   ],
   template: `
-  <h2 mat-dialog-title>{{ data.title || 'Derivatives' }}</h2>
+  <h2 mat-dialog-title>{{ headerTitle }}</h2>
   <div mat-dialog-content>
     <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+      <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput [value]="computedDisplayName || ''" disabled />
+      </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Make</mat-label>
         <mat-select formControlName="makeId" required (selectionChange)="onMakeChange()">
@@ -39,10 +44,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
           <mat-option *ngFor="let g of generations" [value]="g.id">{{ g.name }}</mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Name</mat-label>
-        <input matInput type="text" formControlName="name" required />
-      </mat-form-field>
+      <!-- Name input removed; name is auto-computed and shown above -->
       <mat-form-field appearance="outline">
         <mat-label>Body Type</mat-label>
         <mat-select formControlName="bodyTypeId" required>
@@ -79,11 +81,15 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Seats</mat-label>
-        <input matInput type="number" formControlName="seats" required min="2" max="9" />
+        <mat-select formControlName="seats" required>
+          <mat-option *ngFor="let s of seatOptions" [value]="s">{{ s }}</mat-option>
+        </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Doors</mat-label>
-        <input matInput type="number" formControlName="doors" required min="2" max="5" />
+        <mat-select formControlName="doors" required>
+          <mat-option *ngFor="let d of doorOptions" [value]="d">{{ d }}</mat-option>
+        </mat-select>
       </mat-form-field>
       <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
     </form>
@@ -94,7 +100,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
   </div>
   `
 })
-export class DerivativeEditDialogComponent {
+export class DerivativeEditDialogComponent implements OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(CatalogApiService);
   private readonly ref = inject(MatDialogRef<DerivativeEditDialogComponent>);
@@ -106,6 +112,12 @@ export class DerivativeEditDialogComponent {
   fuelTypes: OptionDto[] = [];
   private electricIds: number[] = [];
   private hybridIds: number[] = [];
+  copyMode = false;
+  seatOptions = Array.from({ length: 18 }, (_, i) => i + 1);
+  doorOptions = Array.from({ length: 5 }, (_, i) => i + 1);
+  computedDisplayName = '';
+  headerTitle = 'Add Derivative';
+  private sub?: Subscription;
 
   form = this.fb.group({
     name: ['' as string, [Validators.required, Validators.maxLength(100)]],
@@ -118,12 +130,12 @@ export class DerivativeEditDialogComponent {
     transmissionId: [null as number | null],
     fuelTypeId: [null as number | null],
     batteryCapacityKWh: [null as number | null],
-    seats: [5, [Validators.required, Validators.min(2), Validators.max(9)]],
-    doors: [4, [Validators.required, Validators.min(2), Validators.max(5)]],
+    seats: [5, [Validators.required]],
+    doors: [4, [Validators.required]],
     isActive: [true]
   });
 
-  constructor(@Inject(MAT_DIALOG_DATA) public data: { title: string; makes: MakeDto[]; models: ModelDto[]; modelId?: number; generationId?: number | null; bodyTypeId?: number; seats?: number; doors?: number; code?: string; engine?: string; transmissionId?: number | null; fuelTypeId?: number | null; batteryCapacityKWh?: number | null }){
+  constructor(@Inject(MAT_DIALOG_DATA) public data: { title: string; makes: MakeDto[]; models: ModelDto[]; modelId?: number; generationId?: number | null; bodyTypeId?: number; seats?: number; doors?: number; code?: string; engine?: string; transmissionId?: number | null; fuelTypeId?: number | null; batteryCapacityKWh?: number | null; driveTypeId?: number | null; isActive?: boolean; copyMode?: boolean; name?: string }){
     this.api.getBodyTypeOptions().subscribe({ next: (opts) => this.bodyTypes = opts });
     this.api.getVariantOptions().subscribe({ next: (opts) => {
       this.transmissions = opts.transmissions; this.fuelTypes = opts.fuelTypes;
@@ -132,6 +144,8 @@ export class DerivativeEditDialogComponent {
       this.hybridIds = names.filter(f => f.name.includes('hybrid') && f.name.includes('plug')).map(f => f.id);
     } });
     this.api.getDriveTypeOptions().subscribe({ next: (opts) => this.driveTypes = opts });
+    this.copyMode = !!this.data.copyMode;
+    this.headerTitle = this.copyMode ? 'Add Derivative' : (this.data.title || 'Add Derivative');
     // Pre-populate make based on model
     const model = this.data.modelId ? this.data.models.find(m => m.id === this.data.modelId) : undefined;
     if (model) this.form.patchValue({ makeId: model.makeId });
@@ -143,10 +157,7 @@ export class DerivativeEditDialogComponent {
         this.form.patchValue({ generationId: this.data.generationId ?? null });
       }
     }
-    if (this.data.title?.toLowerCase().includes('edit') && typeof (this as any).data !== 'undefined'){
-      // Attempt to populate name if provided via DerivativeDto
-    }
-    if ((this as any).data && (this as any).data['name'] !== undefined){ this.form.patchValue({ name: (this as any).data['name'] ?? '' }); }
+    if (this.data.name !== undefined){ this.form.patchValue({ name: this.data.name ?? '' }); }
     if (this.data.engine !== undefined) this.form.patchValue({ engine: this.data.engine ?? '' });
     if (this.data.transmissionId !== undefined) this.form.patchValue({ transmissionId: this.data.transmissionId ?? null });
     if (this.data.fuelTypeId !== undefined) this.form.patchValue({ fuelTypeId: this.data.fuelTypeId ?? null });
@@ -157,7 +168,26 @@ export class DerivativeEditDialogComponent {
     if ((this as any).data && (this as any).data['driveTypeId'] !== undefined) this.form.patchValue({ driveTypeId: (this as any).data['driveTypeId'] ?? null });
     if ((this as any).data && (this as any).data['isActive'] !== undefined) this.form.patchValue({ isActive: !!(this as any).data['isActive'] });
     this.onFuelChange();
+
+    // Auto-compute derivative name and title based on selection
+    const makeName$ = this.form.get('makeId')!.valueChanges.pipe(startWith(this.form.value.makeId));
+    const modelId$ = this.form.get('modelId')!.valueChanges.pipe(startWith(this.form.value.modelId));
+    const generationId$ = this.form.get('generationId')!.valueChanges.pipe(startWith(this.form.value.generationId));
+    const bodyTypeId$ = this.form.get('bodyTypeId')!.valueChanges.pipe(startWith(this.form.value.bodyTypeId));
+    const transmissionId$ = this.form.get('transmissionId')!.valueChanges.pipe(startWith(this.form.value.transmissionId));
+    this.sub = combineLatest([makeName$, modelId$, generationId$, bodyTypeId$, transmissionId$]).subscribe(([mkId, mdId, genId, btId, trId]) => {
+      const mk = this.data.makes.find(m => m.id === (mkId as number))?.name ?? '';
+      const md = this.data.models.find(m => m.id === (mdId as number))?.name ?? '';
+      const gn = this.generations.find(g => g.id === (genId as number))?.name ?? '';
+      const bt = this.bodyTypes.find(b => b.id === (btId as number))?.name ?? '';
+      const tr = this.transmissions.find(t => t.id === (trId as number))?.name ?? '';
+      const parts = [mk, md, gn, bt, tr].filter(Boolean);
+      const composed = parts.join(' ').trim();
+      this.computedDisplayName = composed || '';
+      this.form.patchValue({ name: composed }, { emitEvent: false });
+    });
   }
+  ngOnDestroy(){ this.sub?.unsubscribe(); }
 
   onMakeChange(){
     this.updateFilteredModels();
@@ -178,7 +208,7 @@ export class DerivativeEditDialogComponent {
     this.generations = [];
     this.form.patchValue({ generationId: null });
     if (modelId){
-      this.api.getGenerations(modelId).subscribe({ next: (gens) => this.generations = gens });
+      this.api.getGenerations(modelId).subscribe({ next: (gens) => { this.generations = gens; const cur = this.form.value.generationId; if (cur != null) { this.form.patchValue({ generationId: cur }); } } });
     }
   }
 
@@ -204,6 +234,7 @@ export class DerivativeEditDialogComponent {
 
   isElectricSelected(){ const fid = this.form.value.fuelTypeId as number | null; return fid != null && this.electricIds.includes(fid); }
   isHybridSelected(){ const fid = this.form.value.fuelTypeId as number | null; return fid != null && this.hybridIds.includes(fid); }
+  // Name is auto-computed; no manual editing
 
   submit(){ if (this.form.invalid) return; this.ref.close(this.form.value); }
   close(){ this.ref.close(); }

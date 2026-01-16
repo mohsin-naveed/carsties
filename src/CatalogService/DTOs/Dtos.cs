@@ -17,9 +17,9 @@ public record VariantDto(int Id, string Name, string Code, int DerivativeId, boo
 public record CreateVariantDto(string Name, int DerivativeId, bool? IsPopular, bool? IsImported);
 public record UpdateVariantDto(string? Name, int? DerivativeId, bool? IsPopular, bool? IsImported);
 
-public record FeatureDto(int Id, string Name, string? Description);
-public record CreateFeatureDto(string Name, string? Description);
-public record UpdateFeatureDto(string? Name, string? Description);
+public record FeatureDto(int Id, string Name, string? Description, int FeatureCategoryId, string? FeatureCategory);
+public record CreateFeatureDto(string Name, string? Description, int FeatureCategoryId);
+public record UpdateFeatureDto(string? Name, string? Description, int? FeatureCategoryId);
 
 public record VariantFeatureDto(int VariantId, int FeatureId, bool IsStandard, DateTime AddedDate);
 public record CreateVariantFeatureDto(int VariantId, int FeatureId, bool IsStandard);

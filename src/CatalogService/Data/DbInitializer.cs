@@ -1,4 +1,5 @@
 using CatalogService.Entities;
+using CatalogService.RequestHelpers;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
@@ -95,16 +96,43 @@ public class DbInitializer
             };
             context.BodyTypes.AddRange(bodyTypes);
         }
+        // Seed Feature Categories
+        if (!context.FeatureCategories.Any())
+        {
+            context.FeatureCategories.AddRange(
+                new FeatureCategory { Code = CodeGenerator.MakeCode("Comfort"), Name = "Comfort", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+                new FeatureCategory { Code = CodeGenerator.MakeCode("Exterior"), Name = "Exterior", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+                new FeatureCategory { Code = CodeGenerator.MakeCode("Interior"), Name = "Interior", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+                new FeatureCategory { Code = CodeGenerator.MakeCode("Safety"), Name = "Safety", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }
+            );
+        }
+        context.SaveChanges();
+        // Rename legacy category names to new ones if present
+        var legacyComfort = context.FeatureCategories.FirstOrDefault(c => c.Name == "ComfortConvenience");
+        if (legacyComfort != null)
+        {
+            legacyComfort.Name = "Comfort";
+            legacyComfort.Code = CodeGenerator.MakeCode("Comfort");
+        }
+        var legacySafety = context.FeatureCategories.FirstOrDefault(c => c.Name == "SafetySecurity");
+        if (legacySafety != null)
+        {
+            legacySafety.Name = "Safety";
+            legacySafety.Code = CodeGenerator.MakeCode("Safety");
+        }
+        context.SaveChanges();
+        var catMap = context.FeatureCategories.ToDictionary(c => c.Name, c => c.Id);
+
         if (!context.Features.Any())
         {
-            // Seed a small feature catalog used across variants
+            // Seed a small feature catalog used across variants with categories
             var seedFeatures = new List<Feature>
             {
-                new() { Name = "Air Conditioning", Description = "Automatic climate control" },
-                new() { Name = "ABS", Description = "Anti-lock Braking System" },
-                new() { Name = "Bluetooth", Description = "Hands-free connectivity" },
-                new() { Name = "Cruise Control", Description = "Adaptive cruise control" },
-                new() { Name = "Sunroof", Description = "Electric sunroof" }
+                new() { Name = "Air Conditioning", Code = CodeGenerator.MakeCode("Air Conditioning"), Description = "Automatic climate control", FeatureCategoryId = catMap["Comfort"] },
+                new() { Name = "ABS", Code = CodeGenerator.MakeCode("ABS"), Description = "Anti-lock Braking System", FeatureCategoryId = catMap["Safety"] },
+                new() { Name = "Bluetooth", Code = CodeGenerator.MakeCode("Bluetooth"), Description = "Hands-free connectivity", FeatureCategoryId = catMap["Comfort"] },
+                new() { Name = "Cruise Control", Code = CodeGenerator.MakeCode("Cruise Control"), Description = "Adaptive cruise control", FeatureCategoryId = catMap["Comfort"] },
+                new() { Name = "Sunroof", Code = CodeGenerator.MakeCode("Sunroof"), Description = "Electric sunroof", FeatureCategoryId = catMap["Exterior"] }
             };
             context.Features.AddRange(seedFeatures);
         }

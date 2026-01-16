@@ -3,6 +3,7 @@ using AutoMapper.QueryableExtensions;
 using CatalogService.Data;
 using CatalogService.DTOs;
 using CatalogService.Entities;
+using CatalogService.RequestHelpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +13,19 @@ namespace CatalogService.Controllers;
 [Route("api/[controller]")]
 public class FeaturesController(CatalogDbContext context, IMapper mapper) : ControllerBase
 {
+    private async Task<string> GenerateUniqueCodeAsync(string name, int? excludeId = null)
+    {
+        var baseCode = CodeGenerator.MakeCode(name);
+        var code = baseCode;
+        var i = 2;
+        while (await context.Features.AnyAsync(x => x.Code == code && (!excludeId.HasValue || x.Id != excludeId.Value)))
+        {
+            code = $"{baseCode}-{i}";
+            i++;
+        }
+        return code;
+    }
+
     [HttpGet("paged")]
     public async Task<ActionResult<PagedResult<FeatureDto>>> GetPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? sort = null, [FromQuery] string? dir = null)
     {
@@ -35,6 +49,9 @@ public class FeaturesController(CatalogDbContext context, IMapper mapper) : Cont
                     break;
                 case "description":
                     ordered = (direction == "desc") ? baseQuery.OrderByDescending(x => x.Description) : baseQuery.OrderBy(x => x.Description);
+                    break;
+                case "category":
+                    ordered = (direction == "desc") ? baseQuery.OrderByDescending(x => x.FeatureCategoryId) : baseQuery.OrderBy(x => x.FeatureCategoryId);
                     break;
             }
         }
@@ -69,10 +86,20 @@ public class FeaturesController(CatalogDbContext context, IMapper mapper) : Cont
     {
         if (await context.Features.AnyAsync(x => x.Name == dto.Name))
             return Conflict($"Feature '{dto.Name}' already exists");
+        var catOk = await context.FeatureCategories.AnyAsync(c => c.Id == dto.FeatureCategoryId);
+        if (!catOk) return BadRequest("Invalid FeatureCategoryId");
         var entity = mapper.Map<Feature>(dto);
+        entity.Code = await GenerateUniqueCodeAsync(dto.Name);
         context.Features.Add(entity);
-        var ok = await context.SaveChangesAsync() > 0;
-        if (!ok) return BadRequest("Failed to create feature");
+        try
+        {
+            var ok = await context.SaveChangesAsync() > 0;
+            if (!ok) return BadRequest("Failed to create feature");
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict($"Feature code already exists for name '{dto.Name}'");
+        }
         var result = mapper.Map<FeatureDto>(entity);
         return CreatedAtAction(nameof(Get), new { id = entity.Id }, result);
     }
@@ -82,10 +109,27 @@ public class FeaturesController(CatalogDbContext context, IMapper mapper) : Cont
     {
         var entity = await context.Features.FindAsync(id);
         if (entity is null) return NotFound();
-        if (!string.IsNullOrWhiteSpace(dto.Name)) entity.Name = dto.Name;
+        if (!string.IsNullOrWhiteSpace(dto.Name))
+        {
+            entity.Name = dto.Name;
+            entity.Code = await GenerateUniqueCodeAsync(dto.Name, id);
+        }
+        if (dto.FeatureCategoryId.HasValue)
+        {
+            var catOk = await context.FeatureCategories.AnyAsync(c => c.Id == dto.FeatureCategoryId.Value);
+            if (!catOk) return BadRequest("Invalid FeatureCategoryId");
+            entity.FeatureCategoryId = dto.FeatureCategoryId.Value;
+        }
         if (dto.Description is not null) entity.Description = dto.Description;
-        var ok = await context.SaveChangesAsync() > 0;
-        return ok ? Ok() : BadRequest("Failed to update feature");
+        try
+        {
+            var ok = await context.SaveChangesAsync() > 0;
+            return ok ? Ok() : BadRequest("Failed to update feature");
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict("Feature code already exists");
+        }
     }
 
     [HttpDelete("{id:int}")]

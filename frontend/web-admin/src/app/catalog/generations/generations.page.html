@@ -4,6 +4,7 @@
   <button mat-flat-button color="primary" (click)="openCreate()">Add Generation</button>
 </section>
 
+
 <section class="controls">
   <div class="controls-left">
     <mat-form-field appearance="outline">
@@ -56,9 +57,9 @@
 
   <ng-container matColumnDef="actions">
     <th mat-header-cell *matHeaderCellDef>Actions</th>
-    <td mat-cell *matCellDef="let it; let rowIndex = index">
-      <button mat-icon-button color="primary" (click)="openEdit(it)"><mat-icon>edit</mat-icon></button>
-      <button mat-icon-button color="warn" (click)="remove(it)"><mat-icon>delete</mat-icon></button>
+    <td mat-cell *matCellDef="let it" class="actions-cell">
+      <button mat-icon-button color="primary" (click)="openEdit(it)" matTooltip="Edit"><mat-icon>edit</mat-icon></button>
+      <button mat-icon-button color="warn" (click)="remove(it)" matTooltip="Delete"><mat-icon>delete</mat-icon></button>
     </td>
   </ng-container>
 

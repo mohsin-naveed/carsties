@@ -12,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSortModule, Sort } from '@angular/material/sort';
+import { MatDividerModule } from '@angular/material/divider';
 import { CatalogApiService, GenerationDto, ModelDto, MakeDto } from '../catalog-api.service';
 import { NotificationService } from '../../core/notification.service';
 import { BehaviorSubject, combineLatest } from 'rxjs';
@@ -20,7 +21,7 @@ import { map, shareReplay } from 'rxjs/operators';
 @Component({
   selector: 'app-generations-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, MatDialogModule, MatPaginatorModule, MatSortModule],
+  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, MatDialogModule, MatPaginatorModule, MatSortModule, MatDividerModule],
   templateUrl: './generations.page.html',
   styles: [`
     .header { display:flex; align-items:center; gap:.75rem; margin-bottom:.5rem; }
@@ -30,6 +31,10 @@ import { map, shareReplay } from 'rxjs/operators';
     .controls-right { display:flex; align-items:end; }
     .search { width:320px; max-width:40vw; }
     table { width:100%; }
+    .actions-cell { display:flex; align-items:center; gap:.25rem; white-space:nowrap; }
+    tr.mat-row:hover { background: rgba(0,0,0,0.03); }
+    th.mat-header-cell { font-weight: 600; }
+    td.mat-cell, th.mat-header-cell { padding: .5rem .75rem; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

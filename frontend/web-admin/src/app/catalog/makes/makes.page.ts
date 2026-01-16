@@ -25,6 +25,8 @@ import { map } from 'rxjs/operators';
     .controls-right { display:flex; align-items:end; }
     .search { width:320px; max-width:40vw; }
     table { width:100%; }
+    .actions-cell { display:flex; align-items:center; gap:.25rem; white-space:nowrap; }
+    tr.mat-row:hover { background: rgba(0,0,0,0.03); }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

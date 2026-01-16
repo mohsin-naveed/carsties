@@ -15,11 +15,12 @@ import { CatalogApiService, ModelDto, MakeDto } from '../catalog-api.service';
 import { NotificationService } from '../../core/notification.service';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
+import { MatDividerModule } from '@angular/material/divider';
 
 @Component({
   selector: 'app-models-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, MatDialogModule, MatPaginatorModule, MatSortModule],
+  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, MatDialogModule, MatPaginatorModule, MatSortModule, MatDividerModule],
   templateUrl: './models.page.html',
   styles: [`
     .header { display:flex; align-items:center; gap:.75rem; margin-bottom:.5rem; }
@@ -29,6 +30,10 @@ import { map, shareReplay } from 'rxjs/operators';
     .controls-right { display:flex; align-items:end; }
     .search { width:320px; max-width:40vw; }
     table { width:100%; }
+    th.mat-header-cell { font-weight: 600; }
+    td.mat-cell, th.mat-header-cell { padding: .5rem .75rem; }
+    .actions-cell { display:flex; align-items:center; gap:.25rem; white-space:nowrap; }
+    tr.mat-row:hover { background: rgba(0,0,0,0.03); }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

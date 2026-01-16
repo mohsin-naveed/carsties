@@ -15,7 +15,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
   standalone: true,
   imports: [CommonModule, A11yModule, MatDialogModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule, MatSlideToggleModule],
   template: `
-    <h2 mat-dialog-title>{{ data.title }}</h2>
+    <h2 mat-dialog-title>{{ headerTitle }}</h2>
     <div mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" style="width:100%">
@@ -55,7 +55,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
     </div>
     <div mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Cancel</button>
-      <button mat-flat-button color="primary" (click)="save()" [disabled]="form.invalid">Save</button>
+      <button mat-flat-button color="primary" (click)="save()" [disabled]="form.invalid || !form.dirty">Save</button>
     </div>
   `,
   styles: [`
@@ -69,7 +69,7 @@ export class VariantEditDialogComponent implements AfterViewInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(CatalogApiService);
   public ref: MatDialogRef<VariantEditDialogComponent, { name: string; derivativeId: number; featureIds: number[]; isPopular?: boolean; isImported?: boolean }> = inject(MatDialogRef);
-  public data: { title: string; name?: string; derivativeId?: number; generations: GenerationDto[]; derivatives: DerivativeDto[]; models: ModelDto[]; makes: MakeDto[]; featureIds?: number[]; isPopular?: boolean; isImported?: boolean } = inject(MAT_DIALOG_DATA);
+  public data: { title: string; name?: string; derivativeId?: number; generations: GenerationDto[]; derivatives: DerivativeDto[]; models: ModelDto[]; makes: MakeDto[]; featureIds?: number[]; isPopular?: boolean; isImported?: boolean; copyMode?: boolean } = inject(MAT_DIALOG_DATA);
 
   @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
 
@@ -82,6 +82,8 @@ export class VariantEditDialogComponent implements AfterViewInit {
     isPopular: [this.data.isPopular ?? false],
     isImported: [this.data.isImported ?? false]
   });
+  isCopyMode = false;
+  headerTitle = 'Add Variant';
 
   ngAfterViewInit(){ setTimeout(() => this.nameInput?.nativeElement.focus(), 0); }
 
@@ -111,6 +113,8 @@ export class VariantEditDialogComponent implements AfterViewInit {
   features: FeatureDto[] = [];
   constructor(){
     this.api.getFeatures().subscribe({ next: (fs) => this.features = fs });
+    this.isCopyMode = !!this.data.copyMode;
+    this.headerTitle = this.isCopyMode ? 'Copy Variant' : (this.data.title || 'Add Variant');
   }
 
   save(){

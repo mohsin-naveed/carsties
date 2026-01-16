@@ -15,11 +15,12 @@ import { CatalogApiService, FeatureDto } from '../catalog-api.service';
 import { NotificationService } from '../../core/notification.service';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { MatDividerModule } from '@angular/material/divider';
 
 @Component({
   selector: 'app-features-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatDialogModule, MatPaginatorModule, MatSortModule],
+  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatDialogModule, MatPaginatorModule, MatSortModule, MatDividerModule],
   templateUrl: './features.page.html',
   styles: [`
     .header { display:flex; align-items:center; gap:.75rem; margin-bottom:.5rem; }
@@ -28,6 +29,10 @@ import { map } from 'rxjs/operators';
     .controls-right { display:flex; align-items:end; }
     .search { width:320px; max-width:40vw; }
     table { width:100%; }
+    .actions-cell { display:flex; align-items:center; gap:.25rem; white-space:nowrap; }
+    tr.mat-row:hover { background: rgba(0,0,0,0.03); }
+    th.mat-header-cell { font-weight: 600; }
+    td.mat-cell, th.mat-header-cell { padding: .5rem .75rem; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -37,7 +42,7 @@ export class FeaturesPage {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
 
-  readonly displayedColumns = ['name','description','actions'];
+  readonly displayedColumns = ['category','name','description','actions'];
   readonly items$ = new BehaviorSubject<FeatureDto[]>([]);
   readonly total$ = new BehaviorSubject<number>(0);
   readonly page$ = new BehaviorSubject<number>(1);
@@ -72,8 +77,8 @@ export class FeaturesPage {
 
   openCreate(){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(FeatureEditDialogComponent, { data: { title: 'Add Feature' }, width: '400px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { name: string; description?: string } | undefined) => {
+    const ref = this.dialog.open(FeatureEditDialogComponent, { data: { title: 'Add Feature' }, width: '420px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; description?: string; featureCategoryId: number } | undefined) => {
       if (res){
         this.api.createFeature(res).subscribe({ next: () => { this.notify.success('Feature created'); this.loadPage(); } });
       }
@@ -82,8 +87,8 @@ export class FeaturesPage {
 
   openEdit(it: FeatureDto){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(FeatureEditDialogComponent, { data: { title: 'Edit Feature', name: it.name, description: it.description }, width: '400px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { name: string; description?: string } | undefined) => {
+    const ref = this.dialog.open(FeatureEditDialogComponent, { data: { title: 'Edit Feature', name: it.name, description: it.description, featureCategoryId: it.featureCategoryId }, width: '420px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; description?: string; featureCategoryId: number } | undefined) => {
       if (res){
         this.api.updateFeature(it.id, res).subscribe({ next: () => { this.notify.success('Feature updated'); this.loadPage(); } });
       }

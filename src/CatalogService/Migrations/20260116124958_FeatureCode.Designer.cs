@@ -3,6 +3,7 @@ using System;
 using CatalogService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CatalogService.Migrations
 {
     [DbContext(typeof(CatalogDbContext))]
-    partial class CatalogDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260116124958_FeatureCode")]
+    partial class FeatureCode
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -175,9 +178,6 @@ namespace CatalogService.Migrations
                         .HasMaxLength(250)
                         .HasColumnType("character varying(250)");
 
-                    b.Property<int>("FeatureCategoryId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -187,49 +187,11 @@ namespace CatalogService.Migrations
 
                     b.HasIndex("Code")
                         .IsUnique();
-
-                    b.HasIndex("FeatureCategoryId");
 
                     b.HasIndex("Name")
                         .IsUnique();
 
                     b.ToTable("Features", (string)null);
-                });
-
-            modelBuilder.Entity("CatalogService.Entities.FeatureCategory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("now()");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("now()");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.ToTable("FeatureCategories", (string)null);
                 });
 
             modelBuilder.Entity("CatalogService.Entities.FuelType", b =>
@@ -521,17 +483,6 @@ namespace CatalogService.Migrations
                     b.Navigation("TransmissionRef");
                 });
 
-            modelBuilder.Entity("CatalogService.Entities.Feature", b =>
-                {
-                    b.HasOne("CatalogService.Entities.FeatureCategory", "Category")
-                        .WithMany("Features")
-                        .HasForeignKey("FeatureCategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-                });
-
             modelBuilder.Entity("CatalogService.Entities.Generation", b =>
                 {
                     b.HasOne("CatalogService.Entities.Model", "Model")
@@ -610,11 +561,6 @@ namespace CatalogService.Migrations
             modelBuilder.Entity("CatalogService.Entities.Feature", b =>
                 {
                     b.Navigation("VariantFeatures");
-                });
-
-            modelBuilder.Entity("CatalogService.Entities.FeatureCategory", b =>
-                {
-                    b.Navigation("Features");
                 });
 
             modelBuilder.Entity("CatalogService.Entities.Generation", b =>

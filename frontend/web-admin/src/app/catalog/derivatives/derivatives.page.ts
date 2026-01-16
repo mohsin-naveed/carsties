@@ -10,7 +10,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSortModule, Sort } from '@angular/material/sort';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDividerModule } from '@angular/material/divider';
 import { CatalogApiService, DerivativeDto, ModelDto, MakeDto, OptionDto } from '../catalog-api.service';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog.component';
 import { NotificationService } from '../../core/notification.service';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
@@ -19,7 +22,7 @@ import { DerivativeEditDialogComponent } from './derivative-edit-dialog.componen
 @Component({
   selector: 'app-derivatives-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, MatDialogModule, MatPaginatorModule, MatSortModule],
+  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, MatDialogModule, MatPaginatorModule, MatSortModule, MatTooltipModule, MatDividerModule],
   templateUrl: './derivatives.page.html',
   styles:[`
     .header { display:flex; align-items:center; gap:.75rem; margin-bottom:.5rem; }
@@ -29,6 +32,10 @@ import { DerivativeEditDialogComponent } from './derivative-edit-dialog.componen
     .controls-right { display:flex; align-items:end; }
     .search { width:320px; max-width:40vw; }
     table { width:100%; }
+    .actions-cell { display:flex; align-items:center; gap:.25rem; white-space:nowrap; }
+    tr.mat-row:hover { background: rgba(0,0,0,0.03); }
+    th.mat-header-cell { font-weight: 600; }
+    td.mat-cell, th.mat-header-cell { padding: .5rem .75rem; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -142,15 +149,37 @@ export class DerivativesPage {
     });
   }
 
+  openCopy(it: DerivativeDto){
+    (document.activeElement as HTMLElement | null)?.blur();
+    const ref = this.dialog.open(DerivativeEditDialogComponent, { data: { title: 'Copy Derivative', copyMode: true, makes: this.makesCache, models: this.modelsCache, name: it.name ?? '', modelId: it.modelId, generationId: it.generationId ?? null, bodyTypeId: it.bodyTypeId, driveTypeId: it.driveTypeId, seats: it.seats, doors: it.doors, engine: it.engine, transmissionId: it.transmissionId ?? null, fuelTypeId: it.fuelTypeId ?? null, batteryCapacityKWh: it.batteryCapacityKWh ?? null, isActive: it.isActive }, width: '720px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; modelId: number; generationId: number; bodyTypeId: number; driveTypeId: number; seats: number; doors: number; engine?: string; transmissionId?: number; fuelTypeId?: number; batteryCapacityKWh?: number; isActive?: boolean } | undefined) => {
+      if (res){
+        this.api.createDerivative(res).subscribe({ next: () => { this.notify.success('Derivative copied'); this.loadContext(); } });
+      }
+    });
+  }
+
   remove(it: DerivativeDto){
-    if (!confirm(`Delete derivative '${this.getBodyTypeName(it)}' for model '${this.getModelName(it)}'?`)) return;
-    this.api.deleteDerivative(it.id).subscribe({ next: () => { this.notify.success('Derivative deleted'); this.loadContext(); } });
+    const ref = this.dialog.open(ConfirmDialogComponent, { data: { message: `Delete derivative '${this.getBodyTypeName(it)}' for model '${this.getModelName(it)}'?` } });
+    ref.afterClosed().subscribe((ok: boolean) => {
+      if (ok){
+        this.api.deleteDerivative(it.id).subscribe({ next: () => { this.notify.success('Derivative deleted'); this.loadContext(); } });
+      }
+    });
   }
 
   getModelName(it: DerivativeDto){ const model = this.models$.value.find(m => m.id === it.modelId); return model?.name ?? ''; }
   getMakeName(it: DerivativeDto){ const model = this.models$.value.find(m => m.id === it.modelId); const make = model ? this.makes$.value.find(x => x.id === model.makeId) : undefined; return make?.name ?? ''; }
   getBodyTypeName(it: DerivativeDto){ return this.bodyTypeMap[it.bodyTypeId] ?? ''; }
   getDriveType(it: DerivativeDto){ return it.driveType ?? ''; }
+  getDriveCode(it: DerivativeDto){
+    const name = (it.driveType ?? '').toLowerCase();
+    if (!name) return '—';
+    if (name.includes('front')) return 'FWD';
+    if (name.includes('rear')) return 'RWD';
+    if (name.includes('four')) return '4WD';
+    return it.driveType ?? '—';
+  }
   onFilterInput(val: string){ this.filter$.next(val); }
 
   isElectric(it: DerivativeDto){ return (it.fuelType ?? '').toLowerCase() === 'electric'; }
