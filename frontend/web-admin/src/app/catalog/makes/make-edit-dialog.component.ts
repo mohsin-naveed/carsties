@@ -1,4 +1,5 @@
 import { Component, Inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -15,7 +16,7 @@ export interface MakeEditData { title: string; name?: string; country?: string; 
 @Component({
   selector: 'app-make-edit-dialog',
   standalone: true,
-  imports: [MatDialogModule, ReactiveFormsModule, FormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSlideToggleModule, MatSelectModule, MatIconModule, MatDividerModule],
+  imports: [CommonModule, MatDialogModule, ReactiveFormsModule, FormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSlideToggleModule, MatSelectModule, MatIconModule, MatDividerModule],
   template: `
     <h2 mat-dialog-title>{{ data.title }}</h2>
     <form [formGroup]="form" (ngSubmit)="save()">
@@ -27,19 +28,7 @@ export interface MakeEditData { title: string; name?: string; country?: string; 
         <mat-form-field appearance="outline" class="w-100">
           <mat-label>Country</mat-label>
           <mat-select formControlName="country">
-            <mat-option>
-              <div class="filter">
-                <mat-icon class="icon">search</mat-icon>
-                <input matInput [(ngModel)]="countryFilter" placeholder="Search country" />
-              </div>
-            </mat-option>
-            <mat-optgroup label="Popular">
-              <mat-option *ngFor="let c of filteredPopularCountries()" [value]="c">{{ c }}</mat-option>
-            </mat-optgroup>
-            <mat-divider></mat-divider>
-            <mat-optgroup label="All Countries">
-              <mat-option *ngFor="let c of filteredOtherCountries()" [value]="c">{{ c }}</mat-option>
-            </mat-optgroup>
+            <mat-option *ngFor="let c of countries" [value]="c">{{ c }}</mat-option>
           </mat-select>
         </mat-form-field>
         <div class="toggles">
@@ -58,23 +47,34 @@ export interface MakeEditData { title: string; name?: string; country?: string; 
 export class MakeEditDialogComponent {
   readonly form = this.fb.nonNullable.group({ name: ['', [Validators.required, Validators.maxLength(100)]], country: [''], isActive: [true], isPopular: [false] });
 
-  countryFilter = '';
-  private readonly popular = [
-    'Japan','Germany','China','France','United States','United Kingdom'
+  public readonly countries = [
+    'Japan',
+    'China',
+    'South Korea',
+    'France',
+    'Germany',
+    'Malaysia',
+    'United Kingdom',
+    'United States',
+    'Pakistan',
+    'Argentina',
+    'Australia',
+    'Brazil',
+    'Canada',
+    'Czech Republic',
+    'India',
+    'Indonesia',
+    'Iran',
+    'Italy',
+    'Mexico',
+    'Russia',
+    'South Africa',
+    'Spain',
+    'Sweden',
+    'Thailand',
+    'Turkey',
+    'Vietnam'
   ];
-  // Basic list; can be expanded later
-  private readonly countries = [
-    'Argentina','Australia','Austria','Belgium','Brazil','Canada','China','Czech Republic','Denmark','Egypt','Finland','France','Germany','Hungary','India','Indonesia','Iran','Ireland','Italy','Japan','Malaysia','Mexico','Netherlands','Norway','Pakistan','Poland','Portugal','Romania','Russia','Saudi Arabia','Slovakia','South Africa','South Korea','Spain','Sweden','Switzerland','Taiwan','Thailand','Turkey','United Arab Emirates','United Kingdom','United States','Vietnam'
-  ].sort();
-  filteredPopularCountries(){
-    const q = this.countryFilter.toLowerCase().trim();
-    return this.popular.filter(c => c.toLowerCase().includes(q));
-  }
-  filteredOtherCountries(){
-    const q = this.countryFilter.toLowerCase().trim();
-    const popularSet = new Set(this.popular);
-    return this.countries.filter(c => !popularSet.has(c) && c.toLowerCase().includes(q));
-  }
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: MakeEditData,
