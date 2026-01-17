@@ -33,7 +33,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
         <mat-form-field appearance="outline" style="width:100%">
           <mat-label>Derivative</mat-label>
           <mat-select formControlName="derivativeId" [disabled]="!form.value.modelId">
-            <mat-option *ngFor="let d of filteredDerivatives()" [value]="d.id">{{ d.name || d.bodyType || 'Derivative' }}</mat-option>
+            <mat-option *ngFor="let d of filteredDerivatives()" [value]="d.id">{{ derivativeOptionLabel(d) }}</mat-option>
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline" style="width:100%">
@@ -91,6 +91,16 @@ export class VariantEditDialogComponent implements AfterViewInit {
     const makeId = this.form.value.makeId as number | null;
     if (!makeId) return [];
     return this.data.models.filter(m => m.makeId === makeId);
+  }
+
+  derivativeOptionLabel(d: DerivativeDto): string {
+    const name = d.name || d.bodyType || 'Derivative';
+    const gen = this.data.generations.find(g => g.id === (d.generationId ?? -1));
+    if (!gen) return name;
+    const start = gen.startYear ? String(gen.startYear) : '';
+    const end = gen.endYear ? String(gen.endYear) : 'Present';
+    const range = start || end ? ` (${start} - ${end})` : '';
+    return `${name}${range}`;
   }
   filteredDerivatives(): DerivativeDto[] {
     const modelId = this.form.value.modelId as number | null;

@@ -23,10 +23,6 @@ import { Subscription, combineLatest, startWith } from 'rxjs';
   <div mat-dialog-content>
     <form class="form" [formGroup]="form" (ngSubmit)="submit()">
       <mat-form-field appearance="outline">
-        <mat-label>Name</mat-label>
-        <input matInput [value]="computedDisplayName || ''" disabled />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
         <mat-label>Make</mat-label>
         <mat-select formControlName="makeId" required (selectionChange)="onMakeChange()">
           <mat-option *ngFor="let mk of data.makes" [value]="mk.id">{{ mk.name }}</mat-option>
@@ -46,7 +42,7 @@ import { Subscription, combineLatest, startWith } from 'rxjs';
       </mat-form-field>
       <!-- Name input removed; name is auto-computed and shown above -->
       <mat-form-field appearance="outline">
-        <mat-label>Body Type</mat-label>
+        <mat-label>Body</mat-label>
         <mat-select formControlName="bodyTypeId" required>
           <mat-option *ngFor="let bt of bodyTypes" [value]="bt.id">{{ bt.name }}</mat-option>
         </mat-select>
@@ -59,12 +55,16 @@ import { Subscription, combineLatest, startWith } from 'rxjs';
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline" *ngIf="!isElectricSelected()">
-          <mat-label>Engine</mat-label>
-          <input matInput type="text" formControlName="engine" />
+          <mat-label>Engine CC</mat-label>
+          <input matInput type="number" formControlName="engineCC" min="100" step="50" />
         </mat-form-field>
-        <mat-form-field appearance="outline" *ngIf="isElectricSelected() || isHybridSelected()">
+        <mat-form-field appearance="outline" *ngIf="!isElectricSelected()">
+          <mat-label>Engine L</mat-label>
+          <input matInput type="number" formControlName="engineL" min="0.5" step="0.1" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" *ngIf="isElectricSelected() || isPhevSelected()">
           <mat-label>Battery (kWh)</mat-label>
-          <input matInput type="number" formControlName="batteryCapacityKWh" min="1" step="0.1" />
+          <input matInput type="number" formControlName="batteryKWh" min="1" step="0.1" />
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Transmission</mat-label>
@@ -74,10 +74,14 @@ import { Subscription, combineLatest, startWith } from 'rxjs';
         </mat-form-field>
       </div>
       <mat-form-field appearance="outline">
-        <mat-label>Drive Type</mat-label>
+        <mat-label>Drive</mat-label>
         <mat-select formControlName="driveTypeId" required>
           <mat-option *ngFor="let dt of driveTypes" [value]="dt.id">{{ dt.name }}</mat-option>
         </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput [value]="computedDisplayName || ''" disabled />
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Seats</mat-label>
@@ -113,8 +117,8 @@ export class DerivativeEditDialogComponent implements OnDestroy {
   private electricIds: number[] = [];
   private hybridIds: number[] = [];
   copyMode = false;
-  seatOptions = Array.from({ length: 18 }, (_, i) => i + 1);
-  doorOptions = Array.from({ length: 5 }, (_, i) => i + 1);
+  seatOptions = Array.from({ length: 8 }, (_, i) => i + 2); // 2..9
+  doorOptions = Array.from({ length: 4 }, (_, i) => i + 2); // 2..5
   computedDisplayName = '';
   headerTitle = 'Add Derivative';
   private sub?: Subscription;
@@ -126,10 +130,11 @@ export class DerivativeEditDialogComponent implements OnDestroy {
     generationId: [null as number | null, Validators.required],
     bodyTypeId: [null as number | null, Validators.required],
     driveTypeId: [null as number | null, Validators.required],
-    engine: ['' as string | null],
+    engineCC: [null as number | null],
+    engineL: [{ value: null as number | null, disabled: true }],
     transmissionId: [null as number | null],
     fuelTypeId: [null as number | null],
-    batteryCapacityKWh: [null as number | null],
+    batteryKWh: [null as number | null],
     seats: [5, [Validators.required]],
     doors: [4, [Validators.required]],
     isActive: [true]
@@ -141,7 +146,7 @@ export class DerivativeEditDialogComponent implements OnDestroy {
       this.transmissions = opts.transmissions; this.fuelTypes = opts.fuelTypes;
       const names = opts.fuelTypes.map(f => ({ id: f.id, name: f.name.toLowerCase() }));
       this.electricIds = names.filter(f => f.name === 'electric').map(f => f.id);
-      this.hybridIds = names.filter(f => f.name.includes('hybrid') && f.name.includes('plug')).map(f => f.id);
+      this.hybridIds = names.filter(f => f.name === 'phev' || f.name.includes('plug')).map(f => f.id);
     } });
     this.api.getDriveTypeOptions().subscribe({ next: (opts) => this.driveTypes = opts });
     this.copyMode = !!this.data.copyMode;
@@ -158,10 +163,10 @@ export class DerivativeEditDialogComponent implements OnDestroy {
       }
     }
     if (this.data.name !== undefined){ this.form.patchValue({ name: this.data.name ?? '' }); }
-    if (this.data.engine !== undefined) this.form.patchValue({ engine: this.data.engine ?? '' });
+    if ((this as any).data && (this as any).data['engineCC'] !== undefined) this.form.patchValue({ engineCC: (this as any).data['engineCC'] ?? null });
     if (this.data.transmissionId !== undefined) this.form.patchValue({ transmissionId: this.data.transmissionId ?? null });
     if (this.data.fuelTypeId !== undefined) this.form.patchValue({ fuelTypeId: this.data.fuelTypeId ?? null });
-    if (this.data.batteryCapacityKWh !== undefined) this.form.patchValue({ batteryCapacityKWh: this.data.batteryCapacityKWh ?? null });
+    if ((this as any).data && (this as any).data['batteryKWh'] !== undefined) this.form.patchValue({ batteryKWh: (this as any).data['batteryKWh'] ?? null });
     if (this.data.bodyTypeId !== undefined) this.form.patchValue({ bodyTypeId: this.data.bodyTypeId ?? null });
     if (this.data.seats !== undefined) this.form.patchValue({ seats: this.data.seats ?? 5 });
     if (this.data.doors !== undefined) this.form.patchValue({ doors: this.data.doors ?? 4 });
@@ -175,13 +180,19 @@ export class DerivativeEditDialogComponent implements OnDestroy {
     const generationId$ = this.form.get('generationId')!.valueChanges.pipe(startWith(this.form.value.generationId));
     const bodyTypeId$ = this.form.get('bodyTypeId')!.valueChanges.pipe(startWith(this.form.value.bodyTypeId));
     const transmissionId$ = this.form.get('transmissionId')!.valueChanges.pipe(startWith(this.form.value.transmissionId));
-    this.sub = combineLatest([makeName$, modelId$, generationId$, bodyTypeId$, transmissionId$]).subscribe(([mkId, mdId, genId, btId, trId]) => {
+    const engineL$ = this.form.get('engineCC')!.valueChanges.pipe(startWith(this.form.value.engineCC));
+    const battery$ = this.form.get('batteryKWh')!.valueChanges.pipe(startWith((this.form.value as any).batteryKWh));
+    this.sub = combineLatest([makeName$, modelId$, generationId$, bodyTypeId$, transmissionId$, engineL$, battery$]).subscribe(([mkId, mdId, genId, btId, trId, cc, batt]) => {
       const mk = this.data.makes.find(m => m.id === (mkId as number))?.name ?? '';
       const md = this.data.models.find(m => m.id === (mdId as number))?.name ?? '';
       const gn = this.generations.find(g => g.id === (genId as number))?.name ?? '';
       const bt = this.bodyTypes.find(b => b.id === (btId as number))?.name ?? '';
       const tr = this.transmissions.find(t => t.id === (trId as number))?.name ?? '';
-      const parts = [mk, md, gn, bt, tr].filter(Boolean);
+      const engL = cc ? Number((Number(cc) / 1000).toFixed(1)) : null;
+      if (engL != null) this.form.patchValue({ engineL: engL }, { emitEvent: false });
+      const fuelName = this.fuelTypes.find(f => f.id === (this.form.value.fuelTypeId as number | null))?.name ?? '';
+      const energyPart = engL != null ? `${engL}L` : (batt ? `${batt} kWh` : '');
+      const parts = [gn, energyPart, fuelName, tr, bt].filter(Boolean);
       const composed = parts.join(' ').trim();
       this.computedDisplayName = composed || '';
       this.form.patchValue({ name: composed }, { emitEvent: false });
@@ -214,26 +225,27 @@ export class DerivativeEditDialogComponent implements OnDestroy {
 
   onFuelChange(){
     const isE = this.isElectricSelected();
-    const isH = this.isHybridSelected();
-    const engineCtrl = this.form.get('engine');
-    const battCtrl = this.form.get('batteryCapacityKWh');
+    const isP = this.isPhevSelected();
+    const engineCtrl = this.form.get('engineCC');
+    const engineLCtrl = this.form.get('engineL');
+    const battCtrl = this.form.get('batteryKWh');
     if (isE){
-      engineCtrl?.clearValidators();
+      engineCtrl?.clearValidators(); engineLCtrl?.clearValidators();
       battCtrl?.setValidators([Validators.required, Validators.min(1)]);
-    } else if (isH) {
-      // Both allowed; battery optional but must be positive if provided
-      battCtrl?.setValidators([Validators.min(1)]);
-      engineCtrl?.setValidators([Validators.maxLength(100)]);
+    } else if (isP) {
+      battCtrl?.setValidators([Validators.required, Validators.min(1)]);
+      engineCtrl?.setValidators([Validators.required, Validators.min(100)]);
     } else {
       battCtrl?.clearValidators();
-      engineCtrl?.setValidators([Validators.maxLength(100)]);
+      engineCtrl?.setValidators([Validators.required, Validators.min(100)]);
     }
     engineCtrl?.updateValueAndValidity();
+    engineLCtrl?.updateValueAndValidity();
     battCtrl?.updateValueAndValidity();
   }
 
   isElectricSelected(){ const fid = this.form.value.fuelTypeId as number | null; return fid != null && this.electricIds.includes(fid); }
-  isHybridSelected(){ const fid = this.form.value.fuelTypeId as number | null; return fid != null && this.hybridIds.includes(fid); }
+  isPhevSelected(){ const fid = this.form.value.fuelTypeId as number | null; return fid != null && this.hybridIds.includes(fid); }
   // Name is auto-computed; no manual editing
 
   submit(){ if (this.form.invalid) return; this.ref.close(this.form.value); }

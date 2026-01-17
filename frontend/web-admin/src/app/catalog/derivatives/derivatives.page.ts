@@ -132,29 +132,29 @@ export class DerivativesPage {
   openCreate(){
     (document.activeElement as HTMLElement | null)?.blur();
     const ref = this.dialog.open(DerivativeEditDialogComponent, { data: { title: 'Add Derivative', makes: this.makesCache, models: this.modelsCache }, width: '720px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { name: string; modelId: number; generationId: number; bodyTypeId: number; driveTypeId: number; seats: number; doors: number; engine?: string; transmissionId?: number; fuelTypeId?: number; batteryCapacityKWh?: number; isActive?: boolean } | undefined) => {
+    ref.afterClosed().subscribe((res: { name: string; modelId: number; generationId: number; bodyTypeId: number; driveTypeId: number; seats: number; doors: number; engineCC?: number; engineL?: number; transmissionId?: number; fuelTypeId?: number; batteryKWh?: number; isActive?: boolean } | undefined) => {
       if (res){
-        this.api.createDerivative(res).subscribe({ next: () => { this.notify.success('Derivative created'); this.loadContext(); } });
+        this.api.createDerivative(res).subscribe({ next: () => { this.notify.success('Derivative created'); this.loadContext(); this.loadPage(); } });
       }
     });
   }
 
   openEdit(it: DerivativeDto){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(DerivativeEditDialogComponent, { data: { title: 'Edit Derivative', makes: this.makesCache, models: this.modelsCache, name: it.name ?? '', modelId: it.modelId, generationId: it.generationId ?? null, bodyTypeId: it.bodyTypeId, driveTypeId: it.driveTypeId, seats: it.seats, doors: it.doors, engine: it.engine, transmissionId: it.transmissionId ?? null, fuelTypeId: it.fuelTypeId ?? null, batteryCapacityKWh: it.batteryCapacityKWh ?? null, isActive: it.isActive }, width: '720px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { name?: string; modelId: number; generationId: number; bodyTypeId: number; driveTypeId: number; seats: number; doors: number; engine?: string; transmissionId?: number; fuelTypeId?: number; batteryCapacityKWh?: number; isActive?: boolean } | undefined) => {
+    const ref = this.dialog.open(DerivativeEditDialogComponent, { data: { title: 'Edit Derivative', makes: this.makesCache, models: this.modelsCache, name: it.name ?? '', modelId: it.modelId, generationId: it.generationId ?? null, bodyTypeId: it.bodyTypeId, driveTypeId: it.driveTypeId, seats: it.seats, doors: it.doors, engineCC: it.engineCC, engineL: it.engineL, transmissionId: it.transmissionId ?? null, fuelTypeId: it.fuelTypeId ?? null, batteryKWh: it.batteryKWh ?? null, isActive: it.isActive }, width: '720px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name?: string; modelId: number; generationId: number; bodyTypeId: number; driveTypeId: number; seats: number; doors: number; engineCC?: number; engineL?: number; transmissionId?: number; fuelTypeId?: number; batteryKWh?: number; isActive?: boolean } | undefined) => {
       if (res){
-        this.api.updateDerivative(it.id, res).subscribe({ next: () => { this.notify.success('Derivative updated'); this.loadContext(); } });
+        this.api.updateDerivative(it.id, res).subscribe({ next: () => { this.notify.success('Derivative updated'); this.loadContext(); this.loadPage(); } });
       }
     });
   }
 
   openCopy(it: DerivativeDto){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(DerivativeEditDialogComponent, { data: { title: 'Copy Derivative', copyMode: true, makes: this.makesCache, models: this.modelsCache, name: it.name ?? '', modelId: it.modelId, generationId: it.generationId ?? null, bodyTypeId: it.bodyTypeId, driveTypeId: it.driveTypeId, seats: it.seats, doors: it.doors, engine: it.engine, transmissionId: it.transmissionId ?? null, fuelTypeId: it.fuelTypeId ?? null, batteryCapacityKWh: it.batteryCapacityKWh ?? null, isActive: it.isActive }, width: '720px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { name: string; modelId: number; generationId: number; bodyTypeId: number; driveTypeId: number; seats: number; doors: number; engine?: string; transmissionId?: number; fuelTypeId?: number; batteryCapacityKWh?: number; isActive?: boolean } | undefined) => {
+    const ref = this.dialog.open(DerivativeEditDialogComponent, { data: { title: 'Copy Derivative', copyMode: true, makes: this.makesCache, models: this.modelsCache, name: it.name ?? '', modelId: it.modelId, generationId: it.generationId ?? null, bodyTypeId: it.bodyTypeId, driveTypeId: it.driveTypeId, seats: it.seats, doors: it.doors, engineCC: it.engineCC, engineL: it.engineL, transmissionId: it.transmissionId ?? null, fuelTypeId: it.fuelTypeId ?? null, batteryKWh: it.batteryKWh ?? null, isActive: it.isActive }, width: '720px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; modelId: number; generationId: number; bodyTypeId: number; driveTypeId: number; seats: number; doors: number; engineCC?: number; engineL?: number; transmissionId?: number; fuelTypeId?: number; batteryKWh?: number; isActive?: boolean } | undefined) => {
       if (res){
-        this.api.createDerivative(res).subscribe({ next: () => { this.notify.success('Derivative copied'); this.loadContext(); } });
+        this.api.createDerivative(res).subscribe({ next: () => { this.notify.success('Derivative copied'); this.loadContext(); this.loadPage(); } });
       }
     });
   }
@@ -163,7 +163,7 @@ export class DerivativesPage {
     const ref = this.dialog.open(ConfirmDialogComponent, { data: { message: `Delete derivative '${this.getBodyTypeName(it)}' for model '${this.getModelName(it)}'?` } });
     ref.afterClosed().subscribe((ok: boolean) => {
       if (ok){
-        this.api.deleteDerivative(it.id).subscribe({ next: () => { this.notify.success('Derivative deleted'); this.loadContext(); } });
+        this.api.deleteDerivative(it.id).subscribe({ next: () => { this.notify.success('Derivative deleted'); this.loadContext(); this.loadPage(); } });
       }
     });
   }
@@ -184,10 +184,15 @@ export class DerivativesPage {
 
   isElectric(it: DerivativeDto){ return (it.fuelType ?? '').toLowerCase() === 'electric'; }
   isHybrid(it: DerivativeDto){ const name = (it.fuelType ?? '').toLowerCase(); return name.includes('hybrid') && name.includes('plug'); }
+  private engineString(it: DerivativeDto): string {
+    if (it.engineL != null) return `${Number(it.engineL).toFixed(1)}L`;
+    if (it.engineCC != null) return `${it.engineCC}cc`;
+    return '—';
+  }
   powerLabel(it: DerivativeDto){
-    if (this.isElectric(it)) return it.batteryCapacityKWh ? `${it.batteryCapacityKWh} kWh` : '—';
-    if (this.isHybrid(it)) return [it.engine || '—', it.batteryCapacityKWh ? `${it.batteryCapacityKWh} kWh` : undefined].filter(Boolean).join(' + ');
-    return it.engine || '—';
+    if (this.isElectric(it)) return it.batteryKWh ? `${it.batteryKWh} kWh` : '—';
+    if (this.isHybrid(it)) return [this.engineString(it), it.batteryKWh ? `${it.batteryKWh} kWh` : undefined].filter(Boolean).join(' + ');
+    return this.engineString(it);
   }
 
   onMakeChange(id: number | null){ this.selectedMakeId$.next(id ?? null); }

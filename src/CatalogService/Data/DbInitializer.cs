@@ -77,9 +77,12 @@ public class DbInitializer
             {
                 new() { Name = "Petrol" },
                 new() { Name = "Diesel" },
+                new() { Name = "Electric" },
                 new() { Name = "Hybrid" },
-                new() { Name = "Plug-In Hybrid" },
-                new() { Name = "Electric" }
+                new() { Name = "PHEV" },
+                new() { Name = "CNG" },
+                new() { Name = "LPG" },
+                new() { Name = "REEV" }
             };
             context.FuelTypes.AddRange(fuelTypes);
         }
@@ -87,12 +90,27 @@ public class DbInitializer
         {
             var bodyTypes = new List<BodyType>
             {
-                new() { Name = "Saloon" },
-                new() { Name = "Estate" },
+                new() { Name = "Sedan" },
                 new() { Name = "Hatchback" },
+                new() { Name = "Crossover" },
                 new() { Name = "SUV" },
+                new() { Name = "MPV" },
+                new() { Name = "Compact sedan" },
+                new() { Name = "Compact SUV" },
+                new() { Name = "Convertible" },
                 new() { Name = "Coupe" },
-                new() { Name = "Convertible" }
+                new() { Name = "Double Cabin" },
+                new() { Name = "High Roof" },
+                new() { Name = "Micro Van" },
+                new() { Name = "Mini Van" },
+                new() { Name = "Mini Vehicles" },
+                new() { Name = "Off-Road" },
+                new() { Name = "Vehicles" },
+                new() { Name = "Pick Up" },
+                new() { Name = "Single Cabin" },
+                new() { Name = "Station Wagon" },
+                new() { Name = "Truck" },
+                new() { Name = "Van" }
             };
             context.BodyTypes.AddRange(bodyTypes);
         }
@@ -258,7 +276,7 @@ public class DbInitializer
             .ToDictionary(g => g.Key, g => g.First().Id);
 
         // Derivatives per model (Pakistan-specific popular body types)
-        var saloonId = context.BodyTypes.Where(b => b.Name == "Saloon").Select(b => b.Id).First();
+        var saloonId = context.BodyTypes.Where(b => b.Name == "Sedan" || b.Name == "Saloon").Select(b => b.Id).First();
         var hatchId = context.BodyTypes.Where(b => b.Name == "Hatchback").Select(b => b.Id).First();
         var suvId = context.BodyTypes.Where(b => b.Name == "SUV").Select(b => b.Id).First();
 
@@ -277,24 +295,11 @@ public class DbInitializer
                 DriveTypeId = (m.Name is "3 Series" or "A4") ? driveMap["RWD"] : driveMap["FWD"],
                 Seats = 5,
                 Doors = bodyId == suvId ? (short)5 : (short)4,
-                Engine = m.Name switch
-                {
-                    "Alto" => "0.66L",
-                    "Swift" => "1.2L",
-                    "Yaris" => "1.3L",
-                    "Corolla" => "1.6L",
-                    "Civic" => "1.5L Turbo",
-                    "City" => "1.5L",
-                    "Fortuner" => "2.7L",
-                    "Sportage" => "2.0L",
-                    "Stonic" => "1.4L",
-                    "3 Series" => "2.0L",
-                    "A4" => "2.0L",
-                    _ => "1.6L"
-                },
+                EngineCC = null,
+                EngineL = null,
                 TransmissionId = transMap["Automatic"],
                 FuelTypeId = fuelMap["Petrol"],
-                BatteryCapacityKWh = null,
+                BatteryKWh = null,
                 IsActive = true
             };
             d.Code = RequestHelpers.CodeGenerator.DerivativeCode(m.Make!.Code, m.Code, "Gen 2", context.BodyTypes.First(b => b.Id == bodyId).Name, context.Transmissions.First(t => t.Id == d.TransmissionId!).Name);
@@ -312,10 +317,11 @@ public class DbInitializer
                     DriveTypeId = driveMap["FWD"],
                     Seats = 5,
                     Doors = bodyId == suvId ? (short)5 : (short)4,
-                    Engine = m.Name == "Civic" ? "2.0L" : "1.8L",
+                    EngineCC = null,
+                    EngineL = null,
                     TransmissionId = transMap["CVT"],
                     FuelTypeId = fuelMap["Hybrid"],
-                    BatteryCapacityKWh = 1.2m,
+                    BatteryKWh = 1.2m,
                     IsActive = true
                 };
                 dh.Code = RequestHelpers.CodeGenerator.DerivativeCode(m.Make!.Code, m.Code, "Gen 2", context.BodyTypes.First(b => b.Id == bodyId).Name, "CVT");
@@ -332,7 +338,7 @@ public class DbInitializer
         {
             var baseVariant = BuildVariant(
                 name: "Base",
-                engine: d.Engine ?? "",
+                engine: (d.EngineL.HasValue ? $"{d.EngineL.Value:0.0}L" : (d.EngineCC.HasValue ? $"{d.EngineCC.Value}cc" : "")),
                 transmission: context.Transmissions.First(t => t.Id == d.TransmissionId!).Name,
                 fuelType: context.FuelTypes.First(f => f.Id == d.FuelTypeId!).Name,
                 featureFinder: F,
@@ -344,7 +350,7 @@ public class DbInitializer
 
             var premiumVariant = BuildVariant(
                 name: "Premium",
-                engine: d.Engine ?? "",
+                engine: (d.EngineL.HasValue ? $"{d.EngineL.Value:0.0}L" : (d.EngineCC.HasValue ? $"{d.EngineCC.Value}cc" : "")),
                 transmission: context.Transmissions.First(t => t.Id == d.TransmissionId!).Name,
                 fuelType: context.FuelTypes.First(f => f.Id == d.FuelTypeId!).Name,
                 featureFinder: F,

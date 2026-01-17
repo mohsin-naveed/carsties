@@ -154,12 +154,12 @@ export class VariantsPage {
       if (res){
         this.api.createVariant({ name: res.name, derivativeId: res.derivativeId }).subscribe({ next: (variant) => {
           const featureIds = res.featureIds ?? [];
-          if (featureIds.length === 0){ this.notify.success('Variant created'); this.loadContext(); return; }
+          if (featureIds.length === 0){ this.notify.success('Variant created'); this.loadContext(); this.loadPage(); return; }
           let remaining = featureIds.length;
           featureIds.forEach(fid => {
             this.api.createVariantFeature({ variantId: variant.id, featureId: fid, isStandard: true }).subscribe({ next: () => {
-              remaining--; if (remaining === 0){ this.notify.success('Variant created'); this.loadContext(); }
-            }, error: () => { remaining--; if (remaining === 0){ this.notify.success('Variant created'); this.loadContext(); } } });
+              remaining--; if (remaining === 0){ this.notify.success('Variant created'); this.loadContext(); this.loadPage(); }
+            }, error: () => { remaining--; if (remaining === 0){ this.notify.success('Variant created'); this.loadContext(); this.loadPage(); } } });
           });
         } });
       }
@@ -193,11 +193,11 @@ export class VariantsPage {
               this.api.getVariantFeatures(it.id).subscribe({
                 next: (curr) => {
                   let remainingDeletes = curr.length;
-                  if (remainingDeletes === 0){ this.addSelectedFeatures(it.id, res.featureIds ?? []); return; }
+                  if (remainingDeletes === 0){ this.addSelectedFeatures(it.id, res.featureIds ?? []); this.loadPage(); return; }
                   curr.forEach(vf => {
                     this.api.deleteVariantFeature(vf.variantId, vf.featureId).subscribe({
-                      next: () => { remainingDeletes--; if (remainingDeletes === 0){ this.addSelectedFeatures(it.id, res.featureIds ?? []); } },
-                      error: () => { remainingDeletes--; if (remainingDeletes === 0){ this.addSelectedFeatures(it.id, res.featureIds ?? []); } }
+                      next: () => { remainingDeletes--; if (remainingDeletes === 0){ this.addSelectedFeatures(it.id, res.featureIds ?? []); this.loadPage(); } },
+                      error: () => { remainingDeletes--; if (remainingDeletes === 0){ this.addSelectedFeatures(it.id, res.featureIds ?? []); this.loadPage(); } }
                     });
                   });
                 },
@@ -213,43 +213,12 @@ export class VariantsPage {
   }
   openCopy(it: VariantDto){
     (document.activeElement as HTMLElement | null)?.blur();
-    this.api.getVariantFeatures(it.id).subscribe({
-      next: (existing) => {
-        const preselectedIds = existing.map(vf => vf.featureId);
-        const ref = this.dialog.open(VariantEditDialogComponent, {
-          data: {
-            title: 'Copy Variant',
-            copyMode: true,
-            name: it.name,
-            derivativeId: it.derivativeId,
-            generations: this.generationsCache,
-            derivatives: this.derivativesCache,
-            models: this.modelsCache,
-            makes: this.makesCache,
-            featureIds: preselectedIds,
-            isPopular: (it as any).isPopular ?? false,
-            isImported: (it as any).isImported ?? false
-          },
-          width: '600px', autoFocus: true, restoreFocus: true
-        });
-        ref.afterClosed().subscribe((res: { name: string; derivativeId: number; featureIds: number[] } | undefined) => {
-          if (!res) return;
-          this.api.createVariant({ name: res.name, derivativeId: res.derivativeId }).subscribe({
-            next: (variant) => {
-              const featureIds = res.featureIds ?? [];
-              if (featureIds.length === 0){ this.notify.success('Variant copied'); this.loadContext(); return; }
-              let remaining = featureIds.length;
-              featureIds.forEach(fid => {
-                this.api.createVariantFeature({ variantId: variant.id, featureId: fid, isStandard: true }).subscribe({ next: () => {
-                  remaining--; if (remaining === 0){ this.notify.success('Variant copied'); this.loadContext(); }
-                }, error: () => { remaining--; if (remaining === 0){ this.notify.success('Variant copied'); this.loadContext(); } } });
-              });
-            },
-            error: () => this.notify.error('Failed to copy variant')
-          });
-        });
-      },
-      error: () => this.notify.error('Failed to load current features')
+    // Behave exactly like Add Variant: open empty Add dialog
+    const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Add Variant', generations: this.generationsCache, derivatives: this.derivativesCache, models: this.modelsCache, makes: this.makesCache }, width: '600px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; derivativeId: number; featureIds: number[] } | undefined) => {
+      if (res){
+        this.api.createVariant({ name: res.name, derivativeId: res.derivativeId }).subscribe({ next: () => { this.notify.success('Variant copied'); this.loadContext(); this.loadPage(); }, error: () => this.notify.error('Failed to copy variant') });
+      }
     });
   }
   remove(it: VariantDto){
@@ -277,12 +246,12 @@ export class VariantsPage {
   }
 
   addSelectedFeatures(variantId: number, featureIds: number[]){
-    if (!featureIds || featureIds.length === 0){ this.notify.success('Variant updated'); this.loadContext(); return; }
+    if (!featureIds || featureIds.length === 0){ this.notify.success('Variant updated'); this.loadContext(); this.loadPage(); return; }
     let remaining = featureIds.length;
     featureIds.forEach(fid => {
       this.api.createVariantFeature({ variantId, featureId: fid, isStandard: true }).subscribe({ next: () => {
-        remaining--; if (remaining === 0){ this.notify.success('Variant updated'); this.loadContext(); }
-      }, error: () => { remaining--; if (remaining === 0){ this.notify.success('Variant updated'); this.loadContext(); } } });
+        remaining--; if (remaining === 0){ this.notify.success('Variant updated'); this.loadContext(); this.loadPage(); }
+      }, error: () => { remaining--; if (remaining === 0){ this.notify.success('Variant updated'); this.loadContext(); this.loadPage(); } } });
     });
   }
 

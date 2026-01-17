@@ -17,7 +17,7 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
     public ActionResult<List<OptionDto>> GetOptions()
     {
         var bodyTypes = context.BodyTypes
-            .OrderBy(x => x.Name)
+            .OrderBy(x => x.Id)
             .Select(x => new OptionDto(x.Id, x.Name))
             .ToList();
         return Ok(bodyTypes);
@@ -170,12 +170,11 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
         if (dto.Seats < 2 || dto.Seats > 9) return BadRequest("Seats must be between 2 and 9");
         if (dto.Doors < 2 || dto.Doors > 5) return BadRequest("Doors must be between 2 and 5");
 
-        // Validation: if fuel is Electric, require battery; else engine stays optional
+        // Validation: if fuel is Electric, require battery; engine fields must be null
         if (fuel != null && string.Equals(fuel.Name, "Electric", StringComparison.OrdinalIgnoreCase))
         {
-            if (!dto.BatteryCapacityKWh.HasValue || dto.BatteryCapacityKWh.Value <= 0)
-                return BadRequest("BatteryCapacityKWh must be provided for Electric vehicles");
-            // Do not mutate init-only DTO; enforce on entity after mapping
+            if (!dto.BatteryKWh.HasValue || dto.BatteryKWh.Value <= 0)
+                return BadRequest("BatteryKWh must be provided for Electric vehicles");
         }
 
         if (!await context.BodyTypes.AnyAsync(x => x.Id == dto.BodyTypeId))
@@ -192,22 +191,21 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
             DriveTypeId = dto.DriveTypeId,
             Seats = dto.Seats,
             Doors = dto.Doors,
-            Engine = dto.Engine,
+            EngineCC = dto.EngineCC,
+            EngineL = dto.EngineL,
             TransmissionId = dto.TransmissionId,
             FuelTypeId = dto.FuelTypeId,
-            BatteryCapacityKWh = dto.BatteryCapacityKWh,
+            BatteryKWh = dto.BatteryKWh,
             IsActive = dto.IsActive ?? true
         };
-        if (fuel != null && string.Equals(fuel.Name, "Electric", StringComparison.OrdinalIgnoreCase)) entity.Engine = null;
+        if (fuel != null && string.Equals(fuel.Name, "Electric", StringComparison.OrdinalIgnoreCase))
+        {
+            entity.EngineCC = null;
+            entity.EngineL = null;
+        }
 
-        // Build code from Make/Model/Generation/Body/Transmission
-        var model = await context.Models.Include(m => m.Make).FirstAsync(m => m.Id == dto.ModelId);
-        var gen = generation;
-        var body = await context.BodyTypes.FirstAsync(b => b.Id == dto.BodyTypeId);
-        var transName = dto.TransmissionId.HasValue ? (await context.Transmissions.FirstOrDefaultAsync(t => t.Id == dto.TransmissionId.Value))?.Name : null;
-        var makeCode = model.Make!.Code;
-        var modelCode = model.Code;
-        entity.Code = CodeGenerator.DerivativeCode(makeCode, modelCode, gen.Name, body.Name, transName);
+        // Code is derived directly from the composed Name (uppercase, spaces -> '-')
+        entity.Code = CodeGenerator.DerivativeCodeFromName(entity.Name);
         if (!await CodeGenerator.IsCodeUniqueAsync(context, "Derivatives", entity.Code))
             return Conflict($"Code '{entity.Code}' already exists");
         context.Derivatives.Add(entity);
@@ -256,7 +254,8 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
             if (!exists) return BadRequest("Invalid DriveTypeId");
             entity.DriveTypeId = dto.DriveTypeId.Value;
         }
-        if (dto.Engine is not null) entity.Engine = dto.Engine;
+        if (dto.EngineCC.HasValue) entity.EngineCC = dto.EngineCC.Value;
+        if (dto.EngineL.HasValue) entity.EngineL = dto.EngineL.Value;
         if (dto.TransmissionId.HasValue)
         {
             var exists = await context.Transmissions.AnyAsync(x => x.Id == dto.TransmissionId.Value);
@@ -272,13 +271,14 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
             // Apply electric-specific rule
             if (string.Equals(fuel.Name, "Electric", StringComparison.OrdinalIgnoreCase))
             {
-                if (!dto.BatteryCapacityKWh.HasValue || dto.BatteryCapacityKWh.Value <= 0)
-                    return BadRequest("BatteryCapacityKWh must be provided for Electric vehicles");
-                entity.BatteryCapacityKWh = dto.BatteryCapacityKWh;
-                entity.Engine = null;
+                if (!dto.BatteryKWh.HasValue || dto.BatteryKWh.Value <= 0)
+                    return BadRequest("BatteryKWh must be provided for Electric vehicles");
+                entity.BatteryKWh = dto.BatteryKWh;
+                entity.EngineCC = null;
+                entity.EngineL = null;
             }
         }
-        if (dto.BatteryCapacityKWh.HasValue) entity.BatteryCapacityKWh = dto.BatteryCapacityKWh.Value;
+        if (dto.BatteryKWh.HasValue) entity.BatteryKWh = dto.BatteryKWh.Value;
         if (dto.Seats.HasValue)
         {
             if (dto.Seats.Value < 2 || dto.Seats.Value > 9) return BadRequest("Seats must be between 2 and 9");
@@ -291,16 +291,10 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
         }
         if (dto.IsActive.HasValue) entity.IsActive = dto.IsActive.Value;
 
-        // Recompute Code if any relevant piece changed
-        if (changedForCode || dto.ModelId.HasValue || dto.GenerationId.HasValue || dto.Name is not null)
+        // Recompute Code based on Name if name was provided/changed
+        if (dto.Name is not null)
         {
-            var model = await context.Models.Include(m => m.Make).FirstAsync(m => m.Id == entity.ModelId);
-            var gen = await context.Generations.FirstAsync(g => g.Id == entity.GenerationId);
-            var body = await context.BodyTypes.FirstAsync(b => b.Id == entity.BodyTypeId);
-            var transName = entity.TransmissionId.HasValue ? (await context.Transmissions.FirstOrDefaultAsync(t => t.Id == entity.TransmissionId.Value))?.Name : null;
-            var makeCode = model.Make!.Code;
-            var modelCode = model.Code;
-            entity.Code = CodeGenerator.DerivativeCode(makeCode, modelCode, gen.Name, body.Name, transName);
+            entity.Code = CodeGenerator.DerivativeCodeFromName(entity.Name);
             if (!await CodeGenerator.IsCodeUniqueAsync(context, "Derivatives", entity.Code, id))
                 return Conflict($"Code '{entity.Code}' already exists");
         }

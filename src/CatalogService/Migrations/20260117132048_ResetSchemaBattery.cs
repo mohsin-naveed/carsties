@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CatalogService.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialClean : Migration
+    public partial class ResetSchemaBattery : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -42,17 +42,19 @@ namespace CatalogService.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Features",
+                name: "FeatureCategories",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: true)
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()")
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Features", x => x.Id);
+                    table.PrimaryKey("PK_FeatureCategories", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -96,6 +98,28 @@ namespace CatalogService.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Transmissions", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Features",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Code = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
+                    Description = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: true),
+                    FeatureCategoryId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Features", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Features_FeatureCategories_FeatureCategoryId",
+                        column: x => x.FeatureCategoryId,
+                        principalTable: "FeatureCategories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -157,10 +181,11 @@ namespace CatalogService.Migrations
                     DriveTypeId = table.Column<int>(type: "integer", nullable: false),
                     Seats = table.Column<short>(type: "smallint", nullable: false),
                     Doors = table.Column<short>(type: "smallint", nullable: false),
-                    Engine = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    EngineCC = table.Column<int>(type: "integer", nullable: true),
+                    EngineL = table.Column<decimal>(type: "numeric", nullable: true),
                     TransmissionId = table.Column<int>(type: "integer", nullable: true),
                     FuelTypeId = table.Column<int>(type: "integer", nullable: true),
-                    BatteryCapacityKWh = table.Column<decimal>(type: "numeric", nullable: true),
+                    BatteryKWh = table.Column<decimal>(type: "numeric", nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
@@ -325,6 +350,23 @@ namespace CatalogService.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_FeatureCategories_Code",
+                table: "FeatureCategories",
+                column: "Code",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Features_Code",
+                table: "Features",
+                column: "Code",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Features_FeatureCategoryId",
+                table: "Features",
+                column: "FeatureCategoryId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Features_Name",
                 table: "Features",
                 column: "Name",
@@ -413,6 +455,9 @@ namespace CatalogService.Migrations
 
             migrationBuilder.DropTable(
                 name: "Variants");
+
+            migrationBuilder.DropTable(
+                name: "FeatureCategories");
 
             migrationBuilder.DropTable(
                 name: "Derivatives");

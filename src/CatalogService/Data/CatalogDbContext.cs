@@ -154,8 +154,9 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(x => x.Doors).IsRequired();
             entity.HasCheckConstraint("CK_Derivatives_Seats", "\"Seats\" BETWEEN 2 AND 9");
             entity.HasCheckConstraint("CK_Derivatives_Doors", "\"Doors\" BETWEEN 2 AND 5");
-            entity.Property(x => x.Engine).HasMaxLength(100);
-            entity.Property(x => x.BatteryCapacityKWh);
+            entity.Property(x => x.EngineCC);
+            entity.Property(x => x.EngineL);
+            entity.Property(x => x.BatteryKWh);
             entity.Property(x => x.IsActive).HasDefaultValue(true);
 
             entity.HasOne(x => x.Model)

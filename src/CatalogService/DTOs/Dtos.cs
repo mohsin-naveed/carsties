@@ -48,9 +48,9 @@ public record GenerationsContextDto(
 
 
 // Model Bodies
-public record DerivativeDto(int Id, string Code, string? Name, int ModelId, int? GenerationId, int BodyTypeId, string? BodyType, int DriveTypeId, string? DriveType, short Seats, short Doors, string? Engine, int? TransmissionId, string? Transmission, int? FuelTypeId, string? FuelType, decimal? BatteryCapacityKWh, bool IsActive);
-public record CreateDerivativeDto(string Name, int ModelId, int GenerationId, int BodyTypeId, int DriveTypeId, short Seats, short Doors, string? Engine, int? TransmissionId, int? FuelTypeId, decimal? BatteryCapacityKWh, bool? IsActive);
-public record UpdateDerivativeDto(string? Name, int? ModelId, int? GenerationId, int? BodyTypeId, int? DriveTypeId, short? Seats, short? Doors, string? Engine, int? TransmissionId, int? FuelTypeId, decimal? BatteryCapacityKWh, bool? IsActive);
+public record DerivativeDto(int Id, string Code, string? Name, int ModelId, int? GenerationId, int BodyTypeId, string? BodyType, int DriveTypeId, string? DriveType, short Seats, short Doors, int? EngineCC, decimal? EngineL, int? TransmissionId, string? Transmission, int? FuelTypeId, string? FuelType, decimal? BatteryKWh, bool IsActive);
+public record CreateDerivativeDto(string Name, int ModelId, int GenerationId, int BodyTypeId, int DriveTypeId, short Seats, short Doors, int? EngineCC, decimal? EngineL, int? TransmissionId, int? FuelTypeId, decimal? BatteryKWh, bool? IsActive);
+public record UpdateDerivativeDto(string? Name, int? ModelId, int? GenerationId, int? BodyTypeId, int? DriveTypeId, short? Seats, short? Doors, int? EngineCC, decimal? EngineL, int? TransmissionId, int? FuelTypeId, decimal? BatteryKWh, bool? IsActive);
 
 public record DerivativesContextDto(
 	List<MakeDto> Makes,

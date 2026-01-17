@@ -51,7 +51,7 @@ namespace CatalogService.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal?>("BatteryCapacityKWh")
+                    b.Property<decimal?>("BatteryKWh")
                         .HasColumnType("numeric");
 
                     b.Property<int>("BodyTypeId")
@@ -68,9 +68,11 @@ namespace CatalogService.Migrations
                     b.Property<int>("DriveTypeId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Engine")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                    b.Property<int?>("EngineCC")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("EngineL")
+                        .HasColumnType("numeric");
 
                     b.Property<int?>("FuelTypeId")
                         .HasColumnType("integer");

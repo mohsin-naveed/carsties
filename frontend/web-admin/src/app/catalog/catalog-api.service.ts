@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { shareReplay } from 'rxjs/operators';
 
 // DTO interfaces mirroring backend records
 export interface MakeDto { id: number; name: string; code: string; country?: string; isActive: boolean; isPopular: boolean; }
@@ -52,9 +53,9 @@ export interface GenerationsContextDto {
 // VariantFeatures page removed; context DTO no longer needed
 
 // Derivatives
-export interface DerivativeDto { id: number; code: string; name?: string; modelId: number; generationId?: number; bodyTypeId: number; bodyType?: string; driveTypeId: number; driveType?: string; seats: number; doors: number; engine?: string; transmissionId?: number; transmission?: string; fuelTypeId?: number; fuelType?: string; batteryCapacityKWh?: number; isActive: boolean; }
-export interface CreateDerivativeDto { name: string; modelId: number; generationId: number; bodyTypeId: number; driveTypeId: number; seats: number; doors: number; engine?: string; transmissionId?: number; fuelTypeId?: number; batteryCapacityKWh?: number; isActive?: boolean; }
-export interface UpdateDerivativeDto { name?: string; modelId?: number; generationId?: number; bodyTypeId?: number; driveTypeId?: number; seats?: number; doors?: number; engine?: string; transmissionId?: number; fuelTypeId?: number; batteryCapacityKWh?: number; isActive?: boolean; }
+export interface DerivativeDto { id: number; code: string; name?: string; modelId: number; generationId?: number; bodyTypeId: number; bodyType?: string; driveTypeId: number; driveType?: string; seats: number; doors: number; engineCC?: number; engineL?: number; transmissionId?: number; transmission?: string; fuelTypeId?: number; fuelType?: string; batteryKWh?: number; isActive: boolean; }
+export interface CreateDerivativeDto { name: string; modelId: number; generationId: number; bodyTypeId: number; driveTypeId: number; seats: number; doors: number; engineCC?: number; engineL?: number; transmissionId?: number; fuelTypeId?: number; batteryKWh?: number; isActive?: boolean; }
+export interface UpdateDerivativeDto { name?: string; modelId?: number; generationId?: number; bodyTypeId?: number; driveTypeId?: number; seats?: number; doors?: number; engineCC?: number; engineL?: number; transmissionId?: number; fuelTypeId?: number; batteryKWh?: number; isActive?: boolean; }
 export interface DerivativesContextDto { makes: MakeDto[]; models: ModelDto[]; derivatives: DerivativeDto[]; }
 export interface PagedResult<T> { items: T[]; total: number; page: number; pageSize: number; }
 
@@ -63,17 +64,27 @@ export class CatalogApiService {
   private readonly http = inject(HttpClient);
   // Use empty base; environment-based interceptor will prefix with the API base (e.g., http://localhost:7005/api)
   private readonly baseUrl = '';
+  private readonly cache = new Map<string, Observable<any>>();
+
+  private cachedGet<T>(path: string, params?: any): Observable<T> {
+    const key = `${path}?${JSON.stringify(params || {})}`;
+    const cached = this.cache.get(key) as Observable<T> | undefined;
+    if (cached) return cached;
+    const obs = this.http.get<T>(`${this.baseUrl}${path}`, { params }).pipe(shareReplay(1));
+    this.cache.set(key, obs);
+    return obs;
+  }
 
   // Makes
-  getMakes(): Observable<MakeDto[]> { return this.http.get<MakeDto[]>(`${this.baseUrl}/makes`); }
+  getMakes(): Observable<MakeDto[]> { return this.cachedGet<MakeDto[]>(`/makes`); }
   getMake(id: number): Observable<MakeDto> { return this.http.get<MakeDto>(`${this.baseUrl}/makes/${id}`); }
   createMake(dto: CreateMakeDto): Observable<MakeDto> { return this.http.post<MakeDto>(`${this.baseUrl}/makes`, dto); }
   updateMake(id: number, dto: UpdateMakeDto) { return this.http.put(`${this.baseUrl}/makes/${id}`, dto); }
   deleteMake(id: number) { return this.http.delete(`${this.baseUrl}/makes/${id}`); }
 
   // Models
-  getModels(makeId?: number): Observable<ModelDto[]> { const params: any = {}; if (makeId) params.makeId = makeId; return this.http.get<ModelDto[]>(`${this.baseUrl}/models`, { params }); }
-  getModelsContext(makeId?: number): Observable<ModelsContextDto> { const params: any = {}; if (makeId) params.makeId = makeId; return this.http.get<ModelsContextDto>(`${this.baseUrl}/models/context`, { params }); }
+  getModels(makeId?: number): Observable<ModelDto[]> { const params: any = {}; if (makeId) params.makeId = makeId; return this.cachedGet<ModelDto[]>(`/models`, params); }
+  getModelsContext(makeId?: number): Observable<ModelsContextDto> { const params: any = {}; if (makeId) params.makeId = makeId; return this.cachedGet<ModelsContextDto>(`/models/context`, params); }
   getModelsPaged(opts?: { page?: number; pageSize?: number; sort?: string; dir?: 'asc'|'desc'; makeId?: number }): Observable<PagedResult<ModelDto>> {
     const params: any = {};
     if (opts?.page) params.page = opts.page;
@@ -81,17 +92,17 @@ export class CatalogApiService {
     if (opts?.sort) params.sort = opts.sort;
     if (opts?.dir) params.dir = opts.dir;
     if (opts?.makeId) params.makeId = opts.makeId;
-    return this.http.get<PagedResult<ModelDto>>(`${this.baseUrl}/models/paged`, { params });
+    return this.cachedGet<PagedResult<ModelDto>>(`/models/paged`, params);
   }
   createModel(dto: CreateModelDto): Observable<ModelDto> { return this.http.post<ModelDto>(`${this.baseUrl}/models`, dto); }
   updateModel(id: number, dto: UpdateModelDto) { return this.http.put(`${this.baseUrl}/models/${id}`, dto); }
   deleteModel(id: number) { return this.http.delete(`${this.baseUrl}/models/${id}`); }
 
   // Generations
-  getGenerations(modelId?: number): Observable<GenerationDto[]> { const params: any = {}; if (modelId) params.modelId = modelId; return this.http.get<GenerationDto[]>(`${this.baseUrl}/generations`, { params }); }
+  getGenerations(modelId?: number): Observable<GenerationDto[]> { const params: any = {}; if (modelId) params.modelId = modelId; return this.cachedGet<GenerationDto[]>(`/generations`, params); }
   getGenerationsContext(makeId?: number, modelId?: number): Observable<GenerationsContextDto> {
     const params: any = {}; if (makeId) params.makeId = makeId; if (modelId) params.modelId = modelId;
-    return this.http.get<GenerationsContextDto>(`${this.baseUrl}/generations/context`, { params });
+    return this.cachedGet<GenerationsContextDto>(`/generations/context`, params);
   }
   getGenerationsPaged(opts?: { page?: number; pageSize?: number; sort?: string; dir?: 'asc'|'desc'; makeId?: number; modelId?: number }): Observable<PagedResult<GenerationDto>> {
     const params: any = {};
@@ -101,20 +112,20 @@ export class CatalogApiService {
     if (opts?.dir) params.dir = opts.dir;
     if (opts?.makeId) params.makeId = opts.makeId;
     if (opts?.modelId) params.modelId = opts.modelId;
-    return this.http.get<PagedResult<GenerationDto>>(`${this.baseUrl}/generations/paged`, { params });
+    return this.cachedGet<PagedResult<GenerationDto>>(`/generations/paged`, params);
   }
   createGeneration(dto: CreateGenerationDto): Observable<GenerationDto> { return this.http.post<GenerationDto>(`${this.baseUrl}/generations`, dto); }
   updateGeneration(id: number, dto: UpdateGenerationDto) { return this.http.put(`${this.baseUrl}/generations/${id}`, dto); }
   deleteGeneration(id: number) { return this.http.delete(`${this.baseUrl}/generations/${id}`); }
 
   // Variants
-  getVariants(generationId?: number): Observable<VariantDto[]> { const params: any = {}; if (generationId) params.generationId = generationId; return this.http.get<VariantDto[]>(`${this.baseUrl}/variants`, { params }); }
+  getVariants(generationId?: number): Observable<VariantDto[]> { const params: any = {}; if (generationId) params.generationId = generationId; return this.cachedGet<VariantDto[]>(`/variants`, params); }
   getVariantsContext(makeId?: number, modelId?: number, generationId?: number): Observable<VariantsContextDto> {
     const params: any = {};
     if (makeId) params.makeId = makeId;
     if (modelId) params.modelId = modelId;
     if (generationId) params.generationId = generationId;
-    return this.http.get<VariantsContextDto>(`${this.baseUrl}/variants/context`, { params });
+    return this.cachedGet<VariantsContextDto>(`/variants/context`, params);
   }
   getVariantsPaged(opts?: { page?: number; pageSize?: number; sort?: string; dir?: 'asc'|'desc'; makeId?: number; modelId?: number; derivativeId?: number }): Observable<PagedResult<VariantDto>> {
     const params: any = {};
@@ -125,9 +136,9 @@ export class CatalogApiService {
     if (opts?.makeId) params.makeId = opts.makeId;
     if (opts?.modelId) params.modelId = opts.modelId;
     if (opts?.derivativeId) params.derivativeId = opts.derivativeId;
-    return this.http.get<PagedResult<VariantDto>>(`${this.baseUrl}/variants/paged`, { params });
+    return this.cachedGet<PagedResult<VariantDto>>(`/variants/paged`, params);
   }
-  getVariantOptions(): Observable<VariantOptionsDto> { return this.http.get<VariantOptionsDto>(`${this.baseUrl}/variants/options`); }
+  getVariantOptions(): Observable<VariantOptionsDto> { return this.cachedGet<VariantOptionsDto>(`/variants/options`); }
   createVariant(dto: CreateVariantDto): Observable<VariantDto> { return this.http.post<VariantDto>(`${this.baseUrl}/variants`, dto); }
   updateVariant(id: number, dto: UpdateVariantDto) { return this.http.put(`${this.baseUrl}/variants/${id}`, dto); }
   deleteVariant(id: number) { return this.http.delete(`${this.baseUrl}/variants/${id}`); }
@@ -158,8 +169,8 @@ export class CatalogApiService {
   deleteVariantFeature(variantId: number, featureId: number) { return this.http.delete(`${this.baseUrl}/variantfeatures/${variantId}/${featureId}`); }
 
   // Derivatives
-  getDerivatives(modelId?: number): Observable<DerivativeDto[]> { const params: any = {}; if (modelId) params.modelId = modelId; return this.http.get<DerivativeDto[]>(`${this.baseUrl}/derivatives`, { params }); }
-  getDerivativesContext(makeId?: number, modelId?: number): Observable<DerivativesContextDto> { const params: any = {}; if (makeId) params.makeId = makeId; if (modelId) params.modelId = modelId; return this.http.get<DerivativesContextDto>(`${this.baseUrl}/derivatives/context`, { params }); }
+  getDerivatives(modelId?: number): Observable<DerivativeDto[]> { const params: any = {}; if (modelId) params.modelId = modelId; return this.cachedGet<DerivativeDto[]>(`/derivatives`, params); }
+  getDerivativesContext(makeId?: number, modelId?: number): Observable<DerivativesContextDto> { const params: any = {}; if (makeId) params.makeId = makeId; if (modelId) params.modelId = modelId; return this.cachedGet<DerivativesContextDto>(`/derivatives/context`, params); }
   getDerivativesPaged(opts?: { page?: number; pageSize?: number; sort?: string; dir?: 'asc'|'desc'; makeId?: number; modelId?: number }): Observable<PagedResult<DerivativeDto>> {
     const params: any = {};
     if (opts?.page) params.page = opts.page;
@@ -168,10 +179,10 @@ export class CatalogApiService {
     if (opts?.dir) params.dir = opts.dir;
     if (opts?.makeId) params.makeId = opts.makeId;
     if (opts?.modelId) params.modelId = opts.modelId;
-    return this.http.get<PagedResult<DerivativeDto>>(`${this.baseUrl}/derivatives/paged`, { params });
+    return this.cachedGet<PagedResult<DerivativeDto>>(`/derivatives/paged`, params);
   }
-  getBodyTypeOptions(): Observable<OptionDto[]> { return this.http.get<OptionDto[]>(`${this.baseUrl}/derivatives/options`); }
-  getDriveTypeOptions(): Observable<OptionDto[]> { return this.http.get<OptionDto[]>(`${this.baseUrl}/drivetypes/options`); }
+  getBodyTypeOptions(): Observable<OptionDto[]> { return this.cachedGet<OptionDto[]>(`/derivatives/options`); }
+  getDriveTypeOptions(): Observable<OptionDto[]> { return this.cachedGet<OptionDto[]>(`/drivetypes/options`); }
   createDerivative(dto: CreateDerivativeDto): Observable<DerivativeDto> { return this.http.post<DerivativeDto>(`${this.baseUrl}/derivatives`, dto); }
   updateDerivative(id: number, dto: UpdateDerivativeDto) { return this.http.put(`${this.baseUrl}/derivatives/${id}`, dto); }
   deleteDerivative(id: number) { return this.http.delete(`${this.baseUrl}/derivatives/${id}`); }

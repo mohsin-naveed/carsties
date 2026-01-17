@@ -40,6 +40,12 @@ public static class CodeGenerator
         return string.Join('-', tokens);
     }
 
+    // New rule: derivative code is derived directly from its composed display name
+    public static string DerivativeCodeFromName(string name)
+    {
+        return Normalize(name, dashes: true);
+    }
+
     public static string VariantCode(string derivativeCode, string variantName)
     {
         return Normalize(derivativeCode, dashes: true) + "-" + Normalize(variantName, dashes: true);
