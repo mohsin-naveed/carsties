@@ -177,7 +177,7 @@ export class DerivativesPage {
     if (!name) return '—';
     if (name.includes('front')) return 'FWD';
     if (name.includes('rear')) return 'RWD';
-    if (name.includes('four')) return '4WD';
+    if (name.includes('four')) return '4x4';
     return it.driveType ?? '—';
   }
   onFilterInput(val: string){ this.filter$.next(val); }

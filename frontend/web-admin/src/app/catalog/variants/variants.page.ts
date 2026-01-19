@@ -213,12 +213,45 @@ export class VariantsPage {
   }
   openCopy(it: VariantDto){
     (document.activeElement as HTMLElement | null)?.blur();
-    // Behave exactly like Add Variant: open empty Add dialog
-    const ref = this.dialog.open(VariantEditDialogComponent, { data: { title: 'Add Variant', generations: this.generationsCache, derivatives: this.derivativesCache, models: this.modelsCache, makes: this.makesCache }, width: '600px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { name: string; derivativeId: number; featureIds: number[] } | undefined) => {
-      if (res){
-        this.api.createVariant({ name: res.name, derivativeId: res.derivativeId }).subscribe({ next: () => { this.notify.success('Variant copied'); this.loadContext(); this.loadPage(); }, error: () => this.notify.error('Failed to copy variant') });
-      }
+    // Copy should pre-populate values and disable Save until changed
+    this.api.getVariantFeatures(it.id).subscribe({
+      next: (existing) => {
+        const preselectedIds = existing.map(vf => vf.featureId);
+        const ref = this.dialog.open(VariantEditDialogComponent, {
+          data: {
+            title: 'Add Variant',
+            name: it.name,
+            derivativeId: it.derivativeId,
+            generations: this.generationsCache,
+            derivatives: this.derivativesCache,
+            models: this.modelsCache,
+            makes: this.makesCache,
+            featureIds: preselectedIds,
+            isPopular: it.isPopular,
+            isImported: it.isImported,
+            copyMode: true
+          },
+          width: '600px', autoFocus: true, restoreFocus: true
+        });
+        ref.afterClosed().subscribe((res: { name: string; derivativeId: number; featureIds: number[]; isPopular?: boolean; isImported?: boolean } | undefined) => {
+          if (!res) return;
+          // Create new variant with copied values (only if user changed anything)
+          this.api.createVariant({ name: res.name, derivativeId: res.derivativeId, isPopular: res.isPopular, isImported: res.isImported }).subscribe({
+            next: (variant) => {
+              const featureIds = res.featureIds ?? [];
+              if (featureIds.length === 0){ this.notify.success('Variant copied'); this.loadContext(); this.loadPage(); return; }
+              let remaining = featureIds.length;
+              featureIds.forEach(fid => {
+                this.api.createVariantFeature({ variantId: variant.id, featureId: fid, isStandard: true }).subscribe({ next: () => {
+                  remaining--; if (remaining === 0){ this.notify.success('Variant copied'); this.loadContext(); this.loadPage(); }
+                }, error: () => { remaining--; if (remaining === 0){ this.notify.success('Variant copied'); this.loadContext(); this.loadPage(); } } });
+              });
+            },
+            error: () => this.notify.error('Failed to copy variant')
+          });
+        });
+      },
+      error: () => this.notify.error('Failed to load current features')
     });
   }
   remove(it: VariantDto){

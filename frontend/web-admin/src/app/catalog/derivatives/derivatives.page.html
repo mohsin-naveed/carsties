@@ -44,7 +44,7 @@
     <td mat-cell *matCellDef="let it">{{ it.name || '—' }}</td>
   </ng-container>
   <ng-container matColumnDef="bodyType">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header="bodytype">Body Type</th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="bodytype">Body</th>
     <td mat-cell *matCellDef="let it">{{ getBodyTypeName(it) }}</td>
   </ng-container>
   <ng-container matColumnDef="driveType">
