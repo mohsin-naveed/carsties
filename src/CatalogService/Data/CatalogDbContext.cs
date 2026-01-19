@@ -121,10 +121,13 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
 
         modelBuilder.Entity<Transmission>(entity =>
         {
-            entity.ToTable("Transmissions");
+            // Rename table to TransmissionType
+            entity.ToTable("TransmissionType");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).IsRequired().HasMaxLength(50);
             entity.HasIndex(x => x.Name).IsUnique();
+            entity.Property(x => x.Code).IsRequired().HasMaxLength(100);
+            entity.HasIndex(x => x.Code).IsUnique();
         });
 
         modelBuilder.Entity<FuelType>(entity =>
@@ -141,6 +144,8 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).IsRequired().HasMaxLength(50);
             entity.HasIndex(x => x.Name).IsUnique();
+            entity.Property(x => x.Code).IsRequired().HasMaxLength(100);
+            entity.HasIndex(x => x.Code).IsUnique();
         });
 
         modelBuilder.Entity<Derivative>(entity =>

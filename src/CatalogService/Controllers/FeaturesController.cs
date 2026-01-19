@@ -13,17 +13,10 @@ namespace CatalogService.Controllers;
 [Route("api/[controller]")]
 public class FeaturesController(CatalogDbContext context, IMapper mapper) : ControllerBase
 {
-    private async Task<string> GenerateUniqueCodeAsync(string name, int? excludeId = null)
+    private async Task<string> GenerateUniqueCodeAsync()
     {
-        var baseCode = CodeGenerator.MakeCode(name);
-        var code = baseCode;
-        var i = 2;
-        while (await context.Features.AnyAsync(x => x.Code == code && (!excludeId.HasValue || x.Id != excludeId.Value)))
-        {
-            code = $"{baseCode}-{i}";
-            i++;
-        }
-        return code;
+        // New requirement: FR-001, FR-002 ... style codes
+        return await CodeGenerator.NextFeatureCodeAsync(context);
     }
 
     [HttpGet("paged")]
@@ -89,7 +82,7 @@ public class FeaturesController(CatalogDbContext context, IMapper mapper) : Cont
         var catOk = await context.FeatureCategories.AnyAsync(c => c.Id == dto.FeatureCategoryId);
         if (!catOk) return BadRequest("Invalid FeatureCategoryId");
         var entity = mapper.Map<Feature>(dto);
-        entity.Code = await GenerateUniqueCodeAsync(dto.Name);
+        entity.Code = await GenerateUniqueCodeAsync();
         context.Features.Add(entity);
         try
         {
@@ -111,8 +104,8 @@ public class FeaturesController(CatalogDbContext context, IMapper mapper) : Cont
         if (entity is null) return NotFound();
         if (!string.IsNullOrWhiteSpace(dto.Name))
         {
+            // Keep code stable; only update name
             entity.Name = dto.Name;
-            entity.Code = await GenerateUniqueCodeAsync(dto.Name, id);
         }
         if (dto.FeatureCategoryId.HasValue)
         {

@@ -205,7 +205,7 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
         }
 
         // Code is derived directly from the composed Name (uppercase, spaces -> '-')
-        entity.Code = CodeGenerator.DerivativeCodeFromName(entity.Name);
+        entity.Code = await CodeGenerator.NextDerivativeCodeAsync(context, entity.ModelId);
         if (!await CodeGenerator.IsCodeUniqueAsync(context, "Derivatives", entity.Code))
             return Conflict($"Code '{entity.Code}' already exists");
         context.Derivatives.Add(entity);
@@ -294,7 +294,7 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
         // Recompute Code based on Name if name was provided/changed
         if (dto.Name is not null)
         {
-            entity.Code = CodeGenerator.DerivativeCodeFromName(entity.Name);
+            entity.Code = await CodeGenerator.NextDerivativeCodeAsync(context, entity.ModelId);
             if (!await CodeGenerator.IsCodeUniqueAsync(context, "Derivatives", entity.Code, id))
                 return Conflict($"Code '{entity.Code}' already exists");
         }

@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CatalogService.Migrations
 {
     /// <inheritdoc />
-    public partial class ResetSchemaBattery : Migration
+    public partial class InitialCleanSlate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -18,7 +18,8 @@ namespace CatalogService.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
+                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -88,16 +89,17 @@ namespace CatalogService.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Transmissions",
+                name: "TransmissionType",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
+                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Transmissions", x => x.Id);
+                    table.PrimaryKey("PK_TransmissionType", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -224,9 +226,9 @@ namespace CatalogService.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Derivatives_Transmissions_TransmissionId",
+                        name: "FK_Derivatives_TransmissionType_TransmissionId",
                         column: x => x.TransmissionId,
-                        principalTable: "Transmissions",
+                        principalTable: "TransmissionType",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -268,9 +270,9 @@ namespace CatalogService.Migrations
                         principalTable: "Generations",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Variants_Transmissions_TransmissionId",
+                        name: "FK_Variants_TransmissionType_TransmissionId",
                         column: x => x.TransmissionId,
-                        principalTable: "Transmissions",
+                        principalTable: "TransmissionType",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -300,6 +302,12 @@ namespace CatalogService.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BodyTypes_Code",
+                table: "BodyTypes",
+                column: "Code",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_BodyTypes_Name",
@@ -407,8 +415,14 @@ namespace CatalogService.Migrations
                 column: "MakeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Transmissions_Name",
-                table: "Transmissions",
+                name: "IX_TransmissionType_Code",
+                table: "TransmissionType",
+                column: "Code",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransmissionType_Name",
+                table: "TransmissionType",
                 column: "Name",
                 unique: true);
 
@@ -475,7 +489,7 @@ namespace CatalogService.Migrations
                 name: "Generations");
 
             migrationBuilder.DropTable(
-                name: "Transmissions");
+                name: "TransmissionType");
 
             migrationBuilder.DropTable(
                 name: "Models");

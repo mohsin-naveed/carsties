@@ -193,7 +193,7 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
         if (!await context.Derivatives.AnyAsync(x => x.Id == dto.DerivativeId))
             return BadRequest("Invalid DerivativeId");
         var derivative = await context.Derivatives.FirstAsync(d => d.Id == dto.DerivativeId);
-        var entity = new Variant { Name = dto.Name, DerivativeId = dto.DerivativeId, IsPopular = dto.IsPopular ?? false, IsImported = dto.IsImported ?? false, Code = CodeGenerator.VariantCode(derivative.Code, dto.Name) };
+        var entity = new Variant { Name = dto.Name, DerivativeId = dto.DerivativeId, IsPopular = dto.IsPopular ?? false, IsImported = dto.IsImported ?? false, Code = await CodeGenerator.NextVariantCodeAsync(context, dto.DerivativeId) };
         if (!await CodeGenerator.IsCodeUniqueAsync(context, "Variants", entity.Code))
             return Conflict($"Code '{entity.Code}' already exists");
         context.Variants.Add(entity);
@@ -221,8 +221,7 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
         if (dto.IsImported.HasValue) entity.IsImported = dto.IsImported.Value;
         if (codeNeedsUpdate)
         {
-            var derivative = await context.Derivatives.FirstAsync(d => d.Id == entity.DerivativeId);
-            entity.Code = CodeGenerator.VariantCode(derivative.Code, entity.Name);
+            entity.Code = await CodeGenerator.NextVariantCodeAsync(context, entity.DerivativeId);
             if (!await CodeGenerator.IsCodeUniqueAsync(context, "Variants", entity.Code, id))
                 return Conflict($"Code '{entity.Code}' already exists");
         }

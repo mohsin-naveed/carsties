@@ -54,9 +54,9 @@ public class DbInitializer
         if (!context.DriveTypes.Any())
         {
             context.DriveTypes.AddRange(
-                new Entities.DriveType { Code = "FWD", Name = "Front Wheel Drive", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-                new Entities.DriveType { Code = "RWD", Name = "Rear Wheel Drive", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-                new Entities.DriveType { Code = "4WD", Name = "Four Wheel Drive", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }
+                new Entities.DriveType { Code = "DT-FWD", Name = "Front Wheel Drive", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+                new Entities.DriveType { Code = "DT-RWD", Name = "Rear Wheel Drive", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+                new Entities.DriveType { Code = "DT-4WD", Name = "Four Wheel Drive", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }
             );
         }
         // Ensure reference data exists regardless of other data
@@ -64,10 +64,10 @@ public class DbInitializer
         {
             var transmissions = new List<Transmission>
             {
-                new() { Name = "Automatic" },
-                new() { Name = "Manual" },
-                new() { Name = "CVT" },
-                new() { Name = "Dual-Clutch" }
+                new() { Name = "Automatic", Code = CodeGenerator.TransmissionCode("Automatic") },
+                new() { Name = "Manual", Code = CodeGenerator.TransmissionCode("Manual") },
+                new() { Name = "CVT", Code = CodeGenerator.TransmissionCode("CVT") },
+                new() { Name = "Dual-Clutch", Code = CodeGenerator.TransmissionCode("Dual-Clutch") }
             };
             context.Transmissions.AddRange(transmissions);
         }
@@ -88,30 +88,25 @@ public class DbInitializer
         }
         if (!context.BodyTypes.Any())
         {
-            var bodyTypes = new List<BodyType>
+            var names = new[]
             {
-                new() { Name = "Sedan" },
-                new() { Name = "Hatchback" },
-                new() { Name = "Crossover" },
-                new() { Name = "SUV" },
-                new() { Name = "MPV" },
-                new() { Name = "Compact sedan" },
-                new() { Name = "Compact SUV" },
-                new() { Name = "Convertible" },
-                new() { Name = "Coupe" },
-                new() { Name = "Double Cabin" },
-                new() { Name = "High Roof" },
-                new() { Name = "Micro Van" },
-                new() { Name = "Mini Van" },
-                new() { Name = "Mini Vehicles" },
-                new() { Name = "Off-Road" },
-                new() { Name = "Vehicles" },
-                new() { Name = "Pick Up" },
-                new() { Name = "Single Cabin" },
-                new() { Name = "Station Wagon" },
-                new() { Name = "Truck" },
-                new() { Name = "Van" }
+                "Sedan","Hatchback","Crossover","SUV","MPV","Compact sedan","Compact SUV","Convertible","Coupe","Double Cabin","High Roof","Micro Van","Mini Van","Mini Vehicles","Off-Road","Vehicles","Pick Up","Single Cabin","Station Wagon","Truck","Van"
             };
+            var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var bodyTypes = new List<BodyType>();
+            foreach (var n in names)
+            {
+                var baseCode = CodeGenerator.BodyTypeCode(n);
+                var code = baseCode;
+                var i = 2;
+                while (used.Contains(code))
+                {
+                    code = $"{baseCode}-{i}";
+                    i++;
+                }
+                used.Add(code);
+                bodyTypes.Add(new BodyType { Name = n, Code = code });
+            }
             context.BodyTypes.AddRange(bodyTypes);
         }
         // Seed Feature Categories
@@ -141,19 +136,72 @@ public class DbInitializer
         context.SaveChanges();
         var catMap = context.FeatureCategories.ToDictionary(c => c.Name, c => c.Id);
 
-        if (!context.Features.Any())
+        // Replace existing features with provided list and FE- codes
+        if (context.Features.Any())
         {
-            // Seed a small feature catalog used across variants with categories
-            var seedFeatures = new List<Feature>
-            {
-                new() { Name = "Air Conditioning", Code = CodeGenerator.MakeCode("Air Conditioning"), Description = "Automatic climate control", FeatureCategoryId = catMap["Comfort"] },
-                new() { Name = "ABS", Code = CodeGenerator.MakeCode("ABS"), Description = "Anti-lock Braking System", FeatureCategoryId = catMap["Safety"] },
-                new() { Name = "Bluetooth", Code = CodeGenerator.MakeCode("Bluetooth"), Description = "Hands-free connectivity", FeatureCategoryId = catMap["Comfort"] },
-                new() { Name = "Cruise Control", Code = CodeGenerator.MakeCode("Cruise Control"), Description = "Adaptive cruise control", FeatureCategoryId = catMap["Comfort"] },
-                new() { Name = "Sunroof", Code = CodeGenerator.MakeCode("Sunroof"), Description = "Electric sunroof", FeatureCategoryId = catMap["Exterior"] }
-            };
-            context.Features.AddRange(seedFeatures);
+            context.Features.RemoveRange(context.Features);
+            context.SaveChanges();
         }
+        var featureNames = new[]
+        {
+            "ABS",
+            "Air Bags",
+            "Air Conditioning",
+            "Alloy Rims",
+            "Android Auto",
+            "Apple CarPlay",
+            "360 Camera",
+            "Climate Control",
+            "Cruise Control",
+            "DRLs",
+            "Fog Lights",
+            "Front Camera",
+            "Front Speakers",
+            "Head Up Display (HUD)",
+            "Heated Seats",
+            "Immobilizer Key",
+            "Infotainment System",
+            "Keyless Entry",
+            "LED Headlights",
+            "Paddle Shifters",
+            "Panoramic Sunroof",
+            "Parking Sensors",
+            "Power Locks",
+            "Power Mirrors",
+            "Power Seats",
+            "Power Steering",
+            "Push Start",
+            "Rear AC Vents",
+            "Rear Camera",
+            "Rear Speakers",
+            "Steering Switches",
+            "Sun Roof",
+            "Tyre Pressure Monitoring System (TPMS)",
+            "Traction Control",
+            "Ventilated Seats"
+        };
+        var featuresToSeed = new List<Feature>();
+        var seq = 1;
+        foreach (var n in featureNames)
+        {
+            var code = $"FR-{seq:000}";
+            // guarantee uniqueness just in case
+            while (context.Features.Any(f => f.Code == code) || featuresToSeed.Any(f => f.Code.Equals(code, StringComparison.OrdinalIgnoreCase)))
+            {
+                seq++;
+                code = $"FR-{seq:000}";
+            }
+            featuresToSeed.Add(new Feature
+            {
+                Name = n,
+                Code = code,
+                Description = null,
+                FeatureCategoryId = catMap.ContainsKey("Comfort") ? catMap["Comfort"] : catMap.Values.First()
+            });
+            seq++;
+        }
+        context.Features.AddRange(featuresToSeed);
+        context.SaveChanges();
         context.SaveChanges();
         var transMap = context.Transmissions.ToDictionary(t => t.Name, t => t.Id);
         var fuelMap = context.FuelTypes.ToDictionary(f => f.Name, f => f.Id);
@@ -292,7 +340,7 @@ public class DbInitializer
                 ModelId = m.Id,
                 GenerationId = gen2ByModelId[m.Id],
                 BodyTypeId = bodyId,
-                DriveTypeId = (m.Name is "3 Series" or "A4") ? driveMap["RWD"] : driveMap["FWD"],
+                DriveTypeId = (m.Name is "3 Series" or "A4") ? driveMap["DT-RWD"] : driveMap["DT-FWD"],
                 Seats = 5,
                 Doors = bodyId == suvId ? (short)5 : (short)4,
                 EngineCC = null,
@@ -302,7 +350,7 @@ public class DbInitializer
                 BatteryKWh = null,
                 IsActive = true
             };
-            d.Code = RequestHelpers.CodeGenerator.DerivativeCode(m.Make!.Code, m.Code, "Gen 2", context.BodyTypes.First(b => b.Id == bodyId).Name, context.Transmissions.First(t => t.Id == d.TransmissionId!).Name);
+            d.Code = RequestHelpers.CodeGenerator.NextDerivativeCodeAsync(context, d.ModelId).GetAwaiter().GetResult();
             derivatives.Add(d);
 
             // Optional hybrid derivative for select models
@@ -324,7 +372,7 @@ public class DbInitializer
                     BatteryKWh = 1.2m,
                     IsActive = true
                 };
-                dh.Code = RequestHelpers.CodeGenerator.DerivativeCode(m.Make!.Code, m.Code, "Gen 2", context.BodyTypes.First(b => b.Id == bodyId).Name, "CVT");
+                dh.Code = RequestHelpers.CodeGenerator.NextDerivativeCodeAsync(context, dh.ModelId).GetAwaiter().GetResult();
                 derivatives.Add(dh);
             }
         }
@@ -346,7 +394,7 @@ public class DbInitializer
                 featureNames: new[] { "Air Conditioning", "ABS", "Bluetooth" }
             );
             baseVariant.DerivativeId = d.Id;
-            baseVariant.Code = RequestHelpers.CodeGenerator.VariantCode(d.Code, baseVariant.Name);
+            baseVariant.Code = RequestHelpers.CodeGenerator.NextVariantCodeAsync(context, d.Id).GetAwaiter().GetResult();
 
             var premiumVariant = BuildVariant(
                 name: "Premium",
@@ -358,7 +406,7 @@ public class DbInitializer
                 featureNames: new[] { "Air Conditioning", "ABS", "Bluetooth", "Cruise Control", "Sunroof" }
             );
             premiumVariant.DerivativeId = d.Id;
-            premiumVariant.Code = RequestHelpers.CodeGenerator.VariantCode(d.Code, premiumVariant.Name);
+            premiumVariant.Code = RequestHelpers.CodeGenerator.NextVariantCodeAsync(context, d.Id).GetAwaiter().GetResult();
 
             variants.Add(baseVariant);
             variants.Add(premiumVariant);
