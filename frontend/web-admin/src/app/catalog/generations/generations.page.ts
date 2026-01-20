@@ -130,7 +130,7 @@ export class GenerationsPage {
     const ref = this.dialog.open(GenerationEditDialogComponent, { data: { title: 'Add Generation', models: this.modelsCache, makes: this.makesCache }, width: '480px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { name: string; modelId: number; startYear?: number; endYear?: number } | undefined) => {
       if (res){
-        this.api.createGeneration(res).subscribe({ next: () => { this.notify.success('Generation created'); this.loadContext(); } });
+        this.api.createGeneration(res).subscribe({ next: () => { this.notify.success('Generation created'); this.loadContext(); this.loadPage(); } });
       }
     });
   }
@@ -142,7 +142,7 @@ export class GenerationsPage {
     const ref = this.dialog.open(GenerationEditDialogComponent, { data: { title: 'Edit Generation', name: it.name, makeId, modelId: it.modelId, startYear: it.startYear, endYear: it.endYear, models: this.modelsCache, makes: this.makesCache }, width: '480px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { name: string; modelId: number; startYear?: number; endYear?: number } | undefined) => {
       if (res){
-        this.api.updateGeneration(it.id, res).subscribe({ next: () => { this.notify.success('Generation updated'); this.loadContext(); } });
+        this.api.updateGeneration(it.id, res).subscribe({ next: () => { this.notify.success('Generation updated'); this.loadContext(); this.loadPage(); } });
       }
     });
   }

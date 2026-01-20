@@ -192,7 +192,7 @@ export class DerivativeEditDialogComponent implements OnDestroy {
       if (engL != null) this.form.patchValue({ engineL: engL }, { emitEvent: false });
       const fuelName = this.fuelTypes.find(f => f.id === (this.form.value.fuelTypeId as number | null))?.name ?? '';
       const energyPart = engL != null ? `${engL}L` : (batt ? `${batt} kWh` : '');
-      const parts = [gn, energyPart, fuelName, tr, bt].filter(Boolean);
+      const parts = [gn, md, energyPart, fuelName, tr, bt].filter(Boolean);
       const composed = parts.join(' ').trim();
       this.computedDisplayName = composed || '';
       this.form.patchValue({ name: composed }, { emitEvent: false });

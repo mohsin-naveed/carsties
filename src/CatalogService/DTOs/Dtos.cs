@@ -1,25 +1,25 @@
 namespace CatalogService.DTOs;
 
 // Simple DTOs for CRUD
-public record MakeDto(int Id, string Name, string Code, string? Country, bool IsActive, bool IsPopular);
-public record CreateMakeDto(string Name, string? Country, bool? IsActive, bool? IsPopular);
-public record UpdateMakeDto(string? Name, string? Country, bool? IsActive, bool? IsPopular);
+public record MakeDto(int Id, string Name, string Code, string Slug, string? Country, bool IsActive, bool IsPopular);
+public record CreateMakeDto(string Name, string? Country, bool? IsActive, bool? IsPopular, string? Slug = null);
+public record UpdateMakeDto(string? Name, string? Country, bool? IsActive, bool? IsPopular, string? Slug = null);
 
-public record ModelDto(int Id, string Name, string Code, int MakeId, bool IsActive, bool IsPopular);
-public record CreateModelDto(string Name, int MakeId, bool? IsActive, bool? IsPopular);
-public record UpdateModelDto(string? Name, int? MakeId, bool? IsActive, bool? IsPopular);
+public record ModelDto(int Id, string Name, string Code, string Slug, int MakeId, bool IsActive, bool IsPopular);
+public record CreateModelDto(string Name, int MakeId, bool? IsActive, bool? IsPopular, string? Slug = null);
+public record UpdateModelDto(string? Name, int? MakeId, bool? IsActive, bool? IsPopular, string? Slug = null);
 
-public record GenerationDto(int Id, string Name, short? StartYear, short? EndYear, int ModelId);
-public record CreateGenerationDto(string Name, int ModelId, short? StartYear, short? EndYear);
-public record UpdateGenerationDto(string? Name, int? ModelId, short? StartYear, short? EndYear);
+public record GenerationDto(int Id, string Name, string Code, short? StartYear, short? EndYear, int ModelId);
+public record CreateGenerationDto(string Name, int ModelId, short? StartYear, short? EndYear, string? Code = null);
+public record UpdateGenerationDto(string? Name, int? ModelId, short? StartYear, short? EndYear, string? Code = null);
 
 public record VariantDto(int Id, string Name, string Code, int DerivativeId, bool IsPopular, bool IsImported);
 public record CreateVariantDto(string Name, int DerivativeId, bool? IsPopular, bool? IsImported);
 public record UpdateVariantDto(string? Name, int? DerivativeId, bool? IsPopular, bool? IsImported);
 
-public record FeatureDto(int Id, string Name, string? Description, int FeatureCategoryId, string? FeatureCategory);
-public record CreateFeatureDto(string Name, string? Description, int FeatureCategoryId);
-public record UpdateFeatureDto(string? Name, string? Description, int? FeatureCategoryId);
+public record FeatureDto(int Id, string Name, string Slug, string? Description, int FeatureCategoryId, string? FeatureCategory);
+public record CreateFeatureDto(string Name, string? Description, int FeatureCategoryId, string? Slug = null);
+public record UpdateFeatureDto(string? Name, string? Description, int? FeatureCategoryId, string? Slug = null);
 
 public record VariantFeatureDto(int VariantId, int FeatureId, bool IsStandard, DateTime AddedDate);
 public record CreateVariantFeatureDto(int VariantId, int FeatureId, bool IsStandard);

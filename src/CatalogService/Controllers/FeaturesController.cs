@@ -82,6 +82,9 @@ public class FeaturesController(CatalogDbContext context, IMapper mapper) : Cont
         var catOk = await context.FeatureCategories.AnyAsync(c => c.Id == dto.FeatureCategoryId);
         if (!catOk) return BadRequest("Invalid FeatureCategoryId");
         var entity = mapper.Map<Feature>(dto);
+        var slug = dto.Slug ?? SlugGenerator.Generate("fr");
+        while (await context.Features.AnyAsync(x => x.Slug == slug)) slug = SlugGenerator.Generate("fr");
+        entity.Slug = slug;
         entity.Code = await GenerateUniqueCodeAsync();
         context.Features.Add(entity);
         try
@@ -114,6 +117,7 @@ public class FeaturesController(CatalogDbContext context, IMapper mapper) : Cont
             entity.FeatureCategoryId = dto.FeatureCategoryId.Value;
         }
         if (dto.Description is not null) entity.Description = dto.Description;
+        if (dto.Slug is not null) entity.Slug = dto.Slug;
         try
         {
             var ok = await context.SaveChangesAsync() > 0;

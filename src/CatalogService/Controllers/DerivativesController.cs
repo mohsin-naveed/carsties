@@ -204,8 +204,8 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
             entity.EngineL = null;
         }
 
-        // Code is derived directly from the composed Name (uppercase, spaces -> '-')
-        entity.Code = await CodeGenerator.NextDerivativeCodeAsync(context, entity.ModelId);
+        // Simple sequential code per spec: DR-###
+        entity.Code = await CodeGenerator.NextDerivativeCodeAsync(context);
         if (!await CodeGenerator.IsCodeUniqueAsync(context, "Derivatives", entity.Code))
             return Conflict($"Code '{entity.Code}' already exists");
         context.Derivatives.Add(entity);
@@ -291,10 +291,16 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
         }
         if (dto.IsActive.HasValue) entity.IsActive = dto.IsActive.Value;
 
+        // Keep derivative enabled if engine data populated
+        if (entity.EngineCC.HasValue || entity.EngineL.HasValue)
+        {
+            entity.IsActive = true;
+        }
+
         // Recompute Code based on Name if name was provided/changed
         if (dto.Name is not null)
         {
-            entity.Code = await CodeGenerator.NextDerivativeCodeAsync(context, entity.ModelId);
+            entity.Code = await CodeGenerator.NextDerivativeCodeAsync(context);
             if (!await CodeGenerator.IsCodeUniqueAsync(context, "Derivatives", entity.Code, id))
                 return Conflict($"Code '{entity.Code}' already exists");
         }

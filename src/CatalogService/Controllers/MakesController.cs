@@ -35,7 +35,12 @@ public class MakesController(CatalogDbContext context, IMapper mapper) : Control
         if (await context.Makes.AnyAsync(x => x.Name == dto.Name))
             return Conflict($"Make '{dto.Name}' already exists");
 
-        var make = new Make { Name = dto.Name, Country = dto.Country, IsActive = dto.IsActive ?? true, IsPopular = dto.IsPopular ?? false, Code = CodeGenerator.MakeCode(dto.Name) };
+        var slug = dto.Slug ?? SlugGenerator.Generate("mk");
+        // Ensure slug uniqueness
+        while (await context.Makes.AnyAsync(x => x.Slug == slug)) slug = SlugGenerator.Generate("mk");
+
+        var code = await CodeGenerator.NextMakeCodeAsync(context);
+        var make = new Make { Name = dto.Name, Country = dto.Country, IsActive = dto.IsActive ?? true, IsPopular = dto.IsPopular ?? false, Code = code, Slug = slug };
         if (!await CodeGenerator.IsCodeUniqueAsync(context, "Makes", make.Code))
             return Conflict($"Code '{make.Code}' already exists");
         context.Makes.Add(make);
@@ -53,13 +58,12 @@ public class MakesController(CatalogDbContext context, IMapper mapper) : Control
         if (!string.IsNullOrWhiteSpace(dto.Name))
         {
             make.Name = dto.Name;
-            make.Code = CodeGenerator.MakeCode(dto.Name);
-            if (!await CodeGenerator.IsCodeUniqueAsync(context, "Makes", make.Code, id))
-                return Conflict($"Code '{make.Code}' already exists");
+            // Code remains sequential; do not change on name update
         }
         if (dto.Country is not null) make.Country = dto.Country;
         if (dto.IsActive.HasValue) make.IsActive = dto.IsActive.Value;
         if (dto.IsPopular.HasValue) make.IsPopular = dto.IsPopular.Value;
+        if (dto.Slug is not null) make.Slug = dto.Slug;
         var ok = await context.SaveChangesAsync() > 0;
         return ok ? Ok() : BadRequest("Failed to update make");
     }

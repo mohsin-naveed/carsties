@@ -2,6 +2,7 @@ using CatalogService.Entities;
 using CatalogService.RequestHelpers;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using System.Text.RegularExpressions;
 
 namespace CatalogService.Data;
 
@@ -53,38 +54,34 @@ public class DbInitializer
         // Seed DriveTypes
         if (!context.DriveTypes.Any())
         {
-            context.DriveTypes.AddRange(
-                new Entities.DriveType { Code = "DT-FWD", Name = "Front Wheel Drive", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-                new Entities.DriveType { Code = "DT-RWD", Name = "Rear Wheel Drive", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-                new Entities.DriveType { Code = "DT-4WD", Name = "Four Wheel Drive", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }
-            );
+            var dtnames = new[] { "Front Wheel Drive", "Rear Wheel Drive", "Four Wheel Drive" };
+            foreach (var dn in dtnames)
+            {
+                var dt = new Entities.DriveType { Name = dn, Code = CodeGenerator.NextDriveTypeCodeAsync(context).GetAwaiter().GetResult(), CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
+                context.DriveTypes.Add(dt);
+                context.SaveChanges();
+            }
         }
         // Ensure reference data exists regardless of other data
         if (!context.Transmissions.Any())
         {
-            var transmissions = new List<Transmission>
+            var transNames = new[] { "Automatic", "Manual", "CVT", "Dual-Clutch" };
+            foreach (var tn in transNames)
             {
-                new() { Name = "Automatic", Code = CodeGenerator.TransmissionCode("Automatic") },
-                new() { Name = "Manual", Code = CodeGenerator.TransmissionCode("Manual") },
-                new() { Name = "CVT", Code = CodeGenerator.TransmissionCode("CVT") },
-                new() { Name = "Dual-Clutch", Code = CodeGenerator.TransmissionCode("Dual-Clutch") }
-            };
-            context.Transmissions.AddRange(transmissions);
+                var t = new Transmission { Name = tn, Code = CodeGenerator.NextTransmissionCodeAsync(context).GetAwaiter().GetResult() };
+                context.Transmissions.Add(t);
+                context.SaveChanges();
+            }
         }
         if (!context.FuelTypes.Any())
         {
-            var fuelTypes = new List<FuelType>
+            var fuelNames = new[] { "Petrol", "Diesel", "Electric", "Hybrid", "PHEV", "CNG", "LPG", "REEV" };
+            foreach (var fn in fuelNames)
             {
-                new() { Name = "Petrol" },
-                new() { Name = "Diesel" },
-                new() { Name = "Electric" },
-                new() { Name = "Hybrid" },
-                new() { Name = "PHEV" },
-                new() { Name = "CNG" },
-                new() { Name = "LPG" },
-                new() { Name = "REEV" }
-            };
-            context.FuelTypes.AddRange(fuelTypes);
+                var f = new FuelType { Name = fn, Code = CodeGenerator.NextFuelTypeCodeAsync(context).GetAwaiter().GetResult() };
+                context.FuelTypes.Add(f);
+                context.SaveChanges();
+            }
         }
         if (!context.BodyTypes.Any())
         {
@@ -92,31 +89,21 @@ public class DbInitializer
             {
                 "Sedan","Hatchback","Crossover","SUV","MPV","Compact sedan","Compact SUV","Convertible","Coupe","Double Cabin","High Roof","Micro Van","Mini Van","Mini Vehicles","Off-Road","Vehicles","Pick Up","Single Cabin","Station Wagon","Truck","Van"
             };
-            var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var bodyTypes = new List<BodyType>();
             foreach (var n in names)
             {
-                var baseCode = CodeGenerator.BodyTypeCode(n);
-                var code = baseCode;
-                var i = 2;
-                while (used.Contains(code))
-                {
-                    code = $"{baseCode}-{i}";
-                    i++;
-                }
-                used.Add(code);
-                bodyTypes.Add(new BodyType { Name = n, Code = code });
+                var bt = new BodyType { Name = n, Code = CodeGenerator.NextBodyTypeCodeAsync(context).GetAwaiter().GetResult() };
+                context.BodyTypes.Add(bt);
+                context.SaveChanges();
             }
-            context.BodyTypes.AddRange(bodyTypes);
         }
         // Seed Feature Categories
         if (!context.FeatureCategories.Any())
         {
             context.FeatureCategories.AddRange(
-                new FeatureCategory { Code = CodeGenerator.MakeCode("Comfort"), Name = "Comfort", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-                new FeatureCategory { Code = CodeGenerator.MakeCode("Exterior"), Name = "Exterior", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-                new FeatureCategory { Code = CodeGenerator.MakeCode("Interior"), Name = "Interior", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-                new FeatureCategory { Code = CodeGenerator.MakeCode("Safety"), Name = "Safety", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }
+                new FeatureCategory { Code = "FC-001", Name = "Comfort", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+                new FeatureCategory { Code = "FC-002", Name = "Exterior", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+                new FeatureCategory { Code = "FC-003", Name = "Interior", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+                new FeatureCategory { Code = "FC-004", Name = "Safety", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }
             );
         }
         context.SaveChanges();
@@ -125,13 +112,13 @@ public class DbInitializer
         if (legacyComfort != null)
         {
             legacyComfort.Name = "Comfort";
-            legacyComfort.Code = CodeGenerator.MakeCode("Comfort");
+            legacyComfort.Code = "FC-001";
         }
         var legacySafety = context.FeatureCategories.FirstOrDefault(c => c.Name == "SafetySecurity");
         if (legacySafety != null)
         {
             legacySafety.Name = "Safety";
-            legacySafety.Code = CodeGenerator.MakeCode("Safety");
+            legacySafety.Code = "FC-004";
         }
         context.SaveChanges();
         var catMap = context.FeatureCategories.ToDictionary(c => c.Name, c => c.Id);
@@ -195,6 +182,7 @@ public class DbInitializer
             {
                 Name = n,
                 Code = code,
+                Slug = SlugGenerator.Generate("fr"),
                 Description = null,
                 FeatureCategoryId = catMap.ContainsKey("Comfort") ? catMap["Comfort"] : catMap.Values.First()
             });
@@ -246,63 +234,88 @@ public class DbInitializer
             addFeatures(v, feats);
             return v;
         }
-        // Seed Pakistan market makes/models
+        // Seed Pakistan market makes/models (allocate codes sequentially within batch)
         var makes = new List<Make>
         {
             new()
             {
-                Name = "Toyota", Code = RequestHelpers.CodeGenerator.MakeCode("Toyota"), IsActive = true, IsPopular = true,
+                Name = "Toyota", IsActive = true, IsPopular = true,
                 Models =
                 {
-                    new Model { Name = "Corolla", Code = RequestHelpers.CodeGenerator.ModelCode("Corolla"), IsActive = true, IsPopular = true },
-                    new Model { Name = "Yaris", Code = RequestHelpers.CodeGenerator.ModelCode("Yaris"), IsActive = true, IsPopular = true },
-                    new Model { Name = "Fortuner", Code = RequestHelpers.CodeGenerator.ModelCode("Fortuner"), IsActive = true, IsPopular = false }
+                    new Model { Name = "Corolla", IsActive = true, IsPopular = true },
+                    new Model { Name = "Yaris", IsActive = true, IsPopular = true },
+                    new Model { Name = "Fortuner", IsActive = true, IsPopular = false }
                 }
             },
             new()
             {
-                Name = "Honda", Code = RequestHelpers.CodeGenerator.MakeCode("Honda"), IsActive = true, IsPopular = true,
+                Name = "Honda", IsActive = true, IsPopular = true,
                 Models =
                 {
-                    new Model { Name = "Civic", Code = RequestHelpers.CodeGenerator.ModelCode("Civic"), IsActive = true, IsPopular = true },
-                    new Model { Name = "City", Code = RequestHelpers.CodeGenerator.ModelCode("City"), IsActive = true, IsPopular = false }
+                    new Model { Name = "Civic", IsActive = true, IsPopular = true },
+                    new Model { Name = "City", IsActive = true, IsPopular = false }
                 }
             },
             new()
             {
-                Name = "Suzuki", Code = RequestHelpers.CodeGenerator.MakeCode("Suzuki"), IsActive = true, IsPopular = true,
+                Name = "Suzuki", IsActive = true, IsPopular = true,
                 Models =
                 {
-                    new Model { Name = "Alto", Code = RequestHelpers.CodeGenerator.ModelCode("Alto"), IsActive = true, IsPopular = true },
-                    new Model { Name = "Swift", Code = RequestHelpers.CodeGenerator.ModelCode("Swift"), IsActive = true, IsPopular = true }
+                    new Model { Name = "Alto", IsActive = true, IsPopular = true },
+                    new Model { Name = "Swift", IsActive = true, IsPopular = true }
                 }
             },
             new()
             {
-                Name = "Kia", Code = RequestHelpers.CodeGenerator.MakeCode("Kia"), IsActive = true, IsPopular = false,
+                Name = "Kia", IsActive = true, IsPopular = false,
                 Models =
                 {
-                    new Model { Name = "Sportage", Code = RequestHelpers.CodeGenerator.ModelCode("Sportage"), IsActive = true, IsPopular = true },
-                    new Model { Name = "Stonic", Code = RequestHelpers.CodeGenerator.ModelCode("Stonic"), IsActive = true, IsPopular = false }
+                    new Model { Name = "Sportage", IsActive = true, IsPopular = true },
+                    new Model { Name = "Stonic", IsActive = true, IsPopular = false }
                 }
             },
             new()
             {
-                Name = "BMW", Code = RequestHelpers.CodeGenerator.MakeCode("BMW"), IsActive = true, IsPopular = true,
+                Name = "BMW", IsActive = true, IsPopular = true,
                 Models =
                 {
-                    new Model { Name = "3 Series", Code = RequestHelpers.CodeGenerator.ModelCode("3 Series"), IsActive = true, IsPopular = false }
+                    new Model { Name = "3 Series", IsActive = true, IsPopular = false }
                 }
             },
             new()
             {
-                Name = "Audi", Code = RequestHelpers.CodeGenerator.MakeCode("Audi"), IsActive = true, IsPopular = false,
+                Name = "Audi", IsActive = true, IsPopular = false,
                 Models =
                 {
-                    new Model { Name = "A4", Code = RequestHelpers.CodeGenerator.ModelCode("A4"), IsActive = true, IsPopular = false }
+                    new Model { Name = "A4", IsActive = true, IsPopular = false }
                 }
             }
         };
+
+        // Helper to parse numeric part of codes like XX-001
+        static int ParseSeq(string code)
+        {
+            var m = Regex.Match(code ?? string.Empty, "^[A-Z]{2}-(?<n>\\d+)$");
+            return m.Success ? int.Parse(m.Groups["n"].Value) : 0;
+        }
+
+        // Allocate Make codes
+        var mkStartCode = RequestHelpers.CodeGenerator.NextMakeCodeAsync(context).GetAwaiter().GetResult();
+        var mkSeq = ParseSeq(mkStartCode);
+        for (int i = 0; i < makes.Count; i++)
+        {
+            makes[i].Code = $"MK-{(mkSeq + i):000}";
+            makes[i].Slug = SlugGenerator.Generate("mk");
+        }
+        // Allocate Model codes
+        var allModelsSeed = makes.SelectMany(m => m.Models).ToList();
+        var mdStartCode = RequestHelpers.CodeGenerator.NextModelCodeAsync(context).GetAwaiter().GetResult();
+        var mdSeq = ParseSeq(mdStartCode);
+        for (int i = 0; i < allModelsSeed.Count; i++)
+        {
+            allModelsSeed[i].Code = $"MD-{(mdSeq + i):000}";
+            allModelsSeed[i].Slug = SlugGenerator.Generate("md");
+        }
 
         context.Makes.AddRange(makes);
         context.SaveChanges();
@@ -310,10 +323,16 @@ public class DbInitializer
         // Create two generations per model
         var modelsForGen = context.Models.ToList();
         var generations = new List<Generation>();
+        var gnStartCode = RequestHelpers.CodeGenerator.NextGenerationCodeAsync(context).GetAwaiter().GetResult();
+        var gnSeq = ParseSeq(gnStartCode);
         foreach (var m in modelsForGen)
         {
-            generations.Add(new Generation { Name = "Gen 1", ModelId = m.Id, StartYear = 2016, EndYear = 2020 });
-            generations.Add(new Generation { Name = "Gen 2", ModelId = m.Id, StartYear = 2021, EndYear = null });
+            var g1 = new Generation { Name = "Gen 1", ModelId = m.Id, StartYear = 2016, EndYear = 2020, Code = $"GN-{gnSeq:000}" };
+            generations.Add(g1);
+            gnSeq++;
+            var g2 = new Generation { Name = "Gen 2", ModelId = m.Id, StartYear = 2021, EndYear = null, Code = $"GN-{gnSeq:000}" };
+            generations.Add(g2);
+            gnSeq++;
         }
         context.Generations.AddRange(generations);
         context.SaveChanges();
@@ -330,7 +349,9 @@ public class DbInitializer
 
         var derivatives = new List<Derivative>();
         var allModels = context.Models.Include(m => m.Make).ToList();
-        var driveMap = context.DriveTypes.ToDictionary(d => d.Code, d => d.Id);
+        var driveMap = context.DriveTypes.ToDictionary(d => d.Name, d => d.Id);
+        var drStartCode = RequestHelpers.CodeGenerator.NextDerivativeCodeAsync(context).GetAwaiter().GetResult();
+        var drSeq = ParseSeq(drStartCode);
         foreach (var m in allModels)
         {
             var bodyId = m.Name is "Alto" or "Swift" or "Yaris" ? hatchId : (m.Name is "Fortuner" or "Sportage" or "Stonic" ? suvId : saloonId);
@@ -340,7 +361,7 @@ public class DbInitializer
                 ModelId = m.Id,
                 GenerationId = gen2ByModelId[m.Id],
                 BodyTypeId = bodyId,
-                DriveTypeId = (m.Name is "3 Series" or "A4") ? driveMap["DT-RWD"] : driveMap["DT-FWD"],
+                DriveTypeId = (m.Name is "3 Series" or "A4") ? driveMap["Rear Wheel Drive"] : driveMap["Front Wheel Drive"],
                 Seats = 5,
                 Doors = bodyId == suvId ? (short)5 : (short)4,
                 EngineCC = null,
@@ -348,10 +369,11 @@ public class DbInitializer
                 TransmissionId = transMap["Automatic"],
                 FuelTypeId = fuelMap["Petrol"],
                 BatteryKWh = null,
-                IsActive = true
+                IsActive = true,
+                Code = $"DR-{drSeq:000}"
             };
-            d.Code = RequestHelpers.CodeGenerator.NextDerivativeCodeAsync(context, d.ModelId).GetAwaiter().GetResult();
             derivatives.Add(d);
+            drSeq++;
 
             // Optional hybrid derivative for select models
             if (m.Name is "Corolla" or "Civic" or "Yaris")
@@ -362,7 +384,7 @@ public class DbInitializer
                     ModelId = m.Id,
                     GenerationId = gen2ByModelId[m.Id],
                     BodyTypeId = bodyId,
-                    DriveTypeId = driveMap["FWD"],
+                    DriveTypeId = driveMap["Front Wheel Drive"],
                     Seats = 5,
                     Doors = bodyId == suvId ? (short)5 : (short)4,
                     EngineCC = null,
@@ -370,10 +392,11 @@ public class DbInitializer
                     TransmissionId = transMap["CVT"],
                     FuelTypeId = fuelMap["Hybrid"],
                     BatteryKWh = 1.2m,
-                    IsActive = true
+                    IsActive = true,
+                    Code = $"DR-{drSeq:000}"
                 };
-                dh.Code = RequestHelpers.CodeGenerator.NextDerivativeCodeAsync(context, dh.ModelId).GetAwaiter().GetResult();
                 derivatives.Add(dh);
+                drSeq++;
             }
         }
         context.Derivatives.AddRange(derivatives);
@@ -382,6 +405,8 @@ public class DbInitializer
         // Variants under each derivative
         var allDerivatives = context.Derivatives.Include(d => d.Model).ToList();
         var variants = new List<Variant>();
+        var vrStartCode = RequestHelpers.CodeGenerator.NextVariantCodeAsync(context).GetAwaiter().GetResult();
+        var vrSeq = ParseSeq(vrStartCode);
         foreach (var d in allDerivatives)
         {
             var baseVariant = BuildVariant(
@@ -391,10 +416,11 @@ public class DbInitializer
                 fuelType: context.FuelTypes.First(f => f.Id == d.FuelTypeId!).Name,
                 featureFinder: F,
                 addFeatures: AddFeatures,
-                featureNames: new[] { "Air Conditioning", "ABS", "Bluetooth" }
+                featureNames: new[] { "Air Conditioning", "ABS", "Power Steering" }
             );
             baseVariant.DerivativeId = d.Id;
-            baseVariant.Code = RequestHelpers.CodeGenerator.NextVariantCodeAsync(context, d.Id).GetAwaiter().GetResult();
+            baseVariant.Code = $"VR-{vrSeq:000}";
+            vrSeq++;
 
             var premiumVariant = BuildVariant(
                 name: "Premium",
@@ -403,10 +429,11 @@ public class DbInitializer
                 fuelType: context.FuelTypes.First(f => f.Id == d.FuelTypeId!).Name,
                 featureFinder: F,
                 addFeatures: AddFeatures,
-                featureNames: new[] { "Air Conditioning", "ABS", "Bluetooth", "Cruise Control", "Sunroof" }
+                featureNames: new[] { "Air Conditioning", "ABS", "Power Steering", "Cruise Control", "Sun Roof" }
             );
             premiumVariant.DerivativeId = d.Id;
-            premiumVariant.Code = RequestHelpers.CodeGenerator.NextVariantCodeAsync(context, d.Id).GetAwaiter().GetResult();
+            premiumVariant.Code = $"VR-{vrSeq:000}";
+            vrSeq++;
 
             variants.Add(baseVariant);
             variants.Add(premiumVariant);

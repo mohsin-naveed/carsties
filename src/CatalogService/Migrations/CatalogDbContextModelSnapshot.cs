@@ -193,6 +193,11 @@ namespace CatalogService.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
@@ -201,6 +206,9 @@ namespace CatalogService.Migrations
                     b.HasIndex("FeatureCategoryId");
 
                     b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("Slug")
                         .IsUnique();
 
                     b.ToTable("Features", (string)null);
@@ -250,12 +258,20 @@ namespace CatalogService.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
 
                     b.HasIndex("Name")
                         .IsUnique();
@@ -270,6 +286,11 @@ namespace CatalogService.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
 
                     b.Property<short?>("EndYear")
                         .HasColumnType("smallint");
@@ -286,6 +307,9 @@ namespace CatalogService.Migrations
                         .HasColumnType("smallint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
 
                     b.HasIndex("ModelId");
 
@@ -324,12 +348,20 @@ namespace CatalogService.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
                         .IsUnique();
 
                     b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("Slug")
                         .IsUnique();
 
                     b.ToTable("Makes", (string)null);
@@ -366,12 +398,20 @@ namespace CatalogService.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
                         .IsUnique();
 
                     b.HasIndex("MakeId");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
 
                     b.ToTable("Models", (string)null);
                 });

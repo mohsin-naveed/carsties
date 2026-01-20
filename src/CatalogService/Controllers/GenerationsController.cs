@@ -141,8 +141,15 @@ public class GenerationsController(CatalogDbContext context, IMapper mapper) : C
             return BadRequest("Invalid ModelId");
         if (dto.StartYear.HasValue && dto.EndYear.HasValue && dto.StartYear > dto.EndYear)
             return BadRequest("StartYear cannot be greater than EndYear");
-
         var entity = mapper.Map<Generation>(dto);
+        // assign code if not provided
+        if (string.IsNullOrWhiteSpace(entity.Code))
+        {
+            entity.Code = await RequestHelpers.CodeGenerator.NextGenerationCodeAsync(context);
+        }
+        // ensure uniqueness
+        if (await context.Generations.AnyAsync(g => g.Code == entity.Code))
+            return Conflict($"Code '{entity.Code}' already exists");
         context.Generations.Add(entity);
         var ok = await context.SaveChangesAsync() > 0;
         if (!ok) return BadRequest("Failed to create generation");
@@ -164,6 +171,12 @@ public class GenerationsController(CatalogDbContext context, IMapper mapper) : C
         }
         if (dto.StartYear.HasValue) entity.StartYear = dto.StartYear;
         if (dto.EndYear.HasValue) entity.EndYear = dto.EndYear;
+        if (!string.IsNullOrWhiteSpace(dto.Code))
+        {
+            if (await context.Generations.AnyAsync(g => g.Code == dto.Code && g.Id != id))
+                return Conflict($"Code '{dto.Code}' already exists");
+            entity.Code = dto.Code!;
+        }
         if (entity.StartYear.HasValue && entity.EndYear.HasValue && entity.StartYear > entity.EndYear)
             return BadRequest("StartYear cannot be greater than EndYear");
 

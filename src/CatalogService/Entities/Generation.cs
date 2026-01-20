@@ -4,6 +4,7 @@ public class Generation
 {
     public int Id { get; set; }
     public required string Name { get; set; }
+    public string Code { get; set; } = string.Empty;
     public short? StartYear { get; set; }
     public short? EndYear { get; set; }
 

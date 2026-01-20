@@ -7,87 +7,39 @@ namespace CatalogService.RequestHelpers;
 
 public static class CodeGenerator
 {
-    private static string ShortSlug(string input, int maxLen = 4)
+    private static async Task<string> NextCodeAsync(IQueryable<string> codeQuery, string prefix, int width = 3)
     {
-        var upper = Normalize(input);
-        if (string.IsNullOrEmpty(upper)) return "XXX";
-        return upper.Length <= maxLen ? upper : upper.Substring(0, maxLen);
-    }
-
-    private static string Prefixed(string prefix, string name)
-    {
-        return prefix + "-" + ShortSlug(name);
-    }
-    private static string Normalize(string input, bool dashes = false)
-    {
-        var upper = (input ?? string.Empty).Trim().ToUpperInvariant();
-        if (dashes)
-        {
-            upper = Regex.Replace(upper, @"\s+", "-");
-            upper = Regex.Replace(upper, @"[^A-Z0-9-]", "");
-            upper = Regex.Replace(upper, @"-+", "-");
-        }
-        else
-        {
-            upper = Regex.Replace(upper, @"\s+", "");
-            upper = Regex.Replace(upper, @"[^A-Z0-9]", "");
-        }
-        return upper;
-    }
-
-    public static string MakeCode(string name) => Prefixed("MK", name);
-    public static string ModelCode(string name) => Prefixed("MD", name);
-    // Legacy FE- short code generator (kept for backward compat, not used for new features)
-    public static string FeatureCode(string name) => Prefixed("FE", name);
-
-    public static async Task<string> NextFeatureCodeAsync(CatalogDbContext ctx)
-    {
-        // Find the highest FR-### code and increment, else start at FR-001
+        var list = await codeQuery.ToListAsync();
         var max = 0;
-        var list = await ctx.Features.Select(f => f.Code).ToListAsync();
         foreach (var c in list)
         {
             if (string.IsNullOrWhiteSpace(c)) continue;
-            if (c.StartsWith("FR-", StringComparison.OrdinalIgnoreCase))
-            {
-                var numPart = c.Substring(3);
-                if (int.TryParse(numPart, out var n) && n > max) max = n;
-            }
+            var up = c.ToUpperInvariant();
+            var p = prefix.ToUpperInvariant() + "-";
+            if (!up.StartsWith(p)) continue;
+            var numPart = up.Substring(p.Length);
+            if (int.TryParse(numPart, out var n) && n > max) max = n;
         }
         var next = max + 1;
-        var candidate = $"FR-{next:000}";
+        var candidate = $"{prefix.ToUpperInvariant()}-{next.ToString(new string('0', width))}";
         while (list.Any(x => string.Equals(x, candidate, StringComparison.OrdinalIgnoreCase)))
         {
             next++;
-            candidate = $"FR-{next:000}";
+            candidate = $"{prefix.ToUpperInvariant()}-{next.ToString(new string('0', width))}";
         }
         return candidate;
     }
-    public static string TransmissionCode(string name) => Prefixed("TR", name);
-    public static string BodyTypeCode(string name) => Prefixed("BT", name);
 
-    // New code rules per spec: DR-{MakeCode}-{ModelCode}-{0001}
-    public static async Task<string> NextDerivativeCodeAsync(CatalogDbContext ctx, int modelId)
-    {
-        var model = await ctx.Models.FirstAsync(m => m.Id == modelId);
-        var make = await ctx.Makes.FirstAsync(mk => mk.Id == model.MakeId);
-        var baseCode = $"DR-{make.Code}-{model.Code}";
-        var count = await ctx.Derivatives.CountAsync(d => d.ModelId == modelId);
-        var seq = (count + 1).ToString("0000");
-        return $"{baseCode}-{seq}";
-    }
-
-    // Variant code: VR-{MakeCode}-{ModelCode}-{0001} per derivative
-    public static async Task<string> NextVariantCodeAsync(CatalogDbContext ctx, int derivativeId)
-    {
-        var d = await ctx.Derivatives.FirstAsync(x => x.Id == derivativeId);
-        var model = await ctx.Models.FirstAsync(m => m.Id == d.ModelId);
-        var make = await ctx.Makes.FirstAsync(mk => mk.Id == model.MakeId);
-        var baseCode = $"VR-{make.Code}-{model.Code}";
-        var count = await ctx.Variants.CountAsync(v => v.DerivativeId == derivativeId);
-        var seq = (count + 1).ToString("0000");
-        return $"{baseCode}-{seq}";
-    }
+    public static Task<string> NextMakeCodeAsync(CatalogDbContext ctx) => NextCodeAsync(ctx.Makes.Select(m => m.Code), "MK");
+    public static Task<string> NextModelCodeAsync(CatalogDbContext ctx) => NextCodeAsync(ctx.Models.Select(m => m.Code), "MD");
+    public static Task<string> NextGenerationCodeAsync(CatalogDbContext ctx) => NextCodeAsync(ctx.Generations.Select(g => g.Code), "GN");
+    public static Task<string> NextDerivativeCodeAsync(CatalogDbContext ctx) => NextCodeAsync(ctx.Derivatives.Select(d => d.Code), "DR", 3);
+    public static Task<string> NextVariantCodeAsync(CatalogDbContext ctx) => NextCodeAsync(ctx.Variants.Select(v => v.Code), "VR", 3);
+    public static Task<string> NextBodyTypeCodeAsync(CatalogDbContext ctx) => NextCodeAsync(ctx.BodyTypes.Select(b => b.Code), "BT");
+    public static Task<string> NextDriveTypeCodeAsync(CatalogDbContext ctx) => NextCodeAsync(ctx.DriveTypes.Select(d => d.Code), "DT");
+    public static Task<string> NextFuelTypeCodeAsync(CatalogDbContext ctx) => NextCodeAsync(ctx.FuelTypes.Select(f => f.Code), "FT");
+    public static Task<string> NextTransmissionCodeAsync(CatalogDbContext ctx) => NextCodeAsync(ctx.Transmissions.Select(t => t.Code), "TR");
+    public static Task<string> NextFeatureCodeAsync(CatalogDbContext ctx) => NextCodeAsync(ctx.Features.Select(f => f.Code), "FR");
 
     public static async Task<bool> IsCodeUniqueAsync(CatalogDbContext ctx, string table, string code, int? excludeId = null)
     {
@@ -98,6 +50,11 @@ public static class CodeGenerator
             "Models" => !await ctx.Models.AnyAsync(x => x.Code == code && (excludeId == null || x.Id != excludeId.Value)),
             "Derivatives" => !await ctx.Derivatives.AnyAsync(x => x.Code == code && (excludeId == null || x.Id != excludeId.Value)),
             "Variants" => !await ctx.Variants.AnyAsync(x => x.Code == code && (excludeId == null || x.Id != excludeId.Value)),
+            "Generations" => !await ctx.Generations.AnyAsync(x => x.Code == code && (excludeId == null || x.Id != excludeId.Value)),
+            "BodyTypes" => !await ctx.BodyTypes.AnyAsync(x => x.Code == code && (excludeId == null || x.Id != excludeId.Value)),
+            "DriveTypes" => !await ctx.DriveTypes.AnyAsync(x => x.Code == code && (excludeId == null || x.Id != excludeId.Value)),
+            "FuelTypes" => !await ctx.FuelTypes.AnyAsync(x => x.Code == code && (excludeId == null || x.Id != excludeId.Value)),
+            "Transmissions" => !await ctx.Transmissions.AnyAsync(x => x.Code == code && (excludeId == null || x.Id != excludeId.Value)),
             _ => true
         };
     }

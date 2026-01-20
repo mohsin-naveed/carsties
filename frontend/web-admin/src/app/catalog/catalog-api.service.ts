@@ -4,25 +4,25 @@ import { Observable } from 'rxjs';
 import { shareReplay } from 'rxjs/operators';
 
 // DTO interfaces mirroring backend records
-export interface MakeDto { id: number; name: string; code: string; country?: string; isActive: boolean; isPopular: boolean; }
-export interface CreateMakeDto { name: string; country?: string; isActive?: boolean; isPopular?: boolean; }
-export interface UpdateMakeDto { name?: string; country?: string; isActive?: boolean; isPopular?: boolean; }
+export interface MakeDto { id: number; name: string; code: string; slug: string; country?: string; isActive: boolean; isPopular: boolean; }
+export interface CreateMakeDto { name: string; country?: string; isActive?: boolean; isPopular?: boolean; slug?: string; }
+export interface UpdateMakeDto { name?: string; country?: string; isActive?: boolean; isPopular?: boolean; slug?: string; }
 
-export interface ModelDto { id: number; name: string; code: string; makeId: number; isActive: boolean; isPopular: boolean; }
-export interface CreateModelDto { name: string; makeId: number; isActive?: boolean; isPopular?: boolean; }
-export interface UpdateModelDto { name?: string; makeId?: number; isActive?: boolean; isPopular?: boolean; }
+export interface ModelDto { id: number; name: string; code: string; slug: string; makeId: number; isActive: boolean; isPopular: boolean; }
+export interface CreateModelDto { name: string; makeId: number; isActive?: boolean; isPopular?: boolean; slug?: string; }
+export interface UpdateModelDto { name?: string; makeId?: number; isActive?: boolean; isPopular?: boolean; slug?: string; }
 
-export interface GenerationDto { id: number; name: string; startYear?: number; endYear?: number; modelId: number; }
-export interface CreateGenerationDto { name: string; modelId: number; startYear?: number; endYear?: number; }
-export interface UpdateGenerationDto { name?: string; modelId?: number; startYear?: number; endYear?: number; }
+export interface GenerationDto { id: number; name: string; code: string; startYear?: number; endYear?: number; modelId: number; }
+export interface CreateGenerationDto { name: string; modelId: number; startYear?: number; endYear?: number; code?: string; }
+export interface UpdateGenerationDto { name?: string; modelId?: number; startYear?: number; endYear?: number; code?: string; }
 
 export interface VariantDto { id: number; name: string; code: string; derivativeId: number; isPopular: boolean; isImported: boolean; }
 export interface CreateVariantDto { name: string; derivativeId: number; isPopular?: boolean; isImported?: boolean; }
 export interface UpdateVariantDto { name?: string; derivativeId?: number; isPopular?: boolean; isImported?: boolean; }
 
-export interface FeatureDto { id: number; name: string; description?: string; featureCategoryId: number; featureCategory?: string; }
-export interface CreateFeatureDto { name: string; description?: string; featureCategoryId: number; }
-export interface UpdateFeatureDto { name?: string; description?: string; featureCategoryId?: number; }
+export interface FeatureDto { id: number; name: string; slug: string; description?: string; featureCategoryId: number; featureCategory?: string; }
+export interface CreateFeatureDto { name: string; description?: string; featureCategoryId: number; slug?: string; }
+export interface UpdateFeatureDto { name?: string; description?: string; featureCategoryId?: number; slug?: string; }
 
 export interface VariantFeatureDto { variantId: number; featureId: number; isStandard: boolean; addedDate: string; }
 export interface CreateVariantFeatureDto { variantId: number; featureId: number; isStandard: boolean; }

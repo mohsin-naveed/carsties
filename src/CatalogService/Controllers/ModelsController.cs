@@ -98,7 +98,10 @@ public class ModelsController(CatalogDbContext context, IMapper mapper) : Contro
     {
         if (!await context.Makes.AnyAsync(x => x.Id == dto.MakeId))
             return BadRequest("Invalid MakeId");
-        var entity = new Model { Name = dto.Name, MakeId = dto.MakeId, IsActive = dto.IsActive ?? true, IsPopular = dto.IsPopular ?? false, Code = CodeGenerator.ModelCode(dto.Name) };
+        var slug = dto.Slug ?? SlugGenerator.Generate("md");
+        while (await context.Models.AnyAsync(x => x.Slug == slug)) slug = SlugGenerator.Generate("md");
+        var code = await CodeGenerator.NextModelCodeAsync(context);
+        var entity = new Model { Name = dto.Name, MakeId = dto.MakeId, IsActive = dto.IsActive ?? true, IsPopular = dto.IsPopular ?? false, Code = code, Slug = slug };
         if (!await CodeGenerator.IsCodeUniqueAsync(context, "Models", entity.Code))
             return Conflict($"Code '{entity.Code}' already exists");
         context.Models.Add(entity);
@@ -116,9 +119,7 @@ public class ModelsController(CatalogDbContext context, IMapper mapper) : Contro
         if (!string.IsNullOrWhiteSpace(dto.Name))
         {
             entity.Name = dto.Name;
-            entity.Code = CodeGenerator.ModelCode(dto.Name);
-            if (!await CodeGenerator.IsCodeUniqueAsync(context, "Models", entity.Code, id))
-                return Conflict($"Code '{entity.Code}' already exists");
+            // Code remains sequential; do not change on name update
         }
         if (dto.MakeId.HasValue)
         {
@@ -128,6 +129,7 @@ public class ModelsController(CatalogDbContext context, IMapper mapper) : Contro
         }
         if (dto.IsActive.HasValue) entity.IsActive = dto.IsActive.Value;
         if (dto.IsPopular.HasValue) entity.IsPopular = dto.IsPopular.Value;
+        if (dto.Slug is not null) entity.Slug = dto.Slug;
         var ok = await context.SaveChangesAsync() > 0;
         return ok ? Ok() : BadRequest("Failed to update model");
     }

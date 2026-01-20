@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CatalogService.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCleanSlate : Migration
+    public partial class InitialCatalog : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -64,7 +64,8 @@ namespace CatalogService.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
+                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -79,6 +80,7 @@ namespace CatalogService.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Slug = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
                     Country = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     IsPopular = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
@@ -110,6 +112,7 @@ namespace CatalogService.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Code = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
+                    Slug = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
                     Description = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: true),
                     FeatureCategoryId = table.Column<int>(type: "integer", nullable: false)
                 },
@@ -132,6 +135,7 @@ namespace CatalogService.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Slug = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     IsPopular = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     MakeId = table.Column<int>(type: "integer", nullable: false)
@@ -154,6 +158,7 @@ namespace CatalogService.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Code = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
                     StartYear = table.Column<short>(type: "smallint", nullable: true),
                     EndYear = table.Column<short>(type: "smallint", nullable: true),
                     ModelId = table.Column<int>(type: "integer", nullable: false)
@@ -381,9 +386,27 @@ namespace CatalogService.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Features_Slug",
+                table: "Features",
+                column: "Slug",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FuelTypes_Code",
+                table: "FuelTypes",
+                column: "Code",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_FuelTypes_Name",
                 table: "FuelTypes",
                 column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Generations_Code",
+                table: "Generations",
+                column: "Code",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -404,6 +427,12 @@ namespace CatalogService.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Makes_Slug",
+                table: "Makes",
+                column: "Slug",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Models_Code",
                 table: "Models",
                 column: "Code",
@@ -413,6 +442,12 @@ namespace CatalogService.Migrations
                 name: "IX_Models_MakeId",
                 table: "Models",
                 column: "MakeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Models_Slug",
+                table: "Models",
+                column: "Slug",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_TransmissionType_Code",

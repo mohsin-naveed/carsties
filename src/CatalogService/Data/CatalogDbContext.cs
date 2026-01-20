@@ -33,6 +33,8 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(x => x.Country).HasMaxLength(100);
             entity.Property(x => x.IsActive).HasDefaultValue(true);
             entity.Property(x => x.IsPopular).HasDefaultValue(false);
+            entity.Property(x => x.Slug).IsRequired().HasMaxLength(120);
+            entity.HasIndex(x => x.Slug).IsUnique();
         });
 
         modelBuilder.Entity<Model>(entity =>
@@ -44,6 +46,8 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.HasIndex(x => x.Code).IsUnique();
             entity.Property(x => x.IsActive).HasDefaultValue(true);
             entity.Property(x => x.IsPopular).HasDefaultValue(false);
+            entity.Property(x => x.Slug).IsRequired().HasMaxLength(120);
+            entity.HasIndex(x => x.Slug).IsUnique();
             entity.HasOne(x => x.Make)
                 .WithMany(x => x.Models)
                 .HasForeignKey(x => x.MakeId)
@@ -55,6 +59,8 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.ToTable("Generations");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.Code).IsRequired().HasMaxLength(120);
+            entity.HasIndex(x => x.Code).IsUnique();
             entity.HasOne(x => x.Model)
                 .WithMany(x => x.Generations)
                 .HasForeignKey(x => x.ModelId)
@@ -94,6 +100,8 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.HasIndex(x => x.Name).IsUnique();
             entity.Property(x => x.Code).IsRequired().HasMaxLength(120);
             entity.HasIndex(x => x.Code).IsUnique();
+            entity.Property(x => x.Slug).IsRequired().HasMaxLength(120);
+            entity.HasIndex(x => x.Slug).IsUnique();
             entity.Property(x => x.Description).HasMaxLength(250);
             entity.HasOne(x => x.Category)
                 .WithMany(c => c.Features)
@@ -136,6 +144,8 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).IsRequired().HasMaxLength(50);
             entity.HasIndex(x => x.Name).IsUnique();
+            entity.Property(x => x.Code).IsRequired().HasMaxLength(50);
+            entity.HasIndex(x => x.Code).IsUnique();
         });
 
         modelBuilder.Entity<BodyType>(entity =>
