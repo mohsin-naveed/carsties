@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { VariantEditDialogComponent } from './variant-edit-dialog.component';
+import { VariantDetailsDialogComponent } from './variant-details-dialog.component';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog.component';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -144,7 +145,11 @@ export class VariantsPage {
     const d = this.derivatives$.value.find(x => x.id === it.derivativeId);
     if (!d) return '—';
     const gen = this.generations$.value.find(g => g.id === (d.generationId ?? -1));
-    return gen?.name ?? '—';
+    if (!gen) return '—';
+    const start = gen.startYear != null ? String(gen.startYear) : '';
+    const end = gen.endYear != null ? String(gen.endYear) : 'Present';
+    const range = start || end ? `(${start}, ${end})` : '';
+    return `${gen.name} ${range}`.trim();
   }
 
   openCreate(){
@@ -164,6 +169,14 @@ export class VariantsPage {
         } });
       }
     });
+  }
+  openDetails(it: VariantDto){
+    (document.activeElement as HTMLElement | null)?.blur();
+    const ref = this.dialog.open(VariantDetailsDialogComponent, {
+      data: { variant: it, derivatives: this.derivatives$.value, generations: this.generations$.value, models: this.models$.value, makes: this.makes$.value },
+      width: '640px', autoFocus: true, restoreFocus: true
+    });
+    ref.afterClosed().subscribe(() => {});
   }
 
   openEdit(it: VariantDto){

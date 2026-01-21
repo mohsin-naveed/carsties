@@ -98,8 +98,11 @@ public class ModelsController(CatalogDbContext context, IMapper mapper) : Contro
     {
         if (!await context.Makes.AnyAsync(x => x.Id == dto.MakeId))
             return BadRequest("Invalid MakeId");
-        var slug = dto.Slug ?? SlugGenerator.Generate("md");
-        while (await context.Models.AnyAsync(x => x.Slug == slug)) slug = SlugGenerator.Generate("md");
+        // Slug derived from Name; ensure uniqueness per table
+        var baseSlug = SlugGenerator.FromName(dto.Name);
+        var slug = baseSlug;
+        int suffix = 2;
+        while (await context.Models.AnyAsync(x => x.Slug == slug)) { slug = $"{baseSlug}-{suffix++}"; }
         var code = await CodeGenerator.NextModelCodeAsync(context);
         var entity = new Model { Name = dto.Name, MakeId = dto.MakeId, IsActive = dto.IsActive ?? true, IsPopular = dto.IsPopular ?? false, Code = code, Slug = slug };
         if (!await CodeGenerator.IsCodeUniqueAsync(context, "Models", entity.Code))
@@ -119,6 +122,12 @@ public class ModelsController(CatalogDbContext context, IMapper mapper) : Contro
         if (!string.IsNullOrWhiteSpace(dto.Name))
         {
             entity.Name = dto.Name;
+            // Recompute slug from updated name; ensure uniqueness
+            var baseSlug = SlugGenerator.FromName(dto.Name);
+            var slug = baseSlug;
+            int suffix = 2;
+            while (await context.Models.AnyAsync(x => x.Slug == slug && x.Id != id)) { slug = $"{baseSlug}-{suffix++}"; }
+            entity.Slug = slug;
             // Code remains sequential; do not change on name update
         }
         if (dto.MakeId.HasValue)
@@ -129,7 +138,7 @@ public class ModelsController(CatalogDbContext context, IMapper mapper) : Contro
         }
         if (dto.IsActive.HasValue) entity.IsActive = dto.IsActive.Value;
         if (dto.IsPopular.HasValue) entity.IsPopular = dto.IsPopular.Value;
-        if (dto.Slug is not null) entity.Slug = dto.Slug;
+        // Ignore incoming slug updates; slug is derived from name
         var ok = await context.SaveChangesAsync() > 0;
         return ok ? Ok() : BadRequest("Failed to update model");
     }

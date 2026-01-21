@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog.component';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSortModule, Sort } from '@angular/material/sort';
 import { ModelEditDialogComponent } from './model-edit-dialog.component';
@@ -116,7 +117,12 @@ export class ModelsPage {
     });
   }
 
-  remove(it: ModelDto){ if (!confirm(`Delete model '${it.name}'?`)) return; this.api.deleteModel(it.id).subscribe({ next: () => { this.notify.success('Model deleted'); this.loadContext(); this.loadPage(); } }); }
+  remove(it: ModelDto){
+    const ref = this.dialog.open(ConfirmDialogComponent, { data: { message: `Delete model '${it.name}'?` } });
+    ref.afterClosed().subscribe((ok: boolean) => {
+      if (ok){ this.api.deleteModel(it.id).subscribe({ next: () => { this.notify.success('Model deleted'); this.loadContext(); this.loadPage(); } }); }
+    });
+  }
 
   onFilterInput(val: string){ this.filter$.next(val); }
 

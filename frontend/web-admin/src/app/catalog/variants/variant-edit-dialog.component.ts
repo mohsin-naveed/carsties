@@ -124,7 +124,7 @@ export class VariantEditDialogComponent implements AfterViewInit {
   constructor(){
     this.api.getFeatures().subscribe({ next: (fs) => this.features = fs });
     this.isCopyMode = !!this.data.copyMode;
-    this.headerTitle = this.isCopyMode ? 'Copy Variant' : (this.data.title || 'Add Variant');
+    this.headerTitle = this.data.title || 'Add Variant';
   }
 
   save(){

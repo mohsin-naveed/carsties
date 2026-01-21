@@ -82,8 +82,11 @@ public class FeaturesController(CatalogDbContext context, IMapper mapper) : Cont
         var catOk = await context.FeatureCategories.AnyAsync(c => c.Id == dto.FeatureCategoryId);
         if (!catOk) return BadRequest("Invalid FeatureCategoryId");
         var entity = mapper.Map<Feature>(dto);
-        var slug = dto.Slug ?? SlugGenerator.Generate("fr");
-        while (await context.Features.AnyAsync(x => x.Slug == slug)) slug = SlugGenerator.Generate("fr");
+        // Slug derived from Name; ensure uniqueness per table
+        var baseSlug = SlugGenerator.FromName(dto.Name);
+        var slug = baseSlug;
+        int suffix = 2;
+        while (await context.Features.AnyAsync(x => x.Slug == slug)) { slug = $"{baseSlug}-{suffix++}"; }
         entity.Slug = slug;
         entity.Code = await GenerateUniqueCodeAsync();
         context.Features.Add(entity);
@@ -109,6 +112,12 @@ public class FeaturesController(CatalogDbContext context, IMapper mapper) : Cont
         {
             // Keep code stable; only update name
             entity.Name = dto.Name;
+            // Recompute slug from updated name; ensure uniqueness
+            var baseSlug = SlugGenerator.FromName(dto.Name);
+            var slug = baseSlug;
+            int suffix = 2;
+            while (await context.Features.AnyAsync(x => x.Slug == slug && x.Id != id)) { slug = $"{baseSlug}-{suffix++}"; }
+            entity.Slug = slug;
         }
         if (dto.FeatureCategoryId.HasValue)
         {
@@ -117,7 +126,7 @@ public class FeaturesController(CatalogDbContext context, IMapper mapper) : Cont
             entity.FeatureCategoryId = dto.FeatureCategoryId.Value;
         }
         if (dto.Description is not null) entity.Description = dto.Description;
-        if (dto.Slug is not null) entity.Slug = dto.Slug;
+        // Ignore incoming slug updates; slug is derived from name
         try
         {
             var ok = await context.SaveChangesAsync() > 0;

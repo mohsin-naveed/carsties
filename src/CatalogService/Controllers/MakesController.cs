@@ -34,10 +34,11 @@ public class MakesController(CatalogDbContext context, IMapper mapper) : Control
     {
         if (await context.Makes.AnyAsync(x => x.Name == dto.Name))
             return Conflict($"Make '{dto.Name}' already exists");
-
-        var slug = dto.Slug ?? SlugGenerator.Generate("mk");
-        // Ensure slug uniqueness
-        while (await context.Makes.AnyAsync(x => x.Slug == slug)) slug = SlugGenerator.Generate("mk");
+        // Slug derived from Name; ASCII-only, lowercase, hyphen-separated; unique per table
+        var baseSlug = SlugGenerator.FromName(dto.Name);
+        var slug = baseSlug;
+        int suffix = 2;
+        while (await context.Makes.AnyAsync(x => x.Slug == slug)) { slug = $"{baseSlug}-{suffix++}"; }
 
         var code = await CodeGenerator.NextMakeCodeAsync(context);
         var make = new Make { Name = dto.Name, Country = dto.Country, IsActive = dto.IsActive ?? true, IsPopular = dto.IsPopular ?? false, Code = code, Slug = slug };
@@ -58,12 +59,18 @@ public class MakesController(CatalogDbContext context, IMapper mapper) : Control
         if (!string.IsNullOrWhiteSpace(dto.Name))
         {
             make.Name = dto.Name;
+            // Recompute slug from updated name; ensure uniqueness
+            var baseSlug = SlugGenerator.FromName(dto.Name);
+            var slug = baseSlug;
+            int suffix = 2;
+            while (await context.Makes.AnyAsync(x => x.Slug == slug && x.Id != id)) { slug = $"{baseSlug}-{suffix++}"; }
+            make.Slug = slug;
             // Code remains sequential; do not change on name update
         }
         if (dto.Country is not null) make.Country = dto.Country;
         if (dto.IsActive.HasValue) make.IsActive = dto.IsActive.Value;
         if (dto.IsPopular.HasValue) make.IsPopular = dto.IsPopular.Value;
-        if (dto.Slug is not null) make.Slug = dto.Slug;
+        // Ignore incoming slug updates; slug is derived from name
         var ok = await context.SaveChangesAsync() > 0;
         return ok ? Ok() : BadRequest("Failed to update make");
     }

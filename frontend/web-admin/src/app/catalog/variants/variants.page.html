@@ -54,6 +54,7 @@
     <th mat-header-cell *matHeaderCellDef>Actions</th>
     <td mat-cell *matCellDef="let it" class="actions-cell">
       <button mat-icon-button (click)="openCopy(it)" matTooltip="Copy"><mat-icon>content_copy</mat-icon></button>
+      <button mat-icon-button (click)="openDetails(it)" matTooltip="Details"><mat-icon>info</mat-icon></button>
       <button mat-icon-button color="primary" (click)="openEdit(it)" matTooltip="Edit"><mat-icon>edit</mat-icon></button>
       <button mat-icon-button color="warn" (click)="remove(it)" matTooltip="Delete"><mat-icon>delete</mat-icon></button>
     </td>
