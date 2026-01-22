@@ -165,6 +165,8 @@ public class CatalogDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
             entity.Property(x => x.Code).IsRequired().HasMaxLength(150);
             entity.HasIndex(x => x.Code).IsUnique();
+            // Enforce unique name within a Generation
+            entity.HasIndex(x => new { x.GenerationId, x.Name }).IsUnique();
             entity.Property(x => x.Seats).IsRequired();
             entity.Property(x => x.Doors).IsRequired();
             entity.HasCheckConstraint("CK_Derivatives_Seats", "\"Seats\" BETWEEN 2 AND 9");

@@ -55,12 +55,12 @@ import { Subscription, combineLatest, startWith } from 'rxjs';
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline" *ngIf="!isElectricSelected()">
-          <mat-label>Engine Size (cc)</mat-label>
+          <mat-label>Engine Size (CC)</mat-label>
           <input matInput type="number" formControlName="engineCC" min="100" step="50" />
         </mat-form-field>
         <mat-form-field appearance="outline" *ngIf="!isElectricSelected()">
           <mat-label>Engine Size (L)</mat-label>
-          <input matInput type="number" formControlName="engineL" min="0.5" step="0.1" />
+          <input matInput type="text" [value]="engineLText()" [disabled]="true" />
         </mat-form-field>
         <mat-form-field appearance="outline" *ngIf="isElectricSelected() || isPhevSelected()">
           <mat-label>Battery (kWh)</mat-label>
@@ -81,7 +81,7 @@ import { Subscription, combineLatest, startWith } from 'rxjs';
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Name</mat-label>
-        <input matInput [value]="computedDisplayName || ''" disabled />
+        <input matInput [value]="computedDisplayName || ''" [disabled]="true" />
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Seats</mat-label>
@@ -100,7 +100,7 @@ import { Subscription, combineLatest, startWith } from 'rxjs';
   </div>
   <div mat-dialog-actions align="end">
     <button mat-button type="button" (click)="close()">Cancel</button>
-    <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid" (click)="submit()">Save</button>
+    <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || !form.dirty" (click)="submit()">Save</button>
   </div>
   `
 })
@@ -141,6 +141,8 @@ export class DerivativeEditDialogComponent implements OnDestroy {
   });
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: { title: string; makes: MakeDto[]; models: ModelDto[]; modelId?: number; generationId?: number | null; bodyTypeId?: number; seats?: number; doors?: number; code?: string; engine?: string; transmissionId?: number | null; fuelTypeId?: number | null; batteryCapacityKWh?: number | null; driveTypeId?: number | null; isActive?: boolean; copyMode?: boolean; name?: string }){
+    // Ensure Engine L is disabled (read-only)
+    this.form.get('engineL')?.disable({ emitEvent: false });
     this.api.getBodyTypeOptions().subscribe({ next: (opts) => this.bodyTypes = opts });
     this.api.getVariantOptions().subscribe({ next: (opts) => {
       this.transmissions = opts.transmissions; this.fuelTypes = opts.fuelTypes;
@@ -183,21 +185,21 @@ export class DerivativeEditDialogComponent implements OnDestroy {
     const engineL$ = this.form.get('engineCC')!.valueChanges.pipe(startWith(this.form.value.engineCC));
     const battery$ = this.form.get('batteryKWh')!.valueChanges.pipe(startWith((this.form.value as any).batteryKWh));
     this.sub = combineLatest([makeName$, modelId$, generationId$, bodyTypeId$, transmissionId$, engineL$, battery$]).subscribe(([mkId, mdId, genId, btId, trId, cc, batt]) => {
-      const mk = this.data.makes.find(m => m.id === (mkId as number))?.name ?? '';
       const md = this.data.models.find(m => m.id === (mdId as number))?.name ?? '';
-      const genObj = this.generations.find(g => g.id === (genId as number));
-      const gn = genObj?.startYear != null ? String(genObj.startYear) : (genObj?.name ?? '');
       const bt = this.bodyTypes.find(b => b.id === (btId as number))?.name ?? '';
       const tr = this.transmissions.find(t => t.id === (trId as number))?.name ?? '';
       const engL = cc ? Number((Number(cc) / 1000).toFixed(1)) : null;
-      if (engL != null) this.form.patchValue({ engineL: engL }, { emitEvent: false });
+      if (engL != null) this.form.get('engineL')?.setValue(engL, { emitEvent: false });
       const fuelName = this.fuelTypes.find(f => f.id === (this.form.value.fuelTypeId as number | null))?.name ?? '';
-      const energyPart = engL != null ? `${engL}L` : (batt ? `${batt} kWh` : '');
-      const parts = [gn, md, energyPart, fuelName, tr, bt].filter(Boolean);
+      // Name format: {Model} {EngineL/BatteryKWh} {Fuel} {Transmission} {BodyType}
+      const energyPart = engL != null ? `${engL}` : (batt ? `${batt} kWh` : '');
+      const parts = [md, energyPart, fuelName, tr, bt].filter(Boolean);
       const composed = parts.join(' ').trim();
       this.computedDisplayName = composed || '';
       this.form.patchValue({ name: composed }, { emitEvent: false });
     });
+    // Keep form pristine until the user changes a field
+    this.form.markAsPristine();
   }
   ngOnDestroy(){ this.sub?.unsubscribe(); }
 
@@ -231,13 +233,25 @@ export class DerivativeEditDialogComponent implements OnDestroy {
     const engineLCtrl = this.form.get('engineL');
     const battCtrl = this.form.get('batteryKWh');
     if (isE){
-      engineCtrl?.clearValidators(); engineLCtrl?.clearValidators();
+      // Electric: no engine values, require battery
+      engineCtrl?.clearValidators();
+      engineCtrl?.disable({ emitEvent: false });
+      engineLCtrl?.disable({ emitEvent: false });
+      battCtrl?.enable({ emitEvent: false });
       battCtrl?.setValidators([Validators.required, Validators.min(1)]);
     } else if (isP) {
+      // PHEV: engine and battery required
+      engineCtrl?.enable({ emitEvent: false });
+      engineLCtrl?.disable({ emitEvent: false });
+      battCtrl?.enable({ emitEvent: false });
       battCtrl?.setValidators([Validators.required, Validators.min(1)]);
       engineCtrl?.setValidators([Validators.required, Validators.min(100)]);
     } else {
+      // ICE/others: engine required, battery not needed
+      engineCtrl?.enable({ emitEvent: false });
+      engineLCtrl?.disable({ emitEvent: false });
       battCtrl?.clearValidators();
+      battCtrl?.disable({ emitEvent: false });
       engineCtrl?.setValidators([Validators.required, Validators.min(100)]);
     }
     engineCtrl?.updateValueAndValidity();
@@ -256,6 +270,18 @@ export class DerivativeEditDialogComponent implements OnDestroy {
   }
   // Name is auto-computed; no manual editing
 
-  submit(){ if (this.form.invalid) return; this.ref.close(this.form.value); }
+  engineLText(){
+    const v = this.form.get('engineL')?.value;
+    return v != null ? Number(v).toFixed(1) : '';
+  }
+
+  submit(){
+    if (this.form.invalid) return;
+    const raw = this.form.getRawValue() as any;
+    if (raw.engineL != null) raw.engineL = Number(raw.engineL);
+    if (raw.engineCC != null) raw.engineCC = Number(raw.engineCC);
+    if (raw.batteryKWh != null) raw.batteryKWh = Number(raw.batteryKWh);
+    this.ref.close(raw);
+  }
   close(){ this.ref.close(); }
 }

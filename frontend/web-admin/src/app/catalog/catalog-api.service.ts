@@ -66,6 +66,13 @@ export class CatalogApiService {
   private readonly baseUrl = '';
   private readonly cache = new Map<string, Observable<any>>();
 
+  // Allow pages to invalidate cached GETs after mutations
+  invalidateCache(prefix?: string) {
+    if (!prefix) { this.cache.clear(); return; }
+    const keys = Array.from(this.cache.keys());
+    for (const k of keys) if (k.startsWith(prefix)) this.cache.delete(k);
+  }
+
   private cachedGet<T>(path: string, params?: any): Observable<T> {
     const key = `${path}?${JSON.stringify(params || {})}`;
     const cached = this.cache.get(key) as Observable<T> | undefined;

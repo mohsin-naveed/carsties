@@ -134,7 +134,10 @@ export class DerivativesPage {
     const ref = this.dialog.open(DerivativeEditDialogComponent, { data: { title: 'Add Derivative', makes: this.makesCache, models: this.modelsCache }, width: '720px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { name: string; modelId: number; generationId: number; bodyTypeId: number; driveTypeId: number; seats: number; doors: number; engineCC?: number; engineL?: number; transmissionId?: number; fuelTypeId?: number; batteryKWh?: number; isActive?: boolean } | undefined) => {
       if (res){
-        this.api.createDerivative(res).subscribe({ next: () => { this.notify.success('Derivative created'); this.loadContext(); this.loadPage(); } });
+        this.api.createDerivative(res).subscribe({
+          next: () => { this.notify.success('Derivative created'); this.api.invalidateCache('/derivatives'); this.loadContext(); this.loadPage(); },
+          error: (err) => { const msg = (err?.error && typeof err.error === 'string') ? err.error : 'Failed to create derivative'; this.notify.error(msg); }
+        });
       }
     });
   }
@@ -144,7 +147,10 @@ export class DerivativesPage {
     const ref = this.dialog.open(DerivativeEditDialogComponent, { data: { title: 'Edit Derivative', makes: this.makesCache, models: this.modelsCache, name: it.name ?? '', modelId: it.modelId, generationId: it.generationId ?? null, bodyTypeId: it.bodyTypeId, driveTypeId: it.driveTypeId, seats: it.seats, doors: it.doors, engineCC: it.engineCC, engineL: it.engineL, transmissionId: it.transmissionId ?? null, fuelTypeId: it.fuelTypeId ?? null, batteryKWh: it.batteryKWh ?? null, isActive: it.isActive }, width: '720px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { name?: string; modelId: number; generationId: number; bodyTypeId: number; driveTypeId: number; seats: number; doors: number; engineCC?: number; engineL?: number; transmissionId?: number; fuelTypeId?: number; batteryKWh?: number; isActive?: boolean } | undefined) => {
       if (res){
-        this.api.updateDerivative(it.id, res).subscribe({ next: () => { this.notify.success('Derivative updated'); this.loadContext(); this.loadPage(); } });
+        this.api.updateDerivative(it.id, res).subscribe({
+          next: () => { this.notify.success('Derivative updated'); this.api.invalidateCache('/derivatives'); this.loadContext(); this.loadPage(); },
+          error: (err) => { const msg = (err?.error && typeof err.error === 'string') ? err.error : 'Failed to update derivative'; this.notify.error(msg); }
+        });
       }
     });
   }
@@ -154,7 +160,7 @@ export class DerivativesPage {
     const ref = this.dialog.open(DerivativeEditDialogComponent, { data: { title: 'Copy Derivative', copyMode: true, makes: this.makesCache, models: this.modelsCache, name: it.name ?? '', modelId: it.modelId, generationId: it.generationId ?? null, bodyTypeId: it.bodyTypeId, driveTypeId: it.driveTypeId, seats: it.seats, doors: it.doors, engineCC: it.engineCC, engineL: it.engineL, transmissionId: it.transmissionId ?? null, fuelTypeId: it.fuelTypeId ?? null, batteryKWh: it.batteryKWh ?? null, isActive: it.isActive }, width: '720px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { name: string; modelId: number; generationId: number; bodyTypeId: number; driveTypeId: number; seats: number; doors: number; engineCC?: number; engineL?: number; transmissionId?: number; fuelTypeId?: number; batteryKWh?: number; isActive?: boolean } | undefined) => {
       if (res){
-        this.api.createDerivative(res).subscribe({ next: () => { this.notify.success('Derivative copied'); this.loadContext(); this.loadPage(); } });
+        this.api.createDerivative(res).subscribe({ next: () => { this.notify.success('Derivative copied'); this.api.invalidateCache('/derivatives'); this.loadContext(); this.loadPage(); } });
       }
     });
   }
@@ -163,7 +169,7 @@ export class DerivativesPage {
     const ref = this.dialog.open(ConfirmDialogComponent, { data: { message: `Delete derivative '${this.getBodyTypeName(it)}' for model '${this.getModelName(it)}'?` } });
     ref.afterClosed().subscribe((ok: boolean) => {
       if (ok){
-        this.api.deleteDerivative(it.id).subscribe({ next: () => { this.notify.success('Derivative deleted'); this.loadContext(); this.loadPage(); } });
+        this.api.deleteDerivative(it.id).subscribe({ next: () => { this.notify.success('Derivative deleted'); this.api.invalidateCache('/derivatives'); this.loadContext(); this.loadPage(); } });
       }
     });
   }
@@ -177,7 +183,7 @@ export class DerivativesPage {
     if (!name) return '—';
     if (name.includes('front')) return 'FWD';
     if (name.includes('rear')) return 'RWD';
-    if (name.includes('four')) return '4x4';
+    if (name.includes('four') || name.includes('awd') || name.includes('4')) return '4WD';
     return it.driveType ?? '—';
   }
   onFilterInput(val: string){ this.filter$.next(val); }
@@ -185,7 +191,7 @@ export class DerivativesPage {
   isElectric(it: DerivativeDto){ return (it.fuelType ?? '').toLowerCase() === 'electric'; }
   isHybrid(it: DerivativeDto){ const name = (it.fuelType ?? '').toLowerCase(); return name.includes('hybrid') && name.includes('plug'); }
   private engineString(it: DerivativeDto): string {
-    if (it.engineL != null) return `${Number(it.engineL).toFixed(1)}L`;
+    if (it.engineL != null) return `${Number(it.engineL).toFixed(1)}`;
     if (it.engineCC != null) return `${it.engineCC}cc`;
     return '—';
   }

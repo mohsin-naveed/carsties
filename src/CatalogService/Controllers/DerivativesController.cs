@@ -182,9 +182,16 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
         if (!await context.DriveTypes.AnyAsync(x => x.Id == dto.DriveTypeId))
             return BadRequest("Invalid DriveTypeId");
 
+        // Enforce unique name within the same Generation (case-insensitive)
+        var trimmedName = dto.Name.Trim();
+        var nameExists = await context.Derivatives
+            .AnyAsync(d => d.GenerationId == dto.GenerationId && d.Name.ToLower() == trimmedName.ToLower());
+        if (nameExists)
+            return Conflict($"A derivative with name '{trimmedName}' already exists in this generation.");
+
         var entity = new Derivative
         {
-            Name = dto.Name,
+            Name = trimmedName,
             ModelId = dto.ModelId,
             GenerationId = dto.GenerationId,
             BodyTypeId = dto.BodyTypeId,
@@ -224,7 +231,13 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
         {
             if (string.IsNullOrWhiteSpace(dto.Name) || dto.Name.Length > 100)
                 return BadRequest("Name must be <= 100 characters");
-            entity.Name = dto.Name;
+            var newName = dto.Name.Trim();
+            var genId = dto.GenerationId ?? entity.GenerationId;
+            var exists = await context.Derivatives
+                .AnyAsync(d => d.Id != id && d.GenerationId == genId && d.Name.ToLower() == newName.ToLower());
+            if (exists)
+                return Conflict($"A derivative with name '{newName}' already exists in this generation.");
+            entity.Name = newName;
         }
         if (dto.ModelId.HasValue)
         {

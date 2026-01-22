@@ -26,8 +26,8 @@ public class MappingProfiles : Profile
         // Derivative - map via constructor parameters for ProjectTo support
         CreateMap<Derivative, DerivativeDto>()
             .ForCtorParam("BodyType", o => o.MapFrom(s => s.BodyTypeRef != null ? s.BodyTypeRef.Name : null))
-            // Show drive type abbreviation (FWD/RWD/4WD) by deriving from code and stripping DT-
-            .ForCtorParam("DriveType", o => o.MapFrom(s => s.DriveTypeRef != null ? (s.DriveTypeRef.Code.StartsWith("DT-") ? s.DriveTypeRef.Code.Substring(3) : s.DriveTypeRef.Code) : null))
+            // Map the human-friendly drive type name; UI will abbreviate to FWD/RWD/4WD
+            .ForCtorParam("DriveType", o => o.MapFrom(s => s.DriveTypeRef != null ? s.DriveTypeRef.Name : null))
             .ForCtorParam("Transmission", o => o.MapFrom(s => s.TransmissionRef != null ? s.TransmissionRef.Name : null))
             .ForCtorParam("FuelType", o => o.MapFrom(s => s.FuelTypeRef != null ? s.FuelTypeRef.Name : null));
         CreateMap<CreateDerivativeDto, Derivative>()

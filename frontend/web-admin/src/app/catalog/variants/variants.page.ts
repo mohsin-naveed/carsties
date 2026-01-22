@@ -159,12 +159,12 @@ export class VariantsPage {
       if (res){
         this.api.createVariant({ name: res.name, derivativeId: res.derivativeId }).subscribe({ next: (variant) => {
           const featureIds = res.featureIds ?? [];
-          if (featureIds.length === 0){ this.notify.success('Variant created'); this.loadContext(); this.loadPage(); return; }
+          if (featureIds.length === 0){ this.notify.success('Variant created'); this.api.invalidateCache('/variants'); this.loadContext(); this.loadPage(); return; }
           let remaining = featureIds.length;
           featureIds.forEach(fid => {
             this.api.createVariantFeature({ variantId: variant.id, featureId: fid, isStandard: true }).subscribe({ next: () => {
-              remaining--; if (remaining === 0){ this.notify.success('Variant created'); this.loadContext(); this.loadPage(); }
-            }, error: () => { remaining--; if (remaining === 0){ this.notify.success('Variant created'); this.loadContext(); this.loadPage(); } } });
+              remaining--; if (remaining === 0){ this.notify.success('Variant created'); this.api.invalidateCache('/variants'); this.loadContext(); this.loadPage(); }
+            }, error: () => { remaining--; if (remaining === 0){ this.notify.success('Variant created'); this.api.invalidateCache('/variants'); this.loadContext(); this.loadPage(); } } });
           });
         } });
       }
@@ -206,11 +206,11 @@ export class VariantsPage {
               this.api.getVariantFeatures(it.id).subscribe({
                 next: (curr) => {
                   let remainingDeletes = curr.length;
-                  if (remainingDeletes === 0){ this.addSelectedFeatures(it.id, res.featureIds ?? []); this.loadPage(); return; }
+                  if (remainingDeletes === 0){ this.addSelectedFeatures(it.id, res.featureIds ?? []); this.api.invalidateCache('/variants'); this.loadPage(); return; }
                   curr.forEach(vf => {
                     this.api.deleteVariantFeature(vf.variantId, vf.featureId).subscribe({
-                      next: () => { remainingDeletes--; if (remainingDeletes === 0){ this.addSelectedFeatures(it.id, res.featureIds ?? []); this.loadPage(); } },
-                      error: () => { remainingDeletes--; if (remainingDeletes === 0){ this.addSelectedFeatures(it.id, res.featureIds ?? []); this.loadPage(); } }
+                      next: () => { remainingDeletes--; if (remainingDeletes === 0){ this.addSelectedFeatures(it.id, res.featureIds ?? []); this.api.invalidateCache('/variants'); this.loadPage(); } },
+                      error: () => { remainingDeletes--; if (remainingDeletes === 0){ this.addSelectedFeatures(it.id, res.featureIds ?? []); this.api.invalidateCache('/variants'); this.loadPage(); } }
                     });
                   });
                 },
@@ -252,12 +252,12 @@ export class VariantsPage {
           this.api.createVariant({ name: res.name, derivativeId: res.derivativeId, isPopular: res.isPopular, isImported: res.isImported }).subscribe({
             next: (variant) => {
               const featureIds = res.featureIds ?? [];
-              if (featureIds.length === 0){ this.notify.success('Variant copied'); this.loadContext(); this.loadPage(); return; }
+              if (featureIds.length === 0){ this.notify.success('Variant copied'); this.api.invalidateCache('/variants'); this.loadContext(); this.loadPage(); return; }
               let remaining = featureIds.length;
               featureIds.forEach(fid => {
                 this.api.createVariantFeature({ variantId: variant.id, featureId: fid, isStandard: true }).subscribe({ next: () => {
-                  remaining--; if (remaining === 0){ this.notify.success('Variant copied'); this.loadContext(); this.loadPage(); }
-                }, error: () => { remaining--; if (remaining === 0){ this.notify.success('Variant copied'); this.loadContext(); this.loadPage(); } } });
+                  remaining--; if (remaining === 0){ this.notify.success('Variant copied'); this.api.invalidateCache('/variants'); this.loadContext(); this.loadPage(); }
+                }, error: () => { remaining--; if (remaining === 0){ this.notify.success('Variant copied'); this.api.invalidateCache('/variants'); this.loadContext(); this.loadPage(); } } });
               });
             },
             error: () => this.notify.error('Failed to copy variant')
@@ -271,7 +271,7 @@ export class VariantsPage {
     const ref = this.dialog.open(ConfirmDialogComponent, { data: { message: `Delete variant '${it.name}'?` } });
     ref.afterClosed().subscribe((ok: boolean) => {
       if (ok){
-        this.api.deleteVariant(it.id).subscribe({ next: () => { this.notify.success('Variant deleted'); this.loadContext(); this.loadPage(); } });
+        this.api.deleteVariant(it.id).subscribe({ next: () => { this.notify.success('Variant deleted'); this.api.invalidateCache('/variants'); this.loadContext(); this.loadPage(); } });
       }
     });
   }
@@ -292,12 +292,12 @@ export class VariantsPage {
   }
 
   addSelectedFeatures(variantId: number, featureIds: number[]){
-    if (!featureIds || featureIds.length === 0){ this.notify.success('Variant updated'); this.loadContext(); this.loadPage(); return; }
+    if (!featureIds || featureIds.length === 0){ this.notify.success('Variant updated'); this.api.invalidateCache('/variants'); this.loadContext(); this.loadPage(); return; }
     let remaining = featureIds.length;
     featureIds.forEach(fid => {
       this.api.createVariantFeature({ variantId, featureId: fid, isStandard: true }).subscribe({ next: () => {
-        remaining--; if (remaining === 0){ this.notify.success('Variant updated'); this.loadContext(); this.loadPage(); }
-      }, error: () => { remaining--; if (remaining === 0){ this.notify.success('Variant updated'); this.loadContext(); this.loadPage(); } } });
+        remaining--; if (remaining === 0){ this.notify.success('Variant updated'); this.api.invalidateCache('/variants'); this.loadContext(); this.loadPage(); }
+      }, error: () => { remaining--; if (remaining === 0){ this.notify.success('Variant updated'); this.api.invalidateCache('/variants'); this.loadContext(); this.loadPage(); } } });
     });
   }
 
