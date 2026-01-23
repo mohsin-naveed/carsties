@@ -95,11 +95,12 @@ export class AddListingComponent {
       this.models = []; this.generations = []; this.derivatives = []; this.variants = []; this.variantFeatures = [];
       this.form.patchValue({ modelId: null, generationId: null, derivativeId: null, variantId: null }, { emitEvent: false });
       if (!makeId) { this.models$.next([]); this.generations$.next([]); this.derivatives$.next([]); this.refreshVariants(); return; }
-      this.api.getModels(makeId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(models => {
+      const makeCode = this.makes.find(m => m.id === makeId)?.code;
+      this.api.getModels(makeCode).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(models => {
         this.models = models; this.models$.next(models);
         if (models.length === 0) { this.refreshVariants(); return; }
-        const genReqs = models.map(m => this.api.getGenerations(m.id));
-        const derReqs = models.map(m => this.api.getDerivatives(m.id));
+        const genReqs = models.map(m => this.api.getGenerations(m.code));
+        const derReqs = models.map(m => this.api.getDerivatives(m.code));
         forkJoin({ gens: forkJoin(genReqs).pipe(map(groups => groups.flat())), ders: forkJoin(derReqs).pipe(map(groups => groups.flat())) })
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe(({ gens, ders }) => { this.generations = gens; this.derivatives = ders; this.generations$.next(gens); this.derivatives$.next(ders); this.refreshVariants(); });
@@ -176,24 +177,30 @@ export class AddListingComponent {
     const year = raw.year!;
     const computedTitle = `${makeName ?? ''} ${modelName ?? ''} ${year}`.trim();
     const dto: CreateListingDto = {
-      title: computedTitle, description: raw.description ?? undefined, year: raw.year!, mileage: raw.mileage!, price: raw.price!,
-      makeId: raw.makeId!, modelId: raw.modelId!, generationId: raw.generationId!, derivativeId: raw.derivativeId!, variantId: raw.variantId!,
-      transmissionId: raw.transmissionId ?? undefined, fuelTypeId: raw.fuelTypeId ?? undefined, bodyTypeId: raw.bodyTypeId!,
-      // snapshots
+      title: computedTitle,
+      description: raw.description ?? undefined,
+      year: raw.year!,
+      mileage: raw.mileage!,
+      price: raw.price!,
+      makeCode: this.makes.find(x => x.id === raw.makeId!)?.code!,
+      modelCode: this.models.find(x => x.id === raw.modelId!)?.code!,
+      generationCode: this.generations.find(x => x.id === raw.generationId!)?.code!,
+      derivativeCode: this.derivatives.find(x => x.id === raw.derivativeId!)?.code!,
+      variantCode: this.variants.find(x => x.id === raw.variantId!)?.code!,
+      transmissionTypeCode: (raw.transmissionId ? this.transmissions.find(x => x.id === raw.transmissionId)?.code : undefined),
+      fuelTypeCode: (raw.fuelTypeId ? this.fuelTypes.find(x => x.id === raw.fuelTypeId)?.code : undefined),
+      bodyTypeCode: this.bodyTypes.find(x => x.id === raw.bodyTypeId!)?.code!,
+      // Optional labels (snapshots)
       makeName,
       modelName,
       generationName: this.generations.find(x => x.id === raw.generationId!)?.name,
       derivativeName: this.derivatives.find(x => x.id === raw.derivativeId!)?.name,
       variantName: this.variants.find(x => x.id === raw.variantId!)?.name,
       bodyTypeName: this.bodyTypes.find(x => x.id === raw.bodyTypeId!)?.name ?? this.derivatives.find(x => x.id === raw.derivativeId!)?.bodyType,
-      transmissionName: (raw.transmissionId ? this.transmissions.find(x => x.id === raw.transmissionId)?.name : undefined)
+      transmissionTypeName: (raw.transmissionId ? this.transmissions.find(x => x.id === raw.transmissionId)?.name : undefined)
         ?? this.derivatives.find(x => x.id === raw.derivativeId!)?.transmission,
       fuelTypeName: (raw.fuelTypeId ? this.fuelTypes.find(x => x.id === raw.fuelTypeId)?.name : undefined)
         ?? this.derivatives.find(x => x.id === raw.derivativeId!)?.fuelType,
-      seatsSnapshot: this.derivatives.find(x => x.id === raw.derivativeId!)?.seats,
-      doorsSnapshot: this.derivatives.find(x => x.id === raw.derivativeId!)?.doors,
-      engineSnapshot: this.derivatives.find(x => x.id === raw.derivativeId!)?.engine,
-      batteryCapacityKWhSnapshot: this.derivatives.find(x => x.id === raw.derivativeId!)?.batteryCapacityKWh,
       featureIds: Array.from(this.selectedFeatureIds)
     };
     this.api.createListing(dto)
@@ -236,7 +243,7 @@ export class AddListingComponent {
       return inYear && inMake && matchesModel;
     });
     if (gensForYear.length === 0) { this.variants = []; return; }
-    forkJoin(gensForYear.map(g => this.api.getVariantsByGeneration(g.id)))
+    forkJoin(gensForYear.map(g => this.api.getVariantsByGeneration(g.code)))
       .pipe(map(groups => groups.flat()))
       .subscribe(vars => {
         const allowedDerivatives = this.derivatives.filter(d => allowedModelIds.has(d.modelId) && (!modelId || d.modelId === modelId));

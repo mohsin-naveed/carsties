@@ -26,6 +26,8 @@ public class ListingDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(x => x.Price).HasColumnType("numeric(18,2)");
             entity.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
 
+            // BatteryKWh now maps to a column of the same name (see migration)
+
             // Snapshot columns config
             entity.Property(x => x.MakeName).HasMaxLength(100);
             entity.Property(x => x.ModelName).HasMaxLength(100);
@@ -33,9 +35,18 @@ public class ListingDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(x => x.DerivativeName).HasMaxLength(100);
             entity.Property(x => x.VariantName).HasMaxLength(100);
             entity.Property(x => x.BodyTypeName).HasMaxLength(50);
-            entity.Property(x => x.TransmissionName).HasMaxLength(50);
+            entity.Property(x => x.TransmissionTypeName).HasMaxLength(50);
             entity.Property(x => x.FuelTypeName).HasMaxLength(50);
-            entity.Property(x => x.EngineSnapshot).HasMaxLength(100);
+
+            // Code snapshots
+            entity.Property(x => x.MakeCode).HasMaxLength(120);
+            entity.Property(x => x.ModelCode).HasMaxLength(120);
+            entity.Property(x => x.GenerationCode).HasMaxLength(120);
+            entity.Property(x => x.BodyTypeCode).HasMaxLength(100);
+            entity.Property(x => x.TransmissionTypeCode).HasMaxLength(100);
+            entity.Property(x => x.FuelTypeCode).HasMaxLength(50);
+            entity.Property(x => x.DerivativeCode).HasMaxLength(120);
+            entity.Property(x => x.VariantCode).HasMaxLength(120);
             // JSON snapshot removed in favor of relational ListingFeatures
 
             entity.HasMany(x => x.Images)

@@ -9,14 +9,15 @@ public class ListingDto
     public int Mileage { get; set; }
     public decimal Price { get; set; }
     public string? Color { get; set; }
-    public int MakeId { get; set; }
-    public int ModelId { get; set; }
-    public int GenerationId { get; set; }
-    public int DerivativeId { get; set; }
-    public int VariantId { get; set; }
-    public int? TransmissionId { get; set; }
-    public int? FuelTypeId { get; set; }
-    public int BodyTypeId { get; set; }
+    // Codes for Catalog references
+    public string? MakeCode { get; set; }
+    public string? ModelCode { get; set; }
+    public string? GenerationCode { get; set; }
+    public string? DerivativeCode { get; set; }
+    public string? VariantCode { get; set; }
+    public string? TransmissionTypeCode { get; set; }
+    public string? FuelTypeCode { get; set; }
+    public string? BodyTypeCode { get; set; }
 
     // Snapshots
     public string? MakeName { get; set; }
@@ -25,12 +26,15 @@ public class ListingDto
     public string? DerivativeName { get; set; }
     public string? VariantName { get; set; }
     public string? BodyTypeName { get; set; }
-    public string? TransmissionName { get; set; }
+    public string? TransmissionTypeName { get; set; }
     public string? FuelTypeName { get; set; }
-    public short? SeatsSnapshot { get; set; }
-    public short? DoorsSnapshot { get; set; }
-    public string? EngineSnapshot { get; set; }
-    public decimal? BatteryCapacityKWhSnapshot { get; set; }
+    public short? Seats { get; set; }
+    public short? Doors { get; set; }
+    public int? EngineSizeCC { get; set; }
+    public decimal? EngineL { get; set; }
+    public decimal? BatteryKWh { get; set; }
+
+    // Note: Codes are already represented above
 
     public List<ListingImageDto> Images { get; set; } = new();
     public int[]? FeatureIds { get; set; }
@@ -44,28 +48,31 @@ public class CreateListingDto
     public int Mileage { get; set; }
     public decimal Price { get; set; }
     public string? Color { get; set; }
-    public int MakeId { get; set; }
-    public int ModelId { get; set; }
-    public int GenerationId { get; set; }
-    public int DerivativeId { get; set; }
-    public int VariantId { get; set; }
-    public int? TransmissionId { get; set; }
-    public int? FuelTypeId { get; set; }
-    public int BodyTypeId { get; set; }
+    // Required codes instead of IDs
+    public string MakeCode { get; set; } = string.Empty;
+    public string ModelCode { get; set; } = string.Empty;
+    public string GenerationCode { get; set; } = string.Empty;
+    public string DerivativeCode { get; set; } = string.Empty;
+    public string VariantCode { get; set; } = string.Empty;
+    public string? TransmissionTypeCode { get; set; }
+    public string? FuelTypeCode { get; set; }
+    public string BodyTypeCode { get; set; } = string.Empty;
 
-    // Optional snapshots supplied by client
+    // Optional snapshots supplied by client (names only)
     public string? MakeName { get; set; }
     public string? ModelName { get; set; }
     public string? GenerationName { get; set; }
     public string? DerivativeName { get; set; }
     public string? VariantName { get; set; }
     public string? BodyTypeName { get; set; }
-    public string? TransmissionName { get; set; }
+    public string? TransmissionTypeName { get; set; }
     public string? FuelTypeName { get; set; }
-    public short? SeatsSnapshot { get; set; }
-    public short? DoorsSnapshot { get; set; }
-    public string? EngineSnapshot { get; set; }
-    public decimal? BatteryCapacityKWhSnapshot { get; set; }
+    // New canonical snapshot fields (server will populate if omitted)
+    public short? Seats { get; set; }
+    public short? Doors { get; set; }
+    public int? EngineSizeCC { get; set; }
+    public decimal? EngineL { get; set; }
+    public decimal? BatteryKWh { get; set; }
     public int[]? FeatureIds { get; set; }
 }
 
@@ -77,14 +84,14 @@ public class UpdateListingDto
     public int? Mileage { get; set; }
     public decimal? Price { get; set; }
     public string? Color { get; set; }
-    public int? MakeId { get; set; }
-    public int? ModelId { get; set; }
-    public int? GenerationId { get; set; }
-    public int? DerivativeId { get; set; }
-    public int? VariantId { get; set; }
-    public int? TransmissionId { get; set; }
-    public int? FuelTypeId { get; set; }
-    public int? BodyTypeId { get; set; }
+    public string? MakeCode { get; set; }
+    public string? ModelCode { get; set; }
+    public string? GenerationCode { get; set; }
+    public string? DerivativeCode { get; set; }
+    public string? VariantCode { get; set; }
+    public string? TransmissionTypeCode { get; set; }
+    public string? FuelTypeCode { get; set; }
+    public string? BodyTypeCode { get; set; }
     public int[]? FeatureIds { get; set; }
 }
 

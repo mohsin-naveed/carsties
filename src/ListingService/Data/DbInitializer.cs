@@ -11,6 +11,7 @@ public class DbInitializer
     {
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ListingDbContext>();
+        var catalog = scope.ServiceProvider.GetService<ICatalogLookup>();
         if (app.Environment.IsDevelopment())
         {
             var resetRequested = string.Equals(Environment.GetEnvironmentVariable("RESET_DB"), "true", StringComparison.OrdinalIgnoreCase);
@@ -19,6 +20,15 @@ public class DbInitializer
                 ResetDatabase(context);
             }
             context.Database.Migrate();
+            // Seed minimal demo data when empty (dev only)
+            try
+            {
+                SeedIfEmpty(context, catalog);
+            }
+            catch
+            {
+                // best-effort; ignore seeding failures in dev
+            }
             return;
         }
         // In non-dev, apply migrations (no destructive reset)
@@ -42,5 +52,44 @@ public class DbInitializer
         cmd.CommandText = $"CREATE DATABASE \"{targetDb}\";";
         cmd.ExecuteNonQuery();
         conn.Close();
+    }
+
+    private static void SeedIfEmpty(ListingDbContext context, ICatalogLookup? catalog)
+    {
+        if (context.Listings.Any()) return;
+
+        var demo = new Listing
+        {
+            Title = "Demo Car 1",
+            Description = "Seeded demo listing",
+            Year = 2020,
+            Mileage = 25000,
+            Price = 15000m,
+            Color = "Blue",
+            MakeCode = "DEMO-MAKE",
+            MakeName = "Demo Make",
+            ModelCode = "DEMO-MODEL",
+            ModelName = "Demo Model",
+            GenerationCode = "DEMO-GEN",
+            GenerationName = "Gen 1",
+            DerivativeCode = "DEMO-DER",
+            DerivativeName = "Derivative",
+            VariantCode = "DEMO-VAR",
+            VariantName = "Variant",
+            BodyTypeCode = "SEDAN",
+            BodyTypeName = "Sedan",
+            TransmissionTypeCode = "AUTO",
+            TransmissionTypeName = "Automatic",
+            FuelTypeCode = "PETROL",
+            FuelTypeName = "Petrol",
+            Seats = 5,
+            Doors = 4,
+            EngineSizeCC = 1998,
+            EngineL = 2.0m,
+            BatteryKWh = null
+        };
+
+        context.Listings.Add(demo);
+        context.SaveChanges();
     }
 }

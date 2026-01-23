@@ -14,7 +14,7 @@ public class DriveTypesController(CatalogDbContext context) : ControllerBase
     {
         var items = context.DriveTypes
             .OrderBy(x => x.Code)
-            .Select(x => new OptionDto(x.Id, x.Name))
+            .Select(x => new OptionDto(x.Id, x.Name, x.Code))
             .ToList();
         return Ok(items);
     }

@@ -18,7 +18,7 @@ public class DerivativesController(CatalogDbContext context, IMapper mapper) : C
     {
         var bodyTypes = context.BodyTypes
             .OrderBy(x => x.Id)
-            .Select(x => new OptionDto(x.Id, x.Name))
+            .Select(x => new OptionDto(x.Id, x.Name, x.Code))
             .ToList();
         return Ok(bodyTypes);
     }

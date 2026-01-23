@@ -15,18 +15,18 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
 {
     [HttpGet]
     public async Task<ActionResult<List<ListingDto>>> GetAll(
-        [FromQuery] int? makeId,
-        [FromQuery(Name = "makeIds")] int[]? makeIds,
-        [FromQuery] int? modelId,
-        [FromQuery(Name = "modelIds")] int[]? modelIds,
-        [FromQuery] int? variantId,
-        [FromQuery(Name = "variantIds")] int[]? variantIds,
-        [FromQuery] int? transmissionId,
-        [FromQuery(Name = "transmissionIds")] int[]? transmissionIds,
-        [FromQuery] int? bodyTypeId,
-        [FromQuery(Name = "bodyTypeIds")] int[]? bodyTypeIds,
-        [FromQuery] int? fuelTypeId,
-        [FromQuery(Name = "fuelTypeIds")] int[]? fuelTypeIds,
+        [FromQuery] string? makeCode,
+        [FromQuery(Name = "makeCodes")] string[]? makeCodes,
+        [FromQuery] string? modelCode,
+        [FromQuery(Name = "modelCodes")] string[]? modelCodes,
+        [FromQuery] string? variantCode,
+        [FromQuery(Name = "variantCodes")] string[]? variantCodes,
+        [FromQuery] string? transmissionTypeCode,
+        [FromQuery(Name = "transmissionTypeCodes")] string[]? transmissionTypeCodes,
+        [FromQuery] string? bodyTypeCode,
+        [FromQuery(Name = "bodyTypeCodes")] string[]? bodyTypeCodes,
+        [FromQuery] string? fuelTypeCode,
+        [FromQuery(Name = "fuelTypeCodes")] string[]? fuelTypeCodes,
         [FromQuery] decimal? priceMin,
         [FromQuery] decimal? priceMax,
         [FromQuery] int? yearMin,
@@ -41,23 +41,23 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         if (yearMax is not null) query = query.Where(l => l.Year <= yearMax);
         if (mileageMin is not null) query = query.Where(l => l.Mileage >= mileageMin);
         if (mileageMax is not null) query = query.Where(l => l.Mileage <= mileageMax);
-        if (makeId is not null) query = query.Where(l => l.MakeId == makeId);
-        else if (makeIds is not null && makeIds.Length > 0) query = query.Where(l => makeIds.Contains(l.MakeId));
+        if (!string.IsNullOrWhiteSpace(makeCode)) query = query.Where(l => l.MakeCode == makeCode);
+        else if (makeCodes is not null && makeCodes.Length > 0) query = query.Where(l => makeCodes.Contains(l.MakeCode!));
 
-        if (modelId is not null) query = query.Where(l => l.ModelId == modelId);
-        else if (modelIds is not null && modelIds.Length > 0) query = query.Where(l => modelIds.Contains(l.ModelId));
+        if (!string.IsNullOrWhiteSpace(modelCode)) query = query.Where(l => l.ModelCode == modelCode);
+        else if (modelCodes is not null && modelCodes.Length > 0) query = query.Where(l => modelCodes.Contains(l.ModelCode!));
 
-        if (variantId is not null) query = query.Where(l => l.VariantId == variantId);
-        else if (variantIds is not null && variantIds.Length > 0) query = query.Where(l => variantIds.Contains(l.VariantId));
+        if (!string.IsNullOrWhiteSpace(variantCode)) query = query.Where(l => l.VariantCode == variantCode);
+        else if (variantCodes is not null && variantCodes.Length > 0) query = query.Where(l => variantCodes.Contains(l.VariantCode!));
 
-        if (transmissionId is not null) query = query.Where(l => l.TransmissionId == transmissionId);
-        else if (transmissionIds is not null && transmissionIds.Length > 0) query = query.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
+        if (!string.IsNullOrWhiteSpace(transmissionTypeCode)) query = query.Where(l => l.TransmissionTypeCode == transmissionTypeCode);
+        else if (transmissionTypeCodes is not null && transmissionTypeCodes.Length > 0) query = query.Where(l => transmissionTypeCodes.Contains(l.TransmissionTypeCode!));
 
-        if (bodyTypeId is not null) query = query.Where(l => l.BodyTypeId == bodyTypeId);
-        else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) query = query.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
+        if (!string.IsNullOrWhiteSpace(bodyTypeCode)) query = query.Where(l => l.BodyTypeCode == bodyTypeCode);
+        else if (bodyTypeCodes is not null && bodyTypeCodes.Length > 0) query = query.Where(l => bodyTypeCodes.Contains(l.BodyTypeCode!));
 
-        if (fuelTypeId is not null) query = query.Where(l => l.FuelTypeId == fuelTypeId);
-        else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) query = query.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
+        if (!string.IsNullOrWhiteSpace(fuelTypeCode)) query = query.Where(l => l.FuelTypeCode == fuelTypeCode);
+        else if (fuelTypeCodes is not null && fuelTypeCodes.Length > 0) query = query.Where(l => fuelTypeCodes.Contains(l.FuelTypeCode!));
         var items = await query.ToListAsync();
         var dtos = items.Select(mapper.Map<ListingDto>).ToList();
         var featuresByListing = await context.ListingFeatures
@@ -75,18 +75,18 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
 
     [HttpGet("facets")]
     public async Task<ActionResult<FacetCountsDto>> GetFacetCounts(
-        [FromQuery] int? makeId,
-        [FromQuery(Name = "makeIds")] int[]? makeIds,
-        [FromQuery] int? modelId,
-        [FromQuery(Name = "modelIds")] int[]? modelIds,
-        [FromQuery] int? variantId,
-        [FromQuery(Name = "variantIds")] int[]? variantIds,
-        [FromQuery] int? transmissionId,
-        [FromQuery(Name = "transmissionIds")] int[]? transmissionIds,
-        [FromQuery] int? bodyTypeId,
-        [FromQuery(Name = "bodyTypeIds")] int[]? bodyTypeIds,
-        [FromQuery] int? fuelTypeId,
-        [FromQuery(Name = "fuelTypeIds")] int[]? fuelTypeIds,
+        [FromQuery] string? makeCode,
+        [FromQuery(Name = "makeCodes")] string[]? makeCodes,
+        [FromQuery] string? modelCode,
+        [FromQuery(Name = "modelCodes")] string[]? modelCodes,
+        [FromQuery] string? variantCode,
+        [FromQuery(Name = "variantCodes")] string[]? variantCodes,
+        [FromQuery] string? transmissionTypeCode,
+        [FromQuery(Name = "transmissionTypeCodes")] string[]? transmissionTypeCodes,
+        [FromQuery] string? bodyTypeCode,
+        [FromQuery(Name = "bodyTypeCodes")] string[]? bodyTypeCodes,
+        [FromQuery] string? fuelTypeCode,
+        [FromQuery(Name = "fuelTypeCodes")] string[]? fuelTypeCodes,
         [FromQuery] decimal? priceMin,
         [FromQuery] decimal? priceMax,
         [FromQuery] int? yearMin,
@@ -105,8 +105,8 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             if (yearMax is not null) q = q.Where(l => l.Year <= yearMax);
             if (mileageMin is not null) q = q.Where(l => l.Mileage >= mileageMin);
             if (mileageMax is not null) q = q.Where(l => l.Mileage <= mileageMax);
-            if (seats is not null && seats.Length > 0) q = q.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
-            if (doors is not null && doors.Length > 0) q = q.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
+            if (seats is not null && seats.Length > 0) q = q.Where(l => l.Seats != null && seats.Contains(l.Seats.Value));
+            if (doors is not null && doors.Length > 0) q = q.Where(l => l.Doors != null && doors.Contains(l.Doors.Value));
             return q;
         }
         IQueryable<Listing> BaseWithoutYear() {
@@ -115,8 +115,8 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             if (priceMax is not null) q = q.Where(l => l.Price <= priceMax);
             if (mileageMin is not null) q = q.Where(l => l.Mileage >= mileageMin);
             if (mileageMax is not null) q = q.Where(l => l.Mileage <= mileageMax);
-            if (seats is not null && seats.Length > 0) q = q.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
-            if (doors is not null && doors.Length > 0) q = q.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
+            if (seats is not null && seats.Length > 0) q = q.Where(l => l.Seats != null && seats.Contains(l.Seats.Value));
+            if (doors is not null && doors.Length > 0) q = q.Where(l => l.Doors != null && doors.Contains(l.Doors.Value));
             return q;
         }
         IQueryable<Listing> BaseWithoutPrice() {
@@ -125,8 +125,8 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             if (yearMax is not null) q = q.Where(l => l.Year <= yearMax);
             if (mileageMin is not null) q = q.Where(l => l.Mileage >= mileageMin);
             if (mileageMax is not null) q = q.Where(l => l.Mileage <= mileageMax);
-            if (seats is not null && seats.Length > 0) q = q.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
-            if (doors is not null && doors.Length > 0) q = q.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
+            if (seats is not null && seats.Length > 0) q = q.Where(l => l.Seats != null && seats.Contains(l.Seats.Value));
+            if (doors is not null && doors.Length > 0) q = q.Where(l => l.Doors != null && doors.Contains(l.Doors.Value));
             return q;
         }
         IQueryable<Listing> BaseWithoutMileage() {
@@ -135,111 +135,111 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             if (priceMax is not null) q = q.Where(l => l.Price <= priceMax);
             if (yearMin is not null) q = q.Where(l => l.Year >= yearMin);
             if (yearMax is not null) q = q.Where(l => l.Year <= yearMax);
-            if (seats is not null && seats.Length > 0) q = q.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
-            if (doors is not null && doors.Length > 0) q = q.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
+            if (seats is not null && seats.Length > 0) q = q.Where(l => l.Seats != null && seats.Contains(l.Seats.Value));
+            if (doors is not null && doors.Length > 0) q = q.Where(l => l.Doors != null && doors.Contains(l.Doors.Value));
             return q;
         }
 
         // Apply filters except the facet under evaluation
         IQueryable<Listing> ApplyWithoutMake(IQueryable<Listing> q) {
-            if (modelId is not null) q = q.Where(l => l.ModelId == modelId);
-            else if (modelIds is not null && modelIds.Length > 0) q = q.Where(l => modelIds.Contains(l.ModelId));
-            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
-            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
-            if (transmissionId is not null) q = q.Where(l => l.TransmissionId == transmissionId);
-            else if (transmissionIds is not null && transmissionIds.Length > 0) q = q.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
-            if (bodyTypeId is not null) q = q.Where(l => l.BodyTypeId == bodyTypeId);
-            else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
-            if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
-            else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
-            if (seats is not null && seats.Length > 0) q = q.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
-            if (doors is not null && doors.Length > 0) q = q.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
+            if (!string.IsNullOrWhiteSpace(modelCode)) q = q.Where(l => l.ModelCode == modelCode);
+            else if (modelCodes is not null && modelCodes.Length > 0) q = q.Where(l => modelCodes.Contains(l.ModelCode!));
+            if (!string.IsNullOrWhiteSpace(variantCode)) q = q.Where(l => l.VariantCode == variantCode);
+            else if (variantCodes is not null && variantCodes.Length > 0) q = q.Where(l => variantCodes.Contains(l.VariantCode!));
+            if (!string.IsNullOrWhiteSpace(transmissionTypeCode)) q = q.Where(l => l.TransmissionTypeCode == transmissionTypeCode);
+            else if (transmissionTypeCodes is not null && transmissionTypeCodes.Length > 0) q = q.Where(l => transmissionTypeCodes.Contains(l.TransmissionTypeCode!));
+            if (!string.IsNullOrWhiteSpace(bodyTypeCode)) q = q.Where(l => l.BodyTypeCode == bodyTypeCode);
+            else if (bodyTypeCodes is not null && bodyTypeCodes.Length > 0) q = q.Where(l => bodyTypeCodes.Contains(l.BodyTypeCode!));
+            if (!string.IsNullOrWhiteSpace(fuelTypeCode)) q = q.Where(l => l.FuelTypeCode == fuelTypeCode);
+            else if (fuelTypeCodes is not null && fuelTypeCodes.Length > 0) q = q.Where(l => fuelTypeCodes.Contains(l.FuelTypeCode!));
+            if (seats is not null && seats.Length > 0) q = q.Where(l => l.Seats != null && seats.Contains(l.Seats.Value));
+            if (doors is not null && doors.Length > 0) q = q.Where(l => l.Doors != null && doors.Contains(l.Doors.Value));
             return q;
         }
         IQueryable<Listing> ApplyWithoutModel(IQueryable<Listing> q) {
-            if (makeId is not null) q = q.Where(l => l.MakeId == makeId);
-            else if (makeIds is not null && makeIds.Length > 0) q = q.Where(l => makeIds.Contains(l.MakeId));
-            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
-            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
-            if (transmissionId is not null) q = q.Where(l => l.TransmissionId == transmissionId);
-            else if (transmissionIds is not null && transmissionIds.Length > 0) q = q.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
-            if (bodyTypeId is not null) q = q.Where(l => l.BodyTypeId == bodyTypeId);
-            else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
-            if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
-            else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
-            if (seats is not null && seats.Length > 0) q = q.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
-            if (doors is not null && doors.Length > 0) q = q.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
+            if (!string.IsNullOrWhiteSpace(makeCode)) q = q.Where(l => l.MakeCode == makeCode);
+            else if (makeCodes is not null && makeCodes.Length > 0) q = q.Where(l => makeCodes.Contains(l.MakeCode!));
+            if (!string.IsNullOrWhiteSpace(variantCode)) q = q.Where(l => l.VariantCode == variantCode);
+            else if (variantCodes is not null && variantCodes.Length > 0) q = q.Where(l => variantCodes.Contains(l.VariantCode!));
+            if (!string.IsNullOrWhiteSpace(transmissionTypeCode)) q = q.Where(l => l.TransmissionTypeCode == transmissionTypeCode);
+            else if (transmissionTypeCodes is not null && transmissionTypeCodes.Length > 0) q = q.Where(l => transmissionTypeCodes.Contains(l.TransmissionTypeCode!));
+            if (!string.IsNullOrWhiteSpace(bodyTypeCode)) q = q.Where(l => l.BodyTypeCode == bodyTypeCode);
+            else if (bodyTypeCodes is not null && bodyTypeCodes.Length > 0) q = q.Where(l => bodyTypeCodes.Contains(l.BodyTypeCode!));
+            if (!string.IsNullOrWhiteSpace(fuelTypeCode)) q = q.Where(l => l.FuelTypeCode == fuelTypeCode);
+            else if (fuelTypeCodes is not null && fuelTypeCodes.Length > 0) q = q.Where(l => fuelTypeCodes.Contains(l.FuelTypeCode!));
+            if (seats is not null && seats.Length > 0) q = q.Where(l => l.Seats != null && seats.Contains(l.Seats.Value));
+            if (doors is not null && doors.Length > 0) q = q.Where(l => l.Doors != null && doors.Contains(l.Doors.Value));
             return q;
         }
         IQueryable<Listing> ApplyWithoutTransmission(IQueryable<Listing> q) {
-            if (makeId is not null) q = q.Where(l => l.MakeId == makeId);
-            else if (makeIds is not null && makeIds.Length > 0) q = q.Where(l => makeIds.Contains(l.MakeId));
-            if (modelId is not null) q = q.Where(l => l.ModelId == modelId);
-            else if (modelIds is not null && modelIds.Length > 0) q = q.Where(l => modelIds.Contains(l.ModelId));
-            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
-            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
-            if (bodyTypeId is not null) q = q.Where(l => l.BodyTypeId == bodyTypeId);
-            else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
-            if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
-            else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
-            if (seats is not null && seats.Length > 0) q = q.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
-            if (doors is not null && doors.Length > 0) q = q.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
+            if (!string.IsNullOrWhiteSpace(makeCode)) q = q.Where(l => l.MakeCode == makeCode);
+            else if (makeCodes is not null && makeCodes.Length > 0) q = q.Where(l => makeCodes.Contains(l.MakeCode!));
+            if (!string.IsNullOrWhiteSpace(modelCode)) q = q.Where(l => l.ModelCode == modelCode);
+            else if (modelCodes is not null && modelCodes.Length > 0) q = q.Where(l => modelCodes.Contains(l.ModelCode!));
+            if (!string.IsNullOrWhiteSpace(variantCode)) q = q.Where(l => l.VariantCode == variantCode);
+            else if (variantCodes is not null && variantCodes.Length > 0) q = q.Where(l => variantCodes.Contains(l.VariantCode!));
+            if (!string.IsNullOrWhiteSpace(bodyTypeCode)) q = q.Where(l => l.BodyTypeCode == bodyTypeCode);
+            else if (bodyTypeCodes is not null && bodyTypeCodes.Length > 0) q = q.Where(l => bodyTypeCodes.Contains(l.BodyTypeCode!));
+            if (!string.IsNullOrWhiteSpace(fuelTypeCode)) q = q.Where(l => l.FuelTypeCode == fuelTypeCode);
+            else if (fuelTypeCodes is not null && fuelTypeCodes.Length > 0) q = q.Where(l => fuelTypeCodes.Contains(l.FuelTypeCode!));
+            if (seats is not null && seats.Length > 0) q = q.Where(l => l.Seats != null && seats.Contains(l.Seats.Value));
+            if (doors is not null && doors.Length > 0) q = q.Where(l => l.Doors != null && doors.Contains(l.Doors.Value));
             return q;
         }
         IQueryable<Listing> ApplyWithoutBody(IQueryable<Listing> q) {
-            if (makeId is not null) q = q.Where(l => l.MakeId == makeId);
-            else if (makeIds is not null && makeIds.Length > 0) q = q.Where(l => makeIds.Contains(l.MakeId));
-            if (modelId is not null) q = q.Where(l => l.ModelId == modelId);
-            else if (modelIds is not null && modelIds.Length > 0) q = q.Where(l => modelIds.Contains(l.ModelId));
-            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
-            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
-            if (transmissionId is not null) q = q.Where(l => l.TransmissionId == transmissionId);
-            else if (transmissionIds is not null && transmissionIds.Length > 0) q = q.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
-            if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
-            else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
+            if (!string.IsNullOrWhiteSpace(makeCode)) q = q.Where(l => l.MakeCode == makeCode);
+            else if (makeCodes is not null && makeCodes.Length > 0) q = q.Where(l => makeCodes.Contains(l.MakeCode!));
+            if (!string.IsNullOrWhiteSpace(modelCode)) q = q.Where(l => l.ModelCode == modelCode);
+            else if (modelCodes is not null && modelCodes.Length > 0) q = q.Where(l => modelCodes.Contains(l.ModelCode!));
+            if (!string.IsNullOrWhiteSpace(variantCode)) q = q.Where(l => l.VariantCode == variantCode);
+            else if (variantCodes is not null && variantCodes.Length > 0) q = q.Where(l => variantCodes.Contains(l.VariantCode!));
+            if (!string.IsNullOrWhiteSpace(transmissionTypeCode)) q = q.Where(l => l.TransmissionTypeCode == transmissionTypeCode);
+            else if (transmissionTypeCodes is not null && transmissionTypeCodes.Length > 0) q = q.Where(l => transmissionTypeCodes.Contains(l.TransmissionTypeCode!));
+            if (!string.IsNullOrWhiteSpace(fuelTypeCode)) q = q.Where(l => l.FuelTypeCode == fuelTypeCode);
+            else if (fuelTypeCodes is not null && fuelTypeCodes.Length > 0) q = q.Where(l => fuelTypeCodes.Contains(l.FuelTypeCode!));
             return q;
         }
         IQueryable<Listing> ApplyWithoutFuel(IQueryable<Listing> q) {
-            if (makeId is not null) q = q.Where(l => l.MakeId == makeId);
-            else if (makeIds is not null && makeIds.Length > 0) q = q.Where(l => makeIds.Contains(l.MakeId));
-            if (modelId is not null) q = q.Where(l => l.ModelId == modelId);
-            else if (modelIds is not null && modelIds.Length > 0) q = q.Where(l => modelIds.Contains(l.ModelId));
-            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
-            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
-            if (transmissionId is not null) q = q.Where(l => l.TransmissionId == transmissionId);
-            else if (transmissionIds is not null && transmissionIds.Length > 0) q = q.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
-            if (bodyTypeId is not null) q = q.Where(l => l.BodyTypeId == bodyTypeId);
-            else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
+            if (!string.IsNullOrWhiteSpace(makeCode)) q = q.Where(l => l.MakeCode == makeCode);
+            else if (makeCodes is not null && makeCodes.Length > 0) q = q.Where(l => makeCodes.Contains(l.MakeCode!));
+            if (!string.IsNullOrWhiteSpace(modelCode)) q = q.Where(l => l.ModelCode == modelCode);
+            else if (modelCodes is not null && modelCodes.Length > 0) q = q.Where(l => modelCodes.Contains(l.ModelCode!));
+            if (!string.IsNullOrWhiteSpace(variantCode)) q = q.Where(l => l.VariantCode == variantCode);
+            else if (variantCodes is not null && variantCodes.Length > 0) q = q.Where(l => variantCodes.Contains(l.VariantCode!));
+            if (!string.IsNullOrWhiteSpace(transmissionTypeCode)) q = q.Where(l => l.TransmissionTypeCode == transmissionTypeCode);
+            else if (transmissionTypeCodes is not null && transmissionTypeCodes.Length > 0) q = q.Where(l => transmissionTypeCodes.Contains(l.TransmissionTypeCode!));
+            if (!string.IsNullOrWhiteSpace(bodyTypeCode)) q = q.Where(l => l.BodyTypeCode == bodyTypeCode);
+            else if (bodyTypeCodes is not null && bodyTypeCodes.Length > 0) q = q.Where(l => bodyTypeCodes.Contains(l.BodyTypeCode!));
             return q;
         }
         IQueryable<Listing> ApplyWithoutYear(IQueryable<Listing> q) {
-            if (makeId is not null) q = q.Where(l => l.MakeId == makeId);
-            else if (makeIds is not null && makeIds.Length > 0) q = q.Where(l => makeIds.Contains(l.MakeId));
-            if (modelId is not null) q = q.Where(l => l.ModelId == modelId);
-            else if (modelIds is not null && modelIds.Length > 0) q = q.Where(l => modelIds.Contains(l.ModelId));
-            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
-            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
-            if (transmissionId is not null) q = q.Where(l => l.TransmissionId == transmissionId);
-            else if (transmissionIds is not null && transmissionIds.Length > 0) q = q.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
-            if (bodyTypeId is not null) q = q.Where(l => l.BodyTypeId == bodyTypeId);
-            else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
-            if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
-            else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
+            if (!string.IsNullOrWhiteSpace(makeCode)) q = q.Where(l => l.MakeCode == makeCode);
+            else if (makeCodes is not null && makeCodes.Length > 0) q = q.Where(l => makeCodes.Contains(l.MakeCode!));
+            if (!string.IsNullOrWhiteSpace(modelCode)) q = q.Where(l => l.ModelCode == modelCode);
+            else if (modelCodes is not null && modelCodes.Length > 0) q = q.Where(l => modelCodes.Contains(l.ModelCode!));
+            if (!string.IsNullOrWhiteSpace(variantCode)) q = q.Where(l => l.VariantCode == variantCode);
+            else if (variantCodes is not null && variantCodes.Length > 0) q = q.Where(l => variantCodes.Contains(l.VariantCode!));
+            if (!string.IsNullOrWhiteSpace(transmissionTypeCode)) q = q.Where(l => l.TransmissionTypeCode == transmissionTypeCode);
+            else if (transmissionTypeCodes is not null && transmissionTypeCodes.Length > 0) q = q.Where(l => transmissionTypeCodes.Contains(l.TransmissionTypeCode!));
+            if (!string.IsNullOrWhiteSpace(bodyTypeCode)) q = q.Where(l => l.BodyTypeCode == bodyTypeCode);
+            else if (bodyTypeCodes is not null && bodyTypeCodes.Length > 0) q = q.Where(l => bodyTypeCodes.Contains(l.BodyTypeCode!));
+            if (!string.IsNullOrWhiteSpace(fuelTypeCode)) q = q.Where(l => l.FuelTypeCode == fuelTypeCode);
+            else if (fuelTypeCodes is not null && fuelTypeCodes.Length > 0) q = q.Where(l => fuelTypeCodes.Contains(l.FuelTypeCode!));
             return q;
         }
         IQueryable<Listing> ApplyWithoutPrice(IQueryable<Listing> q) {
-            if (makeId is not null) q = q.Where(l => l.MakeId == makeId);
-            else if (makeIds is not null && makeIds.Length > 0) q = q.Where(l => makeIds.Contains(l.MakeId));
-            if (modelId is not null) q = q.Where(l => l.ModelId == modelId);
-            else if (modelIds is not null && modelIds.Length > 0) q = q.Where(l => modelIds.Contains(l.ModelId));
-            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
-            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
-            if (transmissionId is not null) q = q.Where(l => l.TransmissionId == transmissionId);
-            else if (transmissionIds is not null && transmissionIds.Length > 0) q = q.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
-            if (bodyTypeId is not null) q = q.Where(l => l.BodyTypeId == bodyTypeId);
-            else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
-            if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
-            else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
+            if (!string.IsNullOrWhiteSpace(makeCode)) q = q.Where(l => l.MakeCode == makeCode);
+            else if (makeCodes is not null && makeCodes.Length > 0) q = q.Where(l => makeCodes.Contains(l.MakeCode!));
+            if (!string.IsNullOrWhiteSpace(modelCode)) q = q.Where(l => l.ModelCode == modelCode);
+            else if (modelCodes is not null && modelCodes.Length > 0) q = q.Where(l => modelCodes.Contains(l.ModelCode!));
+            if (!string.IsNullOrWhiteSpace(variantCode)) q = q.Where(l => l.VariantCode == variantCode);
+            else if (variantCodes is not null && variantCodes.Length > 0) q = q.Where(l => variantCodes.Contains(l.VariantCode!));
+            if (!string.IsNullOrWhiteSpace(transmissionTypeCode)) q = q.Where(l => l.TransmissionTypeCode == transmissionTypeCode);
+            else if (transmissionTypeCodes is not null && transmissionTypeCodes.Length > 0) q = q.Where(l => transmissionTypeCodes.Contains(l.TransmissionTypeCode!));
+            if (!string.IsNullOrWhiteSpace(bodyTypeCode)) q = q.Where(l => l.BodyTypeCode == bodyTypeCode);
+            else if (bodyTypeCodes is not null && bodyTypeCodes.Length > 0) q = q.Where(l => bodyTypeCodes.Contains(l.BodyTypeCode!));
+            if (!string.IsNullOrWhiteSpace(fuelTypeCode)) q = q.Where(l => l.FuelTypeCode == fuelTypeCode);
+            else if (fuelTypeCodes is not null && fuelTypeCodes.Length > 0) q = q.Where(l => fuelTypeCodes.Contains(l.FuelTypeCode!));
             if (yearMin is not null) q = q.Where(l => l.Year >= yearMin);
             if (yearMax is not null) q = q.Where(l => l.Year <= yearMax);
             if (mileageMin is not null) q = q.Where(l => l.Mileage >= mileageMin);
@@ -247,18 +247,18 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             return q;
         }
         IQueryable<Listing> ApplyWithoutMileage(IQueryable<Listing> q) {
-            if (makeId is not null) q = q.Where(l => l.MakeId == makeId);
-            else if (makeIds is not null && makeIds.Length > 0) q = q.Where(l => makeIds.Contains(l.MakeId));
-            if (modelId is not null) q = q.Where(l => l.ModelId == modelId);
-            else if (modelIds is not null && modelIds.Length > 0) q = q.Where(l => modelIds.Contains(l.ModelId));
-            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
-            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
-            if (transmissionId is not null) q = q.Where(l => l.TransmissionId == transmissionId);
-            else if (transmissionIds is not null && transmissionIds.Length > 0) q = q.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
-            if (bodyTypeId is not null) q = q.Where(l => l.BodyTypeId == bodyTypeId);
-            else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
-            if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
-            else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
+            if (!string.IsNullOrWhiteSpace(makeCode)) q = q.Where(l => l.MakeCode == makeCode);
+            else if (makeCodes is not null && makeCodes.Length > 0) q = q.Where(l => makeCodes.Contains(l.MakeCode!));
+            if (!string.IsNullOrWhiteSpace(modelCode)) q = q.Where(l => l.ModelCode == modelCode);
+            else if (modelCodes is not null && modelCodes.Length > 0) q = q.Where(l => modelCodes.Contains(l.ModelCode!));
+            if (!string.IsNullOrWhiteSpace(variantCode)) q = q.Where(l => l.VariantCode == variantCode);
+            else if (variantCodes is not null && variantCodes.Length > 0) q = q.Where(l => variantCodes.Contains(l.VariantCode!));
+            if (!string.IsNullOrWhiteSpace(transmissionTypeCode)) q = q.Where(l => l.TransmissionTypeCode == transmissionTypeCode);
+            else if (transmissionTypeCodes is not null && transmissionTypeCodes.Length > 0) q = q.Where(l => transmissionTypeCodes.Contains(l.TransmissionTypeCode!));
+            if (!string.IsNullOrWhiteSpace(bodyTypeCode)) q = q.Where(l => l.BodyTypeCode == bodyTypeCode);
+            else if (bodyTypeCodes is not null && bodyTypeCodes.Length > 0) q = q.Where(l => bodyTypeCodes.Contains(l.BodyTypeCode!));
+            if (!string.IsNullOrWhiteSpace(fuelTypeCode)) q = q.Where(l => l.FuelTypeCode == fuelTypeCode);
+            else if (fuelTypeCodes is not null && fuelTypeCodes.Length > 0) q = q.Where(l => fuelTypeCodes.Contains(l.FuelTypeCode!));
             if (priceMin is not null) q = q.Where(l => l.Price >= priceMin);
             if (priceMax is not null) q = q.Where(l => l.Price <= priceMax);
             if (yearMin is not null) q = q.Where(l => l.Year >= yearMin);
@@ -267,48 +267,46 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         }
 
         var makeCounts = await ApplyWithoutMake(Base())
-            .GroupBy(l => l.MakeId)
-            .Select(g => new { Id = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.Id, x => x.Count);
+            .Where(l => l.MakeCode != null)
+            .GroupBy(l => l.MakeCode!)
+            .Select(g => new { Code = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Code, x => x.Count);
         var modelCounts = await ApplyWithoutModel(Base())
-            .GroupBy(l => l.ModelId)
-            .Select(g => new { Id = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.Id, x => x.Count);
+            .Where(l => l.ModelCode != null)
+            .GroupBy(l => l.ModelCode!)
+            .Select(g => new { Code = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Code, x => x.Count);
         var transCounts = await ApplyWithoutTransmission(Base())
-            .Where(l => l.TransmissionId != null)
-            .GroupBy(l => l.TransmissionId!.Value)
-            .Select(g => new { Id = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.Id, x => x.Count);
+            .Where(l => l.TransmissionTypeCode != null)
+            .GroupBy(l => l.TransmissionTypeCode!)
+            .Select(g => new { Code = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Code, x => x.Count);
         var bodyCounts = await ApplyWithoutBody(Base())
-            .GroupBy(l => l.BodyTypeId)
-            .Select(g => new { Id = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.Id, x => x.Count);
+            .Where(l => l.BodyTypeCode != null)
+            .GroupBy(l => l.BodyTypeCode!)
+            .Select(g => new { Code = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Code, x => x.Count);
         var fuelCounts = await ApplyWithoutFuel(Base())
-            .Where(l => l.FuelTypeId != null)
-            .GroupBy(l => l.FuelTypeId!.Value)
-            .Select(g => new { Id = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.Id, x => x.Count);
+            .Where(l => l.FuelTypeCode != null)
+            .GroupBy(l => l.FuelTypeCode!)
+            .Select(g => new { Code = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Code, x => x.Count);
         // Seats and Doors (exclude filtering by the facet under evaluation)
         IQueryable<Listing> ApplyWithoutSeats(IQueryable<Listing> q) {
-            if (makeId is not null) q = q.Where(l => l.MakeId == makeId);
-            else if (makeIds is not null && makeIds.Length > 0) q = q.Where(l => makeIds.Contains(l.MakeId));
+            if (!string.IsNullOrWhiteSpace(makeCode)) q = q.Where(l => l.MakeCode == makeCode);
+            else if (makeCodes is not null && makeCodes.Length > 0) q = q.Where(l => makeCodes.Contains(l.MakeCode!));
+            if (!string.IsNullOrWhiteSpace(modelCode)) q = q.Where(l => l.ModelCode == modelCode);
+            else if (modelCodes is not null && modelCodes.Length > 0) q = q.Where(l => modelCodes.Contains(l.ModelCode!));
+            if (!string.IsNullOrWhiteSpace(variantCode)) q = q.Where(l => l.VariantCode == variantCode);
+            else if (variantCodes is not null && variantCodes.Length > 0) q = q.Where(l => variantCodes.Contains(l.VariantCode!));
+            if (!string.IsNullOrWhiteSpace(transmissionTypeCode)) q = q.Where(l => l.TransmissionTypeCode == transmissionTypeCode);
+            else if (transmissionTypeCodes is not null && transmissionTypeCodes.Length > 0) q = q.Where(l => transmissionTypeCodes.Contains(l.TransmissionTypeCode!));
+            if (!string.IsNullOrWhiteSpace(bodyTypeCode)) q = q.Where(l => l.BodyTypeCode == bodyTypeCode);
+            else if (bodyTypeCodes is not null && bodyTypeCodes.Length > 0) q = q.Where(l => bodyTypeCodes.Contains(l.BodyTypeCode!));
+            if (!string.IsNullOrWhiteSpace(fuelTypeCode)) q = q.Where(l => l.FuelTypeCode == fuelTypeCode);
+            else if (fuelTypeCodes is not null && fuelTypeCodes.Length > 0) q = q.Where(l => fuelTypeCodes.Contains(l.FuelTypeCode!));
 
-            if (modelId is not null) q = q.Where(l => l.ModelId == modelId);
-            else if (modelIds is not null && modelIds.Length > 0) q = q.Where(l => modelIds.Contains(l.ModelId));
-
-            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
-            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
-
-            if (transmissionId is not null) q = q.Where(l => l.TransmissionId == transmissionId);
-            else if (transmissionIds is not null && transmissionIds.Length > 0) q = q.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
-
-            if (bodyTypeId is not null) q = q.Where(l => l.BodyTypeId == bodyTypeId);
-            else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
-
-            if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
-            else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
-
-            if (doors is not null && doors.Length > 0) q = q.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
+            if (doors is not null && doors.Length > 0) q = q.Where(l => l.Doors != null && doors.Contains(l.Doors.Value));
 
             if (priceMin is not null) q = q.Where(l => l.Price >= priceMin);
             if (priceMax is not null) q = q.Where(l => l.Price <= priceMax);
@@ -320,25 +318,20 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             return q;
         }
         IQueryable<Listing> ApplyWithoutDoors(IQueryable<Listing> q) {
-            if (makeId is not null) q = q.Where(l => l.MakeId == makeId);
-            else if (makeIds is not null && makeIds.Length > 0) q = q.Where(l => makeIds.Contains(l.MakeId));
+            if (!string.IsNullOrWhiteSpace(makeCode)) q = q.Where(l => l.MakeCode == makeCode);
+            else if (makeCodes is not null && makeCodes.Length > 0) q = q.Where(l => makeCodes.Contains(l.MakeCode!));
+            if (!string.IsNullOrWhiteSpace(modelCode)) q = q.Where(l => l.ModelCode == modelCode);
+            else if (modelCodes is not null && modelCodes.Length > 0) q = q.Where(l => modelCodes.Contains(l.ModelCode!));
+            if (!string.IsNullOrWhiteSpace(variantCode)) q = q.Where(l => l.VariantCode == variantCode);
+            else if (variantCodes is not null && variantCodes.Length > 0) q = q.Where(l => variantCodes.Contains(l.VariantCode!));
+            if (!string.IsNullOrWhiteSpace(transmissionTypeCode)) q = q.Where(l => l.TransmissionTypeCode == transmissionTypeCode);
+            else if (transmissionTypeCodes is not null && transmissionTypeCodes.Length > 0) q = q.Where(l => transmissionTypeCodes.Contains(l.TransmissionTypeCode!));
+            if (!string.IsNullOrWhiteSpace(bodyTypeCode)) q = q.Where(l => l.BodyTypeCode == bodyTypeCode);
+            else if (bodyTypeCodes is not null && bodyTypeCodes.Length > 0) q = q.Where(l => bodyTypeCodes.Contains(l.BodyTypeCode!));
+            if (!string.IsNullOrWhiteSpace(fuelTypeCode)) q = q.Where(l => l.FuelTypeCode == fuelTypeCode);
+            else if (fuelTypeCodes is not null && fuelTypeCodes.Length > 0) q = q.Where(l => fuelTypeCodes.Contains(l.FuelTypeCode!));
 
-            if (modelId is not null) q = q.Where(l => l.ModelId == modelId);
-            else if (modelIds is not null && modelIds.Length > 0) q = q.Where(l => modelIds.Contains(l.ModelId));
-
-            if (variantId is not null) q = q.Where(l => l.VariantId == variantId);
-            else if (variantIds is not null && variantIds.Length > 0) q = q.Where(l => variantIds.Contains(l.VariantId));
-
-            if (transmissionId is not null) q = q.Where(l => l.TransmissionId == transmissionId);
-            else if (transmissionIds is not null && transmissionIds.Length > 0) q = q.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
-
-            if (bodyTypeId is not null) q = q.Where(l => l.BodyTypeId == bodyTypeId);
-            else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) q = q.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
-
-            if (fuelTypeId is not null) q = q.Where(l => l.FuelTypeId == fuelTypeId);
-            else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) q = q.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
-
-            if (seats is not null && seats.Length > 0) q = q.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
+            if (seats is not null && seats.Length > 0) q = q.Where(l => l.Seats != null && seats.Contains(l.Seats.Value));
 
             if (priceMin is not null) q = q.Where(l => l.Price >= priceMin);
             if (priceMax is not null) q = q.Where(l => l.Price <= priceMax);
@@ -350,13 +343,13 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             return q;
         }
         var seatCounts = await ApplyWithoutSeats(Base())
-            .Where(l => l.SeatsSnapshot != null && l.SeatsSnapshot.Value > 0)
-            .GroupBy(l => l.SeatsSnapshot!.Value)
+            .Where(l => l.Seats != null && l.Seats.Value > 0)
+            .GroupBy(l => l.Seats!.Value)
             .Select(g => new { Id = (int)g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Id, x => x.Count);
         var doorCounts = await ApplyWithoutDoors(Base())
-            .Where(l => l.DoorsSnapshot != null && l.DoorsSnapshot.Value > 0)
-            .GroupBy(l => l.DoorsSnapshot!.Value)
+            .Where(l => l.Doors != null && l.Doors.Value > 0)
+            .GroupBy(l => l.Doors!.Value)
             .Select(g => new { Id = (int)g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Id, x => x.Count);
         var yearCounts = await ApplyWithoutYear(BaseWithoutYear())
@@ -392,36 +385,40 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
 
         // Labels & parent mappings derived from current filtered dataset
         var makeLabels = await Base()
-            .GroupBy(l => new { l.MakeId, l.MakeName })
-            .Select(g => new { g.Key.MakeId, g.Key.MakeName })
-            .ToDictionaryAsync(x => x.MakeId, x => x.MakeName ?? string.Empty);
+            .Where(l => l.MakeCode != null)
+            .GroupBy(l => new { l.MakeCode, l.MakeName })
+            .Select(g => new { Code = g.Key.MakeCode!, Name = g.Key.MakeName })
+            .ToDictionaryAsync(x => x.Code, x => x.Name ?? string.Empty);
 
         var modelLabels = await Base()
-            .GroupBy(l => new { l.ModelId, l.ModelName })
-            .Select(g => new { g.Key.ModelId, g.Key.ModelName })
-            .ToDictionaryAsync(x => x.ModelId, x => x.ModelName ?? string.Empty);
+            .Where(l => l.ModelCode != null)
+            .GroupBy(l => new { l.ModelCode, l.ModelName })
+            .Select(g => new { Code = g.Key.ModelCode!, Name = g.Key.ModelName })
+            .ToDictionaryAsync(x => x.Code, x => x.Name ?? string.Empty);
 
-        var modelMakeIds = await Base()
-            .GroupBy(l => new { l.ModelId, l.MakeId })
-            .Select(g => new { g.Key.ModelId, g.Key.MakeId })
-            .ToDictionaryAsync(x => x.ModelId, x => x.MakeId);
+        var modelMakeCodes = await Base()
+            .Where(l => l.ModelCode != null && l.MakeCode != null)
+            .GroupBy(l => new { l.ModelCode, l.MakeCode })
+            .Select(g => new { ModelCode = g.Key.ModelCode!, MakeCode = g.Key.MakeCode! })
+            .ToDictionaryAsync(x => x.ModelCode, x => x.MakeCode);
 
         var transmissionLabels = await Base()
-            .Where(l => l.TransmissionId != null)
-            .GroupBy(l => new { l.TransmissionId, l.TransmissionName })
-            .Select(g => new { Id = g.Key.TransmissionId!.Value, Name = g.Key.TransmissionName })
-            .ToDictionaryAsync(x => x.Id, x => x.Name ?? string.Empty);
+            .Where(l => l.TransmissionTypeCode != null)
+            .GroupBy(l => new { l.TransmissionTypeCode, l.TransmissionTypeName })
+            .Select(g => new { Code = g.Key.TransmissionTypeCode!, Name = g.Key.TransmissionTypeName })
+            .ToDictionaryAsync(x => x.Code, x => x.Name ?? string.Empty);
 
         var bodyLabels = await Base()
-            .GroupBy(l => new { l.BodyTypeId, l.BodyTypeName })
-            .Select(g => new { Id = g.Key.BodyTypeId, Name = g.Key.BodyTypeName })
-            .ToDictionaryAsync(x => x.Id, x => x.Name ?? string.Empty);
+            .Where(l => l.BodyTypeCode != null)
+            .GroupBy(l => new { l.BodyTypeCode, l.BodyTypeName })
+            .Select(g => new { Code = g.Key.BodyTypeCode!, Name = g.Key.BodyTypeName })
+            .ToDictionaryAsync(x => x.Code, x => x.Name ?? string.Empty);
 
         var fuelLabels = await Base()
-            .Where(l => l.FuelTypeId != null)
-            .GroupBy(l => new { l.FuelTypeId, l.FuelTypeName })
-            .Select(g => new { Id = g.Key.FuelTypeId!.Value, Name = g.Key.FuelTypeName })
-            .ToDictionaryAsync(x => x.Id, x => x.Name ?? string.Empty);
+            .Where(l => l.FuelTypeCode != null)
+            .GroupBy(l => new { l.FuelTypeCode, l.FuelTypeName })
+            .Select(g => new { Code = g.Key.FuelTypeCode!, Name = g.Key.FuelTypeName })
+            .ToDictionaryAsync(x => x.Code, x => x.Name ?? string.Empty);
 
         var dto = new FacetCountsDto
         {
@@ -441,7 +438,7 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
             MileageExact = mileageExactCounts,
             MakeLabels = makeLabels,
             ModelLabels = modelLabels,
-            ModelMakeIds = modelMakeIds,
+            ModelMakeCodes = modelMakeCodes,
             TransmissionLabels = transmissionLabels,
             BodyLabels = bodyLabels,
             FuelLabels = fuelLabels
@@ -455,18 +452,18 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         [FromQuery] int pageSize = 12,
         [FromQuery] string? sortBy = null, // "price" or "year"
         [FromQuery] string? sortDirection = null, // "asc" or "desc"
-        [FromQuery] int? makeId = null,
-        [FromQuery(Name = "makeIds")] int[]? makeIds = null,
-        [FromQuery] int? modelId = null,
-        [FromQuery(Name = "modelIds")] int[]? modelIds = null,
-        [FromQuery] int? variantId = null,
-        [FromQuery(Name = "variantIds")] int[]? variantIds = null,
-        [FromQuery] int? transmissionId = null,
-        [FromQuery(Name = "transmissionIds")] int[]? transmissionIds = null,
-        [FromQuery] int? bodyTypeId = null,
-        [FromQuery(Name = "bodyTypeIds")] int[]? bodyTypeIds = null,
-        [FromQuery] int? fuelTypeId = null,
-        [FromQuery(Name = "fuelTypeIds")] int[]? fuelTypeIds = null,
+        [FromQuery] string? makeCode = null,
+        [FromQuery(Name = "makeCodes")] string[]? makeCodes = null,
+        [FromQuery] string? modelCode = null,
+        [FromQuery(Name = "modelCodes")] string[]? modelCodes = null,
+        [FromQuery] string? variantCode = null,
+        [FromQuery(Name = "variantCodes")] string[]? variantCodes = null,
+        [FromQuery] string? transmissionTypeCode = null,
+        [FromQuery(Name = "transmissionTypeCodes")] string[]? transmissionTypeCodes = null,
+        [FromQuery] string? bodyTypeCode = null,
+        [FromQuery(Name = "bodyTypeCodes")] string[]? bodyTypeCodes = null,
+        [FromQuery] string? fuelTypeCode = null,
+        [FromQuery(Name = "fuelTypeCodes")] string[]? fuelTypeCodes = null,
         [FromQuery] decimal? priceMin = null,
         [FromQuery] decimal? priceMax = null,
         [FromQuery] int? yearMin = null,
@@ -486,25 +483,25 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         if (yearMax is not null) query = query.Where(l => l.Year <= yearMax);
         if (mileageMin is not null) query = query.Where(l => l.Mileage >= mileageMin);
         if (mileageMax is not null) query = query.Where(l => l.Mileage <= mileageMax);
-        if (seats is not null && seats.Length > 0) query = query.Where(l => l.SeatsSnapshot != null && seats.Contains(l.SeatsSnapshot.Value));
-        if (doors is not null && doors.Length > 0) query = query.Where(l => l.DoorsSnapshot != null && doors.Contains(l.DoorsSnapshot.Value));
-        if (makeId is not null) query = query.Where(l => l.MakeId == makeId);
-        else if (makeIds is not null && makeIds.Length > 0) query = query.Where(l => makeIds.Contains(l.MakeId));
+        if (seats is not null && seats.Length > 0) query = query.Where(l => l.Seats != null && seats.Contains(l.Seats.Value));
+        if (doors is not null && doors.Length > 0) query = query.Where(l => l.Doors != null && doors.Contains(l.Doors.Value));
+        if (!string.IsNullOrWhiteSpace(makeCode)) query = query.Where(l => l.MakeCode == makeCode);
+        else if (makeCodes is not null && makeCodes.Length > 0) query = query.Where(l => makeCodes.Contains(l.MakeCode!));
 
-        if (modelId is not null) query = query.Where(l => l.ModelId == modelId);
-        else if (modelIds is not null && modelIds.Length > 0) query = query.Where(l => modelIds.Contains(l.ModelId));
+        if (!string.IsNullOrWhiteSpace(modelCode)) query = query.Where(l => l.ModelCode == modelCode);
+        else if (modelCodes is not null && modelCodes.Length > 0) query = query.Where(l => modelCodes.Contains(l.ModelCode!));
 
-        if (variantId is not null) query = query.Where(l => l.VariantId == variantId);
-        else if (variantIds is not null && variantIds.Length > 0) query = query.Where(l => variantIds.Contains(l.VariantId));
+        if (!string.IsNullOrWhiteSpace(variantCode)) query = query.Where(l => l.VariantCode == variantCode);
+        else if (variantCodes is not null && variantCodes.Length > 0) query = query.Where(l => variantCodes.Contains(l.VariantCode!));
 
-        if (transmissionId is not null) query = query.Where(l => l.TransmissionId == transmissionId);
-        else if (transmissionIds is not null && transmissionIds.Length > 0) query = query.Where(l => transmissionIds.Contains(l.TransmissionId ?? 0));
+        if (!string.IsNullOrWhiteSpace(transmissionTypeCode)) query = query.Where(l => l.TransmissionTypeCode == transmissionTypeCode);
+        else if (transmissionTypeCodes is not null && transmissionTypeCodes.Length > 0) query = query.Where(l => transmissionTypeCodes.Contains(l.TransmissionTypeCode!));
 
-        if (bodyTypeId is not null) query = query.Where(l => l.BodyTypeId == bodyTypeId);
-        else if (bodyTypeIds is not null && bodyTypeIds.Length > 0) query = query.Where(l => bodyTypeIds.Contains(l.BodyTypeId));
+        if (!string.IsNullOrWhiteSpace(bodyTypeCode)) query = query.Where(l => l.BodyTypeCode == bodyTypeCode);
+        else if (bodyTypeCodes is not null && bodyTypeCodes.Length > 0) query = query.Where(l => bodyTypeCodes.Contains(l.BodyTypeCode!));
 
-        if (fuelTypeId is not null) query = query.Where(l => l.FuelTypeId == fuelTypeId);
-        else if (fuelTypeIds is not null && fuelTypeIds.Length > 0) query = query.Where(l => fuelTypeIds.Contains(l.FuelTypeId ?? 0));
+        if (!string.IsNullOrWhiteSpace(fuelTypeCode)) query = query.Where(l => l.FuelTypeCode == fuelTypeCode);
+        else if (fuelTypeCodes is not null && fuelTypeCodes.Length > 0) query = query.Where(l => fuelTypeCodes.Contains(l.FuelTypeCode!));
 
         // Sorting
         var dir = (sortDirection ?? "asc").ToLowerInvariant();
@@ -565,11 +562,7 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
     public async Task<ActionResult<ListingDto>> Create(CreateListingDto dto)
     {
         var listing = mapper.Map<Listing>(dto);
-        // Only populate from server if client did not supply snapshots
-        if (string.IsNullOrWhiteSpace(listing.MakeName) || string.IsNullOrWhiteSpace(listing.ModelName) || string.IsNullOrWhiteSpace(listing.VariantName))
-        {
-            await catalog.PopulateSnapshotsAsync(listing);
-        }
+        // Snapshots and codes are provided by client; no catalog lookup required
         // Persist selected features with snapshot of feature metadata from CatalogService
         var featureIds = dto.FeatureIds ?? Array.Empty<int>();
         context.Listings.Add(listing);
@@ -602,25 +595,10 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         var listing = await context.Listings.FindAsync(id);
         if (listing is null) return NotFound();
         mapper.Map(dto, listing);
-        // Refresh option snapshots if explicitly changed
-        if (dto.TransmissionId.HasValue)
-        {
-            listing.TransmissionName = await catalog.GetTransmissionNameAsync(dto.TransmissionId.Value) ?? listing.TransmissionName;
-        }
-        if (dto.FuelTypeId.HasValue)
-        {
-            listing.FuelTypeName = await catalog.GetFuelTypeNameAsync(dto.FuelTypeId.Value) ?? listing.FuelTypeName;
-        }
-        if (dto.BodyTypeId.HasValue)
-        {
-            listing.BodyTypeName = await catalog.GetBodyTypeNameAsync(dto.BodyTypeId.Value) ?? listing.BodyTypeName;
-        }
+        // Snapshots and codes are provided by client; no catalog lookup required
 
         // Refresh other snapshots if core identifiers changed and client did not supply new snapshots
-        if (string.IsNullOrWhiteSpace(listing.MakeName) || string.IsNullOrWhiteSpace(listing.ModelName) || string.IsNullOrWhiteSpace(listing.VariantName))
-        {
-            await catalog.PopulateSnapshotsAsync(listing);
-        }
+        // Accept provided snapshot labels; if missing, remain null
         var ok = await context.SaveChangesAsync() > 0;
         if (!ok) return BadRequest("Failed to update listing");
 

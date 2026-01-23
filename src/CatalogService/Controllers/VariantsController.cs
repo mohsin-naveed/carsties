@@ -87,11 +87,11 @@ public class VariantsController(CatalogDbContext context, IMapper mapper) : Cont
     {
         var transmissions = context.Transmissions
             .OrderBy(x => x.Id)
-            .Select(x => new OptionDto(x.Id, x.Name))
+            .Select(x => new OptionDto(x.Id, x.Name, x.Code))
             .ToList();
         var fuelTypes = context.FuelTypes
             .OrderBy(x => x.Id)
-            .Select(x => new OptionDto(x.Id, x.Name))
+            .Select(x => new OptionDto(x.Id, x.Name, x.Code))
             .ToList();
         return Ok(new VariantOptionsDto(transmissions, fuelTypes));
     }

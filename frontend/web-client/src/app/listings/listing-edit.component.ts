@@ -172,29 +172,31 @@ export class ListingEditComponent {
     this.api.getListing(this.id).subscribe({
       next: (l: ListingDto) => {
         this.listing = l;
+        // Map codes back to IDs for form controls
+        const makeId = this.makes.find(m => m.code === l.makeCode)?.id ?? null;
         this.form.patchValue({
           title: l.title,
           year: l.year,
           mileage: l.mileage,
           price: l.price,
           description: l.description ?? '',
-          transmissionId: l.transmissionId ?? null,
-          fuelTypeId: l.fuelTypeId ?? null,
-          bodyTypeId: l.bodyTypeId,
-          makeId: l.makeId,
-          modelId: l.modelId,
-          generationId: l.generationId,
-          derivativeId: l.derivativeId,
-          variantId: l.variantId
+          transmissionId: this.transmissions.find(t => t.code === l.transmissionTypeCode)?.id ?? null,
+          fuelTypeId: this.fuelTypes.find(f => f.code === l.fuelTypeCode)?.id ?? null,
+          bodyTypeId: this.bodyTypes.find(b => b.code === l.bodyTypeCode)?.id ?? null,
+          makeId,
+          modelId: null,
+          generationId: null,
+          derivativeId: null,
+          variantId: null
         });
         // Preselect listing features
         (l.featureIds ?? []).forEach(id => this.selectedFeatureIds.add(id));
         // Load models/generations/derivatives for make
-        this.api.getModels(l.makeId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(models => {
+        this.api.getModels(l.makeCode!).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(models => {
           this.models = models;
           this.models$.next(models);
-          const genReqs = models.map(m => this.api.getGenerations(m.id));
-          const derReqs = models.map(m => this.api.getDerivatives(m.id));
+          const genReqs = models.map(m => this.api.getGenerations(m.code));
+          const derReqs = models.map(m => this.api.getDerivatives(m.code));
           forkJoin({ gens: forkJoin(genReqs).pipe(map(groups => groups.flat())), ders: forkJoin(derReqs).pipe(map(groups => groups.flat())) })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(({ gens, ders }) => {
@@ -203,10 +205,17 @@ export class ListingEditComponent {
               this.generations$.next(gens);
               this.derivatives$.next(ders);
               this.refreshVariants();
-              // Set variant features
-              this.api.getVariantFeatures(l.variantId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(vf => {
-                this.variantFeatures = vf;
-              });
+              // Map codes back to IDs and set variant features
+              const modelId = models.find(m => m.code === l.modelCode)?.id ?? null;
+              const genId = gens.find(g => g.code === l.generationCode)?.id ?? null;
+              const derId = ders.find(d => d.code === l.derivativeCode)?.id ?? null;
+              const variant = this.variants.find(v => v.code === l.variantCode);
+              this.form.patchValue({ modelId, generationId: genId, derivativeId: derId, variantId: variant?.id ?? null }, { emitEvent: false });
+              if (variant?.id) {
+                this.api.getVariantFeatures(variant.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(vf => {
+                  this.variantFeatures = vf;
+                });
+              }
             });
         });
       }
@@ -222,14 +231,14 @@ export class ListingEditComponent {
       mileage: this.form.value.mileage ?? undefined,
       price: this.form.value.price ?? undefined,
       description: this.form.value.description ?? undefined,
-      transmissionId: this.form.value.transmissionId ?? undefined,
-      fuelTypeId: this.form.value.fuelTypeId ?? undefined,
-      bodyTypeId: this.form.value.bodyTypeId ?? undefined,
-      makeId: this.form.value.makeId ?? undefined,
-      modelId: this.form.value.modelId ?? undefined,
-      generationId: this.form.value.generationId ?? undefined,
-      derivativeId: this.form.value.derivativeId ?? undefined,
-      variantId: this.form.value.variantId ?? undefined,
+      transmissionTypeCode: (this.form.value.transmissionId ? this.transmissions.find(t => t.id === this.form.value.transmissionId!)?.code : undefined),
+      fuelTypeCode: (this.form.value.fuelTypeId ? this.fuelTypes.find(f => f.id === this.form.value.fuelTypeId!)?.code : undefined),
+      bodyTypeCode: (this.form.value.bodyTypeId ? this.bodyTypes.find(b => b.id === this.form.value.bodyTypeId!)?.code : undefined),
+      makeCode: (this.form.value.makeId ? this.makes.find(m => m.id === this.form.value.makeId!)?.code : undefined),
+      modelCode: (this.form.value.modelId ? this.models.find(m => m.id === this.form.value.modelId!)?.code : undefined),
+      generationCode: (this.form.value.generationId ? this.generations.find(g => g.id === this.form.value.generationId!)?.code : undefined),
+      derivativeCode: (this.form.value.derivativeId ? this.derivatives.find(d => d.id === this.form.value.derivativeId!)?.code : undefined),
+      variantCode: (this.form.value.variantId ? this.variants.find(v => v.id === this.form.value.variantId!)?.code : undefined),
       featureIds: Array.from(this.selectedFeatureIds)
     };
     this.api.updateListing(this.id, dto).subscribe({
@@ -291,14 +300,9 @@ export class ListingEditComponent {
         mileage: l.mileage,
         price: l.price,
         description: l.description ?? '',
-        transmissionId: l.transmissionId ?? null,
-        fuelTypeId: l.fuelTypeId ?? null,
-        bodyTypeId: l.bodyTypeId,
-        makeId: l.makeId,
-        modelId: l.modelId,
-        generationId: l.generationId,
-        derivativeId: l.derivativeId,
-        variantId: l.variantId
+        transmissionId: this.transmissions.find(t => t.code === l.transmissionTypeCode)?.id ?? null,
+        fuelTypeId: this.fuelTypes.find(f => f.code === l.fuelTypeCode)?.id ?? null,
+        bodyTypeId: this.bodyTypes.find(b => b.code === l.bodyTypeCode)?.id ?? null,
       }, { emitEvent: false });
     });
   }
@@ -323,7 +327,7 @@ export class ListingEditComponent {
       return inYear && inMake && matchesModel;
     });
     if (gensForYear.length === 0) { this.variants = []; return; }
-    forkJoin(gensForYear.map(g => this.api.getVariantsByGeneration(g.id)))
+    forkJoin(gensForYear.map(g => this.api.getVariantsByGeneration(g.code)))
       .pipe(map(groups => groups.flat()))
       .subscribe(vars => {
         const allowedDerivatives = this.derivatives.filter(d => allowedModelIds.has(d.modelId) && (!modelId || d.modelId === modelId));

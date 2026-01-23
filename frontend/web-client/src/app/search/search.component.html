@@ -293,7 +293,8 @@
             <div class="chips">
               <span class="chip">{{ car.year }}</span>
               <span class="chip">{{ car.mileage | number }} miles</span>
-              <span class="chip" *ngIf="car.engineSnapshot as eng">{{ eng }}</span>
+              <span class="chip" *ngIf="car.engineL as el">{{ (el | number:'1.1-1') }}L</span>
+              <span class="chip" *ngIf="!car.engineL && car.engineSizeCC as ecc">{{ ecc }} CC</span>
               <span class="chip" *ngIf="car.transmissionName as tn">{{ tn }}</span>
             </div>
             <div class="fuel-pill" *ngIf="car.fuelTypeName as f">{{ f }}</div>

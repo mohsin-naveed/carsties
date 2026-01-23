@@ -11,14 +11,17 @@ public class Listing {
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 
-    public int MakeId { get; set; }
-    public int ModelId { get; set; }
-    public int GenerationId { get; set; }
-    public int DerivativeId { get; set; }
-    public int VariantId { get; set; }
-    public int? TransmissionId { get; set; }
-    public int? FuelTypeId { get; set; }
-    public int BodyTypeId { get; set; }
+    // Codes instead of IDs for Catalog references
+    public string? MakeCode { get; set; }
+    public string? ModelCode { get; set; }
+    public string? GenerationCode { get; set; }
+    public string? DerivativeCode { get; set; }
+    public string? VariantCode { get; set; }
+    public string? TransmissionTypeCode { get; set; }
+    public string? FuelTypeCode { get; set; }
+    public string? BodyTypeCode { get; set; }
+
+    // Snapshot names from Catalog DB
 
     // Snapshot fields to decouple from CatalogService
     public string? MakeName { get; set; }
@@ -27,12 +30,13 @@ public class Listing {
     public string? DerivativeName { get; set; }
     public string? VariantName { get; set; }
     public string? BodyTypeName { get; set; }
-    public string? TransmissionName { get; set; }
+    public string? TransmissionTypeName { get; set; }
     public string? FuelTypeName { get; set; }
-    public short? SeatsSnapshot { get; set; }
-    public short? DoorsSnapshot { get; set; }
-    public string? EngineSnapshot { get; set; }
-    public decimal? BatteryCapacityKWhSnapshot { get; set; }
+    public short? Seats { get; set; }
+    public short? Doors { get; set; }
+    public int? EngineSizeCC { get; set; }
+    public decimal? EngineL { get; set; }
+    public decimal? BatteryKWh { get; set; }
 
     // Images
     public ICollection<ListingImage> Images { get; set; } = new List<ListingImage>();

@@ -20,7 +20,8 @@ public class MappingProfiles : Profile
         CreateMap<Feature, FeatureDto>()
             .ForCtorParam("FeatureCategory", o => o.MapFrom(s => s.Category != null ? s.Category.Name : null));
         CreateMap<CreateFeatureDto, Feature>().ForMember(d => d.Id, o => o.Ignore());
-        CreateMap<FeatureCategory, OptionDto>();
+        CreateMap<FeatureCategory, OptionDto>()
+            .ConstructUsing(s => new OptionDto(s.Id, s.Name, s.Code));
         CreateMap<VariantFeature, VariantFeatureDto>();
 
         // Derivative - map via constructor parameters for ProjectTo support

@@ -4,29 +4,29 @@ import { Observable, forkJoin } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { environment } from '../../environments/environment.development';
 
-export interface MakeDto { id: number; name: string; }
-export interface ModelDto { id: number; name: string; makeId: number; }
-export interface GenerationDto { id: number; name: string; modelId: number; startYear?: number; endYear?: number; }
-export interface DerivativeDto { id: number; name: string; modelId: number; generationId: number; bodyTypeId: number; seats: number; doors: number; engine?: string; transmissionId?: number; fuelTypeId?: number; batteryCapacityKWh?: number; bodyType?: string; transmission?: string; fuelType?: string; }
-export interface VariantDto { id: number; name: string; derivativeId: number; }
-export interface OptionDto { id: number; name: string; }
+export interface MakeDto { id: number; name: string; code: string; }
+export interface ModelDto { id: number; name: string; code: string; makeId: number; }
+export interface GenerationDto { id: number; name: string; code: string; modelId: number; startYear?: number; endYear?: number; }
+export interface DerivativeDto { id: number; name: string; code: string; modelId: number; generationId: number; bodyTypeId: number; seats: number; doors: number; engineCC?: number; engineL?: number; transmissionId?: number; fuelTypeId?: number; batteryKWh?: number; bodyType?: string; transmission?: string; fuelType?: string; }
+export interface VariantDto { id: number; name: string; code: string; derivativeId: number; }
+export interface OptionDto { id: number; name: string; code?: string; }
 export interface VariantOptionsDto { transmissions: OptionDto[]; fuelTypes: OptionDto[]; bodyTypes: OptionDto[]; }
 export interface VariantFeatureSnapshot { variantId: number; featureId: number; isStandard: boolean; }
 export interface FeatureDto { id: number; name: string; description?: string; }
 export interface ListingDto {
   id: number; title: string; description?: string; year: number; mileage: number; price: number; color?: string;
-  makeId: number; modelId: number; generationId: number; derivativeId: number; variantId: number;
-  transmissionId?: number; fuelTypeId?: number; bodyTypeId: number;
+  makeCode?: string; modelCode?: string; generationCode?: string; derivativeCode?: string; variantCode?: string;
+  transmissionTypeCode?: string; fuelTypeCode?: string; bodyTypeCode?: string;
   makeName?: string; modelName?: string; generationName?: string; derivativeName?: string; variantName?: string;
-  bodyTypeName?: string; transmissionName?: string; fuelTypeName?: string;
-  seatsSnapshot?: number; doorsSnapshot?: number; engineSnapshot?: string; batteryCapacityKWhSnapshot?: number;
+  bodyTypeName?: string; transmissionTypeName?: string; fuelTypeName?: string;
+  seats?: number; doors?: number; engineSizeCC?: number; engineL?: number; batteryKWh?: number;
   images?: ListingImageDto[];
   featureIds?: number[];
 }
 
 export interface ListingSearchParams {
-  makeId?: number; modelId?: number; variantId?: number; transmissionId?: number; bodyTypeId?: number; fuelTypeId?: number;
-  makeIds?: number[]; modelIds?: number[]; variantIds?: number[]; transmissionIds?: number[]; bodyTypeIds?: number[]; fuelTypeIds?: number[];
+  makeCode?: string; modelCode?: string; variantCode?: string; transmissionTypeCode?: string; bodyTypeCode?: string; fuelTypeCode?: string;
+  makeCodes?: string[]; modelCodes?: string[]; variantCodes?: string[]; transmissionTypeCodes?: string[]; bodyTypeCodes?: string[]; fuelTypeCodes?: string[];
   seats?: number[]; doors?: number[];
   // Ranges
   priceMin?: number; priceMax?: number;
@@ -47,12 +47,11 @@ export interface PaginationResponse<T> {
 
 export interface CreateListingDto {
   title: string; description?: string; year: number; mileage: number; price: number; color?: string;
-  makeId: number; modelId: number; generationId: number; derivativeId: number; variantId: number;
-  transmissionId?: number; fuelTypeId?: number; bodyTypeId: number;
-  // Snapshots posted from client
+  makeCode: string; modelCode: string; generationCode: string; derivativeCode: string; variantCode: string;
+  transmissionTypeCode?: string; fuelTypeCode?: string; bodyTypeCode: string;
+  // Optional labels (client provides snapshot labels)
   makeName?: string; modelName?: string; generationName?: string; derivativeName?: string; variantName?: string;
-  bodyTypeName?: string; transmissionName?: string; fuelTypeName?: string;
-  seatsSnapshot?: number; doorsSnapshot?: number; engineSnapshot?: string; batteryCapacityKWhSnapshot?: number;
+  bodyTypeName?: string; transmissionTypeName?: string; fuelTypeName?: string;
   featureIds?: number[];
 }
 
@@ -65,17 +64,17 @@ export interface ListingImageDto {
 
 export interface UpdateListingDto {
   title?: string; description?: string; year?: number; mileage?: number; price?: number; color?: string;
-  makeId?: number; modelId?: number; generationId?: number; derivativeId?: number; variantId?: number;
-  transmissionId?: number; fuelTypeId?: number; bodyTypeId?: number;
+  makeCode?: string; modelCode?: string; generationCode?: string; derivativeCode?: string; variantCode?: string;
+  transmissionTypeCode?: string; fuelTypeCode?: string; bodyTypeCode?: string;
   featureIds?: number[];
 }
 
 export interface FacetCountsDto {
-  makes: Record<number, number>;
-  models: Record<number, number>;
-  transmissions: Record<number, number>;
-  bodies: Record<number, number>;
-  fuels: Record<number, number>;
+  makes: Record<string, number>;
+  models: Record<string, number>;
+  transmissions: Record<string, number>;
+  bodies: Record<string, number>;
+  fuels: Record<string, number>;
   seats: Record<number, number>;
   doors: Record<number, number>;
   years: Record<number, number>;
@@ -86,12 +85,12 @@ export interface FacetCountsDto {
   minMileage?: number;
   mileageExact?: Record<number, number>;
   // Labels and parent mapping from ListingService (snapshots)
-  makeLabels?: Record<number, string>;
-  modelLabels?: Record<number, string>;
-  modelMakeIds?: Record<number, number>;
-  transmissionLabels?: Record<number, string>;
-  bodyLabels?: Record<number, string>;
-  fuelLabels?: Record<number, string>;
+  makeLabels?: Record<string, string>;
+  modelLabels?: Record<string, string>;
+  modelMakeCodes?: Record<string, string>;
+  transmissionLabels?: Record<string, string>;
+  bodyLabels?: Record<string, string>;
+  fuelLabels?: Record<string, string>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -112,11 +111,11 @@ export class ListingsApiService {
     }
     return this.makesCache$;
   }
-  getModels(makeId?: number): Observable<ModelDto[]> { const params: any = {}; if (makeId) params.makeId = makeId; return this.http.get<ModelDto[]>(`${this.catalogBaseUrl}/models`, { params }); }
-  getGenerations(modelId?: number): Observable<GenerationDto[]> { const params: any = {}; if (modelId) params.modelId = modelId; return this.http.get<GenerationDto[]>(`${this.catalogBaseUrl}/generations`, { params }); }
-  getDerivatives(modelId?: number): Observable<DerivativeDto[]> { const params: any = {}; if (modelId) params.modelId = modelId; return this.http.get<DerivativeDto[]>(`${this.catalogBaseUrl}/derivatives`, { params }); }
+  getModels(makeCode?: string): Observable<ModelDto[]> { const params: any = {}; if (makeCode) params.makeCode = makeCode; return this.http.get<ModelDto[]>(`${this.catalogBaseUrl}/models`, { params }); }
+  getGenerations(modelCode?: string): Observable<GenerationDto[]> { const params: any = {}; if (modelCode) params.modelCode = modelCode; return this.http.get<GenerationDto[]>(`${this.catalogBaseUrl}/generations`, { params }); }
+  getDerivatives(modelCode?: string): Observable<DerivativeDto[]> { const params: any = {}; if (modelCode) params.modelCode = modelCode; return this.http.get<DerivativeDto[]>(`${this.catalogBaseUrl}/derivatives`, { params }); }
   // Variants are filtered by generation in CatalogService
-  getVariantsByGeneration(generationId: number): Observable<VariantDto[]> { const params: any = { generationId }; return this.http.get<VariantDto[]>(`${this.catalogBaseUrl}/variants`, { params }); }
+  getVariantsByGeneration(generationCode: string): Observable<VariantDto[]> { const params: any = { generationCode }; return this.http.get<VariantDto[]>(`${this.catalogBaseUrl}/variants`, { params }); }
   // Combine options from two endpoints
   getOptions(): Observable<VariantOptionsDto> {
     if (!this.optionsCache$) {
