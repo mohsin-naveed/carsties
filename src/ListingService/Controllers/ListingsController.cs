@@ -61,14 +61,28 @@ public class ListingsController(ListingDbContext context, IMapper mapper) : Cont
         var items = await query.ToListAsync();
         var dtos = items.Select(mapper.Map<ListingDto>).ToList();
         var featuresByListing = await context.ListingFeatures
+            .AsNoTracking()
             .GroupBy(f => f.ListingId)
-            .Select(g => new { ListingId = g.Key, FeatureCodes = g.Select(x => x.FeatureCode).ToArray() })
+            .Select(g => new {
+                ListingId = g.Key,
+                Features = g.Select(x => new ListingFeatureDto {
+                    FeatureCode = x.FeatureCode,
+                    FeatureName = x.FeatureName,
+                    FeatureDescription = x.FeatureDescription,
+                    FeatureCategoryName = x.FeatureCategoryName,
+                    FeatureCategoryCode = x.FeatureCategoryCode
+                }).ToList(),
+                Codes = g.Select(x => x.FeatureCode).ToArray()
+            })
             .ToListAsync();
-        var dict = featuresByListing.ToDictionary(x => x.ListingId, x => x.FeatureCodes);
+        var dict = featuresByListing.ToDictionary(x => x.ListingId, x => x);
         foreach (var d in dtos)
         {
-            dict.TryGetValue(d.Id, out var codes);
-            d.FeatureCodes = codes;
+            if (dict.TryGetValue(d.Id, out var entry))
+            {
+                d.Features = entry.Features;
+                d.FeatureCodes = entry.Codes;
+            }
         }
         return dtos;
     }
@@ -524,15 +538,29 @@ public class ListingsController(ListingDbContext context, IMapper mapper) : Cont
         // Attach features
         var ids = dtos.Select(d => d.Id).ToArray();
         var featuresByListing = await context.ListingFeatures
+            .AsNoTracking()
             .Where(f => ids.Contains(f.ListingId))
             .GroupBy(f => f.ListingId)
-            .Select(g => new { ListingId = g.Key, FeatureCodes = g.Select(x => x.FeatureCode).ToArray() })
+            .Select(g => new {
+                ListingId = g.Key,
+                Features = g.Select(x => new ListingFeatureDto {
+                    FeatureCode = x.FeatureCode,
+                    FeatureName = x.FeatureName,
+                    FeatureDescription = x.FeatureDescription,
+                    FeatureCategoryName = x.FeatureCategoryName,
+                    FeatureCategoryCode = x.FeatureCategoryCode
+                }).ToList(),
+                Codes = g.Select(x => x.FeatureCode).ToArray()
+            })
             .ToListAsync();
-        var dict = featuresByListing.ToDictionary(x => x.ListingId, x => x.FeatureCodes);
+        var dict = featuresByListing.ToDictionary(x => x.ListingId, x => x);
         foreach (var d in dtos)
         {
-            dict.TryGetValue(d.Id, out var codes);
-            d.FeatureCodes = codes;
+            if (dict.TryGetValue(d.Id, out var entry))
+            {
+                d.Features = entry.Features;
+                d.FeatureCodes = entry.Codes;
+            }
         }
 
         var resp = new PaginatedResponse<ListingDto>
@@ -554,7 +582,18 @@ public class ListingsController(ListingDbContext context, IMapper mapper) : Cont
         var entity = await context.Listings.Include(l => l.Images).FirstOrDefaultAsync(l => l.Id == id);
         if (entity is null) return NotFound();
         var dto = mapper.Map<ListingDto>(entity);
-        dto.FeatureCodes = await context.ListingFeatures.Where(f => f.ListingId == id).Select(f => f.FeatureCode).ToArrayAsync();
+        var features = await context.ListingFeatures
+            .AsNoTracking()
+            .Where(f => f.ListingId == id)
+            .Select(x => new ListingFeatureDto {
+                FeatureCode = x.FeatureCode,
+                FeatureName = x.FeatureName,
+                FeatureDescription = x.FeatureDescription,
+                FeatureCategoryName = x.FeatureCategoryName,
+                FeatureCategoryCode = x.FeatureCategoryCode
+            }).ToListAsync();
+        dto.Features = features;
+        dto.FeatureCodes = features.Select(f => f.FeatureCode).ToArray();
         return dto;
     }
 
@@ -566,13 +605,31 @@ public class ListingsController(ListingDbContext context, IMapper mapper) : Cont
         listing.Seats = dto.Seats;
         listing.Doors = dto.Doors;
         // Snapshots and codes are provided by client; no catalog lookup required
-        // Persist selected features with snapshot of feature metadata from CatalogService
+        // Persist selected features with snapshot of provided feature metadata
+        var featureInputs = dto.Features;
         var featureCodes = dto.FeatureCodes ?? Array.Empty<string>();
         context.Listings.Add(listing);
         var ok = await context.SaveChangesAsync() > 0;
         if (!ok) return BadRequest("Failed to create listing");
 
-        if (featureCodes.Length > 0)
+        if (featureInputs is not null && featureInputs.Count > 0)
+        {
+            foreach (var f in featureInputs)
+            {
+                if (string.IsNullOrWhiteSpace(f.FeatureCode)) continue;
+                context.ListingFeatures.Add(new ListingFeature
+                {
+                    ListingId = listing.Id,
+                    FeatureCode = f.FeatureCode,
+                    FeatureName = string.IsNullOrWhiteSpace(f.FeatureName) ? f.FeatureCode : f.FeatureName,
+                    FeatureDescription = f.FeatureDescription,
+                    FeatureCategoryName = f.FeatureCategoryName,
+                    FeatureCategoryCode = f.FeatureCategoryCode
+                });
+            }
+            await context.SaveChangesAsync();
+        }
+        else if (featureCodes.Length > 0)
         {
             foreach (var code in featureCodes.Distinct(StringComparer.OrdinalIgnoreCase))
             {
@@ -586,11 +643,23 @@ public class ListingsController(ListingDbContext context, IMapper mapper) : Cont
             await context.SaveChangesAsync();
         }
         var result = mapper.Map<ListingDto>(listing);
+        var savedFeatures = await context.ListingFeatures
+            .AsNoTracking()
+            .Where(f => f.ListingId == listing.Id)
+            .Select(x => new ListingFeatureDto {
+                FeatureCode = x.FeatureCode,
+                FeatureName = x.FeatureName,
+                FeatureDescription = x.FeatureDescription,
+                FeatureCategoryName = x.FeatureCategoryName,
+                FeatureCategoryCode = x.FeatureCategoryCode
+            }).ToListAsync();
+        result.Features = savedFeatures;
+        result.FeatureCodes = savedFeatures.Select(f => f.FeatureCode).ToArray();
         return CreatedAtAction(nameof(Get), new { id = listing.Id }, result);
     }
 
     [HttpPut("{id:int}")]
-    public async Task<ActionResult> Update(int id, UpdateListingDto dto)
+    public async Task<ActionResult<ListingDto>> Update(int id, UpdateListingDto dto)
     {
         var listing = await context.Listings.FindAsync(id);
         if (listing is null) return NotFound();
@@ -603,14 +672,52 @@ public class ListingsController(ListingDbContext context, IMapper mapper) : Cont
         if (!ok) return BadRequest("Failed to update listing");
 
         // Update features if provided
-        if (dto.FeatureCodes is not null)
+        if (dto.Features is not null)
+        {
+            var existing = await context.ListingFeatures.Where(x => x.ListingId == id).ToListAsync();
+            var incomingByCode = dto.Features
+                .Where(f => !string.IsNullOrWhiteSpace(f.FeatureCode))
+                .GroupBy(f => f.FeatureCode, StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.Last()) // last wins
+                .ToDictionary(f => f.FeatureCode, f => f, StringComparer.OrdinalIgnoreCase);
+
+            // Remove any not in incoming
+            var toRemove = existing.Where(e => !incomingByCode.ContainsKey(e.FeatureCode)).ToList();
+            if (toRemove.Count > 0) context.ListingFeatures.RemoveRange(toRemove);
+
+            // Update existing and add new
+            var existingByCode = existing.ToDictionary(e => e.FeatureCode, e => e, StringComparer.OrdinalIgnoreCase);
+            foreach (var kv in incomingByCode)
+            {
+                var code = kv.Key; var f = kv.Value;
+                if (existingByCode.TryGetValue(code, out var e))
+                {
+                    e.FeatureName = string.IsNullOrWhiteSpace(f.FeatureName) ? code : f.FeatureName;
+                    e.FeatureDescription = f.FeatureDescription;
+                    e.FeatureCategoryName = f.FeatureCategoryName;
+                    e.FeatureCategoryCode = f.FeatureCategoryCode;
+                }
+                else
+                {
+                    context.ListingFeatures.Add(new ListingFeature
+                    {
+                        ListingId = id,
+                        FeatureCode = code,
+                        FeatureName = string.IsNullOrWhiteSpace(f.FeatureName) ? code : f.FeatureName,
+                        FeatureDescription = f.FeatureDescription,
+                        FeatureCategoryName = f.FeatureCategoryName,
+                        FeatureCategoryCode = f.FeatureCategoryCode
+                    });
+                }
+            }
+            await context.SaveChangesAsync();
+        }
+        else if (dto.FeatureCodes is not null)
         {
             var existing = await context.ListingFeatures.Where(x => x.ListingId == id).ToListAsync();
             var newSet = dto.FeatureCodes.Distinct(StringComparer.OrdinalIgnoreCase).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            // Remove not in new set
             var toRemove = existing.Where(e => !newSet.Contains(e.FeatureCode)).ToList();
             if (toRemove.Count > 0) context.ListingFeatures.RemoveRange(toRemove);
-            // Add missing ones
             var existingCodes = existing.Select(e => e.FeatureCode).ToHashSet(StringComparer.OrdinalIgnoreCase);
             foreach (var code in newSet)
             {
@@ -624,7 +731,25 @@ public class ListingsController(ListingDbContext context, IMapper mapper) : Cont
             }
             await context.SaveChangesAsync();
         }
-        return Ok();
+        // Return updated DTO with features
+        var updated = await context.Listings
+            .Include(l => l.Images)
+            .FirstOrDefaultAsync(l => l.Id == id);
+        if (updated is null) return NotFound();
+        var result = mapper.Map<ListingDto>(updated);
+        var features = await context.ListingFeatures
+            .AsNoTracking()
+            .Where(f => f.ListingId == id)
+            .Select(x => new ListingFeatureDto {
+                FeatureCode = x.FeatureCode,
+                FeatureName = x.FeatureName,
+                FeatureDescription = x.FeatureDescription,
+                FeatureCategoryName = x.FeatureCategoryName,
+                FeatureCategoryCode = x.FeatureCategoryCode
+            }).ToListAsync();
+        result.Features = features;
+        result.FeatureCodes = features.Select(f => f.FeatureCode).ToArray();
+        return Ok(result);
     }
 
     [HttpDelete("{id:int}")]

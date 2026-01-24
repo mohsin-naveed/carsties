@@ -37,7 +37,9 @@ public class ListingDto
     // Note: Codes are already represented above
 
     public List<ListingImageDto> Images { get; set; } = new();
+    // Back-compat: keep codes; also expose full feature snapshots
     public string[]? FeatureCodes { get; set; }
+    public List<ListingFeatureDto>? Features { get; set; }
 }
 
 public class CreateListingDto
@@ -73,6 +75,8 @@ public class CreateListingDto
     public int? EngineSizeCC { get; set; }
     public decimal? EngineL { get; set; }
     public decimal? BatteryKWh { get; set; }
+    // Preferred: full feature details; Back-compat: FeatureCodes
+    public List<ListingFeatureInputDto>? Features { get; set; }
     public string[]? FeatureCodes { get; set; }
 }
 
@@ -92,6 +96,9 @@ public class UpdateListingDto
     public string? TransmissionTypeCode { get; set; }
     public string? FuelTypeCode { get; set; }
     public string? BodyTypeCode { get; set; }
+    public short? Seats { get; set; }
+    public short? Doors { get; set; }
+    public List<ListingFeatureInputDto>? Features { get; set; }
     public string[]? FeatureCodes { get; set; }
 }
 
@@ -115,4 +122,22 @@ public class PaginatedResponse<T>
     public int PageSize { get; set; }
     public bool HasNextPage { get; set; }
     public bool HasPreviousPage { get; set; }
+}
+
+public class ListingFeatureInputDto
+{
+    public string FeatureCode { get; set; } = string.Empty;
+    public string FeatureName { get; set; } = string.Empty;
+    public string? FeatureDescription { get; set; }
+    public string? FeatureCategoryName { get; set; }
+    public string? FeatureCategoryCode { get; set; }
+}
+
+public class ListingFeatureDto
+{
+    public string FeatureCode { get; set; } = string.Empty;
+    public string FeatureName { get; set; } = string.Empty;
+    public string? FeatureDescription { get; set; }
+    public string? FeatureCategoryName { get; set; }
+    public string? FeatureCategoryCode { get; set; }
 }

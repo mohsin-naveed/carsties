@@ -10,7 +10,9 @@ public class MappingProfile : Profile
     {
         CreateMap<Listing, ListingDto>();
         CreateMap<CreateListingDto, Listing>();
-        CreateMap<UpdateListingDto, Listing>();
+        // For updates, ignore nulls to avoid overwriting existing values
+        CreateMap<UpdateListingDto, Listing>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
         CreateMap<ListingImage, ListingImageDto>();
     }
 }

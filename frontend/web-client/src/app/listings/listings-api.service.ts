@@ -12,7 +12,21 @@ export interface VariantDto { id: number; name: string; code: string; derivative
 export interface OptionDto { id: number; name: string; code?: string; }
 export interface VariantOptionsDto { transmissions: OptionDto[]; fuelTypes: OptionDto[]; bodyTypes: OptionDto[]; }
 export interface VariantFeatureSnapshot { variantId: number; featureId: number; isStandard: boolean; }
-export interface FeatureDto { id: number; name: string; description?: string; }
+export interface FeatureDto { id: number; name: string; description?: string; code?: string; }
+export interface ListingFeatureInputDto {
+  featureCode: string;
+  featureName?: string;
+  featureDescription?: string;
+  featureCategoryName?: string;
+  featureCategoryCode?: string;
+}
+export interface ListingFeatureDto {
+  featureCode: string;
+  featureName: string;
+  featureDescription?: string;
+  featureCategoryName?: string;
+  featureCategoryCode?: string;
+}
 export interface ListingDto {
   id: number; title: string; description?: string; year: number; mileage: number; price: number; color?: string;
   makeCode?: string; modelCode?: string; generationCode?: string; derivativeCode?: string; variantCode?: string;
@@ -21,7 +35,8 @@ export interface ListingDto {
   bodyTypeName?: string; transmissionTypeName?: string; fuelTypeName?: string;
   seats?: number; doors?: number; engineSizeCC?: number; engineL?: number; batteryKWh?: number;
   images?: ListingImageDto[];
-  featureIds?: number[];
+  features?: ListingFeatureDto[];
+  featureCodes?: string[];
 }
 
 export interface ListingSearchParams {
@@ -52,7 +67,9 @@ export interface CreateListingDto {
   // Optional labels (client provides snapshot labels)
   makeName?: string; modelName?: string; generationName?: string; derivativeName?: string; variantName?: string;
   bodyTypeName?: string; transmissionTypeName?: string; fuelTypeName?: string;
-  featureIds?: number[];
+  seats?: number; doors?: number;
+  features?: ListingFeatureInputDto[];
+  featureCodes?: string[];
 }
 
 export interface ListingImageDto {
@@ -66,7 +83,9 @@ export interface UpdateListingDto {
   title?: string; description?: string; year?: number; mileage?: number; price?: number; color?: string;
   makeCode?: string; modelCode?: string; generationCode?: string; derivativeCode?: string; variantCode?: string;
   transmissionTypeCode?: string; fuelTypeCode?: string; bodyTypeCode?: string;
-  featureIds?: number[];
+  seats?: number; doors?: number;
+  features?: ListingFeatureInputDto[];
+  featureCodes?: string[];
 }
 
 export interface FacetCountsDto {
@@ -165,7 +184,7 @@ export class ListingsApiService {
   }
   createListing(dto: CreateListingDto) { return this.http.post<ListingDto>(`${this.baseUrl}/listings`, dto); }
   getListing(id: number) { return this.http.get<ListingDto>(`${this.baseUrl}/listings/${id}`); }
-  updateListing(id: number, dto: UpdateListingDto) { return this.http.put(`${this.baseUrl}/listings/${id}`, dto); }
+  updateListing(id: number, dto: UpdateListingDto) { return this.http.put<ListingDto>(`${this.baseUrl}/listings/${id}`, dto); }
   uploadListingImages(listingId: number, files: File[]) {
     const fd = new FormData();
     for (const f of files) fd.append('files', f);

@@ -10,7 +10,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ObserversModule } from '@angular/cdk/observers';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ListingsApiService, MakeDto, ModelDto, GenerationDto, DerivativeDto, VariantDto, OptionDto, CreateListingDto, VariantFeatureSnapshot, FeatureDto } from './listings-api.service';
+import { ListingsApiService, MakeDto, ModelDto, GenerationDto, DerivativeDto, VariantDto, OptionDto, CreateListingDto, VariantFeatureSnapshot, FeatureDto, ListingFeatureInputDto } from './listings-api.service';
 import { BehaviorSubject, combineLatest, forkJoin } from 'rxjs';
 import { map, shareReplay, distinctUntilChanged, switchMap, startWith, finalize } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -175,6 +175,15 @@ export class AddListingComponent {
     const modelName = this.models.find(x => x.id === raw.modelId!)?.name;
     const year = raw.year!;
     const computedTitle = `${makeName ?? ''} ${modelName ?? ''} ${year}`.trim();
+    const derivative = this.derivatives.find(x => x.id === raw.derivativeId!);
+    const featureInputs: ListingFeatureInputDto[] = Array.from(this.selectedFeatureIds).map(id => {
+      const f = this.features.find(x => x.id === id);
+      return {
+        featureCode: (f?.code ?? String(id)),
+        featureName: f?.name,
+        featureDescription: f?.description
+      };
+    });
     const dto: CreateListingDto = {
       title: computedTitle,
       description: raw.description ?? undefined,
@@ -200,7 +209,10 @@ export class AddListingComponent {
         ?? this.derivatives.find(x => x.id === raw.derivativeId!)?.transmission,
       fuelTypeName: (raw.fuelTypeId ? this.fuelTypes.find(x => x.id === raw.fuelTypeId)?.name : undefined)
         ?? this.derivatives.find(x => x.id === raw.derivativeId!)?.fuelType,
-      featureIds: Array.from(this.selectedFeatureIds)
+      seats: derivative?.seats,
+      doors: derivative?.doors,
+      features: featureInputs,
+      featureCodes: featureInputs.map(f => f.featureCode)
     };
     this.api.createListing(dto)
       .subscribe({

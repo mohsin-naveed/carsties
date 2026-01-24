@@ -6,7 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { ListingsApiService, ListingDto, UpdateListingDto, OptionDto, MakeDto, ModelDto, GenerationDto, DerivativeDto, VariantDto, FeatureDto, VariantFeatureSnapshot } from './listings-api.service';
+import { ListingsApiService, ListingDto, UpdateListingDto, OptionDto, MakeDto, ModelDto, GenerationDto, DerivativeDto, VariantDto, FeatureDto, VariantFeatureSnapshot, ListingFeatureInputDto } from './listings-api.service';
 import { NotificationService } from '../core/notification.service';
 import { BehaviorSubject, forkJoin } from 'rxjs';
 import { map, distinctUntilChanged, shareReplay } from 'rxjs/operators';
@@ -189,8 +189,12 @@ export class ListingEditComponent {
           derivativeId: null,
           variantId: null
         });
-        // Preselect listing features
-        (l.featureIds ?? []).forEach(id => this.selectedFeatureIds.add(id));
+        // Preselect listing features by codes returned from API
+        const codes = (l.featureCodes ?? (l.features ? l.features.map(f => f.featureCode) : [])) ?? [];
+        codes.forEach(code => {
+          const fid = this.features.find(x => x.code === code)?.id;
+          if (fid) this.selectedFeatureIds.add(fid);
+        });
         // Load models/generations/derivatives for make
         this.api.getModels(makeId ?? undefined).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(models => {
           this.models = models;
@@ -225,6 +229,15 @@ export class ListingEditComponent {
   save() {
     if (this.form.invalid) return;
     this.saving = true;
+    const derivative = this.derivatives.find(d => d.id === (this.form.value.derivativeId ?? undefined));
+    const featureInputs: ListingFeatureInputDto[] = Array.from(this.selectedFeatureIds).map(id => {
+      const f = this.features.find(x => x.id === id);
+      return {
+        featureCode: (f?.code ?? String(id)),
+        featureName: f?.name,
+        featureDescription: f?.description
+      };
+    });
     const dto: UpdateListingDto = {
       title: this.form.value.title ?? undefined,
       year: this.form.value.year ?? undefined,
@@ -239,13 +252,34 @@ export class ListingEditComponent {
       generationCode: (this.form.value.generationId ? this.generations.find(g => g.id === this.form.value.generationId!)?.code : undefined),
       derivativeCode: (this.form.value.derivativeId ? this.derivatives.find(d => d.id === this.form.value.derivativeId!)?.code : undefined),
       variantCode: (this.form.value.variantId ? this.variants.find(v => v.id === this.form.value.variantId!)?.code : undefined),
-      featureIds: Array.from(this.selectedFeatureIds)
+      seats: derivative?.seats,
+      doors: derivative?.doors,
+      features: featureInputs,
+      featureCodes: featureInputs.map(f => f.featureCode)
     };
     this.api.updateListing(this.id, dto).subscribe({
-      next: () => {
+      next: (updated: ListingDto) => {
         this.saving = false;
         this.notify.success('Listing updated');
-        this.refreshListing();
+        this.listing = updated;
+        // Optionally update form fields if needed
+        this.form.patchValue({
+          title: updated.title,
+          year: updated.year,
+          mileage: updated.mileage,
+          price: updated.price,
+          description: updated.description ?? '',
+          transmissionId: this.transmissions.find(t => t.code === updated.transmissionTypeCode)?.id ?? null,
+          fuelTypeId: this.fuelTypes.find(f => f.code === updated.fuelTypeCode)?.id ?? null,
+          bodyTypeId: this.bodyTypes.find(b => b.code === updated.bodyTypeCode)?.id ?? null,
+        }, { emitEvent: false });
+        // Update selected features
+        this.selectedFeatureIds.clear();
+        const codes = (updated.featureCodes ?? (updated.features ? updated.features.map(f => f.featureCode) : [])) ?? [];
+        codes.forEach(code => {
+          const fid = this.features.find(x => x.code === code)?.id;
+          if (fid) this.selectedFeatureIds.add(fid);
+        });
       },
       error: () => { this.saving = false; }
     });

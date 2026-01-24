@@ -27,26 +27,7 @@ builder.Services.AddCors(options =>
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
-// Catalog lookup via CatalogService (typed client)
-
-// HttpClient for Catalog API (shared)
-void ConfigureCatalogClient(HttpClient client)
-{
-    var baseUrl = builder.Configuration.GetSection("CatalogApi").GetValue<string>("BaseUrl") ?? "http://localhost:5208/api";
-    // Ensure BaseAddress includes '/api/' path segment and ends with a trailing slash so relative URIs append correctly
-    var normalized = baseUrl.TrimEnd('/');
-    if (!normalized.EndsWith("/api", StringComparison.OrdinalIgnoreCase))
-    {
-        normalized += "/api";
-    }
-    if (!normalized.EndsWith('/'))
-    {
-        normalized += "/";
-    }
-    client.BaseAddress = new Uri(normalized);
-}
-
-// Catalog lookup client removed; ListingService persists feature metadata by codes provided in payload
+// Catalog lookup removed; ListingService accepts feature metadata in payload
 
 var app = builder.Build();
 
