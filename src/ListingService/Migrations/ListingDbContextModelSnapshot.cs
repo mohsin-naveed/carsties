@@ -149,8 +149,17 @@ namespace ListingService.Migrations
                     b.Property<int>("ListingId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("FeatureId")
-                        .HasColumnType("integer");
+                    b.Property<string>("FeatureCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("FeatureCategoryCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("FeatureCategoryName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("FeatureDescription")
                         .HasMaxLength(250)
@@ -161,7 +170,7 @@ namespace ListingService.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.HasKey("ListingId", "FeatureId");
+                    b.HasKey("ListingId", "FeatureCode");
 
                     b.ToTable("ListingFeatures", (string)null);
                 });

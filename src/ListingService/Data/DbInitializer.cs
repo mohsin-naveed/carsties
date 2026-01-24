@@ -1,7 +1,7 @@
 using ListingService.Entities;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using ListingService.Services;
+// Catalog lookup removed; seeding does not rely on external services
 
 namespace ListingService.Data;
 
@@ -11,7 +11,6 @@ public class DbInitializer
     {
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ListingDbContext>();
-        var catalog = scope.ServiceProvider.GetService<ICatalogLookup>();
         if (app.Environment.IsDevelopment())
         {
             var resetRequested = string.Equals(Environment.GetEnvironmentVariable("RESET_DB"), "true", StringComparison.OrdinalIgnoreCase);
@@ -23,7 +22,7 @@ public class DbInitializer
             // Seed minimal demo data when empty (dev only)
             try
             {
-                SeedIfEmpty(context, catalog);
+                SeedIfEmpty(context);
             }
             catch
             {
@@ -54,7 +53,7 @@ public class DbInitializer
         conn.Close();
     }
 
-    private static void SeedIfEmpty(ListingDbContext context, ICatalogLookup? catalog)
+    private static void SeedIfEmpty(ListingDbContext context)
     {
         if (context.Listings.Any()) return;
 

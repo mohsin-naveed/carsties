@@ -44,9 +44,11 @@ public class Listing {
 
 public class ListingFeature {
     public int ListingId { get; set; }
-    public int FeatureId { get; set; }
+    public required string FeatureCode { get; set; }
     public required string FeatureName { get; set; }
     public string? FeatureDescription { get; set; }
+    public string? FeatureCategoryName { get; set; }
+    public string? FeatureCategoryCode { get; set; }
     public Listing? Listing { get; set; }
 }
 

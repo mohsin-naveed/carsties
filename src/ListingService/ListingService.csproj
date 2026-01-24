@@ -29,6 +29,8 @@
     <Compile Remove="Services\CatalogSyncService.cs" />
     <Compile Remove="Services\DbCatalogLookup.cs" />
     <Compile Remove="Services\CatalogLookupService.cs" />
+    <Compile Remove="Services\ICatalogLookup.cs" />
+    <Compile Remove="Services\CatalogLookup.cs" />
   </ItemGroup>
 
 </Project>

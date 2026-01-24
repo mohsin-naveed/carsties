@@ -58,10 +58,13 @@ public class ListingDbContext(DbContextOptions options) : DbContext(options)
         modelBuilder.Entity<ListingFeature>(entity =>
         {
             entity.ToTable("ListingFeatures");
-            entity.HasKey(x => new { x.ListingId, x.FeatureId });
+            entity.HasKey(x => new { x.ListingId, x.FeatureCode });
             entity.HasOne(x => x.Listing).WithMany().HasForeignKey(x => x.ListingId).OnDelete(DeleteBehavior.Cascade);
+            entity.Property(x => x.FeatureCode).IsRequired().HasMaxLength(50);
             entity.Property(x => x.FeatureName).IsRequired().HasMaxLength(100);
             entity.Property(x => x.FeatureDescription).HasMaxLength(250);
+            entity.Property(x => x.FeatureCategoryName).HasMaxLength(100);
+            entity.Property(x => x.FeatureCategoryCode).HasMaxLength(50);
         });
 
         modelBuilder.Entity<ListingImage>(entity =>

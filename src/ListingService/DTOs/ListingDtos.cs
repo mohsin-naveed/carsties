@@ -37,7 +37,7 @@ public class ListingDto
     // Note: Codes are already represented above
 
     public List<ListingImageDto> Images { get; set; } = new();
-    public int[]? FeatureIds { get; set; }
+    public string[]? FeatureCodes { get; set; }
 }
 
 public class CreateListingDto
@@ -73,7 +73,7 @@ public class CreateListingDto
     public int? EngineSizeCC { get; set; }
     public decimal? EngineL { get; set; }
     public decimal? BatteryKWh { get; set; }
-    public int[]? FeatureIds { get; set; }
+    public string[]? FeatureCodes { get; set; }
 }
 
 public class UpdateListingDto
@@ -92,7 +92,7 @@ public class UpdateListingDto
     public string? TransmissionTypeCode { get; set; }
     public string? FuelTypeCode { get; set; }
     public string? BodyTypeCode { get; set; }
-    public int[]? FeatureIds { get; set; }
+    public string[]? FeatureCodes { get; set; }
 }
 
 // Reference DTOs for output

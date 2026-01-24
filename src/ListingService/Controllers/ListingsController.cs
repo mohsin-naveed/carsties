@@ -2,7 +2,7 @@ using AutoMapper;
 using ListingService.Data;
 using ListingService.DTOs;
 using ListingService.Entities;
-using ListingService.Services;
+// using ListingService.Services; // removed unused catalog lookup
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -11,7 +11,7 @@ namespace ListingService.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ListingsController(ListingDbContext context, IMapper mapper, ICatalogLookup catalog) : ControllerBase
+public class ListingsController(ListingDbContext context, IMapper mapper) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<List<ListingDto>>> GetAll(
@@ -62,13 +62,13 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         var dtos = items.Select(mapper.Map<ListingDto>).ToList();
         var featuresByListing = await context.ListingFeatures
             .GroupBy(f => f.ListingId)
-            .Select(g => new { ListingId = g.Key, FeatureIds = g.Select(x => x.FeatureId).ToArray() })
+            .Select(g => new { ListingId = g.Key, FeatureCodes = g.Select(x => x.FeatureCode).ToArray() })
             .ToListAsync();
-        var dict = featuresByListing.ToDictionary(x => x.ListingId, x => x.FeatureIds);
+        var dict = featuresByListing.ToDictionary(x => x.ListingId, x => x.FeatureCodes);
         foreach (var d in dtos)
         {
-            dict.TryGetValue(d.Id, out var ids);
-            d.FeatureIds = ids;
+            dict.TryGetValue(d.Id, out var codes);
+            d.FeatureCodes = codes;
         }
         return dtos;
     }
@@ -526,13 +526,13 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         var featuresByListing = await context.ListingFeatures
             .Where(f => ids.Contains(f.ListingId))
             .GroupBy(f => f.ListingId)
-            .Select(g => new { ListingId = g.Key, FeatureIds = g.Select(x => x.FeatureId).ToArray() })
+            .Select(g => new { ListingId = g.Key, FeatureCodes = g.Select(x => x.FeatureCode).ToArray() })
             .ToListAsync();
-        var dict = featuresByListing.ToDictionary(x => x.ListingId, x => x.FeatureIds);
+        var dict = featuresByListing.ToDictionary(x => x.ListingId, x => x.FeatureCodes);
         foreach (var d in dtos)
         {
-            dict.TryGetValue(d.Id, out var fids);
-            d.FeatureIds = fids;
+            dict.TryGetValue(d.Id, out var codes);
+            d.FeatureCodes = codes;
         }
 
         var resp = new PaginatedResponse<ListingDto>
@@ -554,7 +554,7 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         var entity = await context.Listings.Include(l => l.Images).FirstOrDefaultAsync(l => l.Id == id);
         if (entity is null) return NotFound();
         var dto = mapper.Map<ListingDto>(entity);
-        dto.FeatureIds = await context.ListingFeatures.Where(f => f.ListingId == id).Select(f => f.FeatureId).ToArrayAsync();
+        dto.FeatureCodes = await context.ListingFeatures.Where(f => f.ListingId == id).Select(f => f.FeatureCode).ToArrayAsync();
         return dto;
     }
 
@@ -562,25 +562,25 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
     public async Task<ActionResult<ListingDto>> Create(CreateListingDto dto)
     {
         var listing = mapper.Map<Listing>(dto);
+        // Ensure Seats and Doors are persisted from payload
+        listing.Seats = dto.Seats;
+        listing.Doors = dto.Doors;
         // Snapshots and codes are provided by client; no catalog lookup required
         // Persist selected features with snapshot of feature metadata from CatalogService
-        var featureIds = dto.FeatureIds ?? Array.Empty<int>();
+        var featureCodes = dto.FeatureCodes ?? Array.Empty<string>();
         context.Listings.Add(listing);
         var ok = await context.SaveChangesAsync() > 0;
         if (!ok) return BadRequest("Failed to create listing");
 
-        if (featureIds.Length > 0)
+        if (featureCodes.Length > 0)
         {
-            foreach (var fid in featureIds.Distinct())
+            foreach (var code in featureCodes.Distinct(StringComparer.OrdinalIgnoreCase))
             {
-                var f = await catalog.GetFeatureAsync(fid);
-                if (f is null) return BadRequest($"Unknown featureId {fid}");
                 context.ListingFeatures.Add(new ListingFeature
                 {
                     ListingId = listing.Id,
-                    FeatureId = f.Id,
-                    FeatureName = f.Name,
-                    FeatureDescription = f.Description
+                    FeatureCode = code,
+                    FeatureName = code
                 });
             }
             await context.SaveChangesAsync();
@@ -603,26 +603,23 @@ public class ListingsController(ListingDbContext context, IMapper mapper, ICatal
         if (!ok) return BadRequest("Failed to update listing");
 
         // Update features if provided
-        if (dto.FeatureIds is not null)
+        if (dto.FeatureCodes is not null)
         {
             var existing = await context.ListingFeatures.Where(x => x.ListingId == id).ToListAsync();
-            var newSet = dto.FeatureIds.Distinct().ToHashSet();
+            var newSet = dto.FeatureCodes.Distinct(StringComparer.OrdinalIgnoreCase).ToHashSet(StringComparer.OrdinalIgnoreCase);
             // Remove not in new set
-            var toRemove = existing.Where(e => !newSet.Contains(e.FeatureId)).ToList();
+            var toRemove = existing.Where(e => !newSet.Contains(e.FeatureCode)).ToList();
             if (toRemove.Count > 0) context.ListingFeatures.RemoveRange(toRemove);
             // Add missing ones
-            var existingIds = existing.Select(e => e.FeatureId).ToHashSet();
-            foreach (var fid in newSet)
+            var existingCodes = existing.Select(e => e.FeatureCode).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var code in newSet)
             {
-                if (existingIds.Contains(fid)) continue;
-                var f = await catalog.GetFeatureAsync(fid);
-                if (f is null) continue;
+                if (existingCodes.Contains(code)) continue;
                 context.ListingFeatures.Add(new ListingFeature
                 {
                     ListingId = id,
-                    FeatureId = f.Id,
-                    FeatureName = f.Name,
-                    FeatureDescription = f.Description
+                    FeatureCode = code,
+                    FeatureName = code
                 });
             }
             await context.SaveChangesAsync();

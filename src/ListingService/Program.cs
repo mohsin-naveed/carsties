@@ -1,5 +1,4 @@
 using ListingService.Data;
-using ListingService.Services;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Polly;
@@ -47,9 +46,7 @@ void ConfigureCatalogClient(HttpClient client)
     client.BaseAddress = new Uri(normalized);
 }
 
-// Typed client for Catalog lookup (HTTP)
-builder.Services.AddHttpClient<ListingService.Services.CatalogLookup>(ConfigureCatalogClient);
-builder.Services.AddScoped<ListingService.Services.ICatalogLookup>(sp => sp.GetRequiredService<ListingService.Services.CatalogLookup>());
+// Catalog lookup client removed; ListingService persists feature metadata by codes provided in payload
 
 var app = builder.Build();
 
