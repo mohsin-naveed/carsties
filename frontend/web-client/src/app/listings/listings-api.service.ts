@@ -173,4 +173,5 @@ export class ListingsApiService {
   }
   getListingImages(listingId: number) { return this.http.get(`${this.baseUrl}/listings/${listingId}/images`); }
   deleteListingImage(listingId: number, imageId: number) { return this.http.delete(`${this.baseUrl}/listings/${listingId}/images/${imageId}`); }
+  deleteListing(id: number) { return this.http.delete(`${this.baseUrl}/listings/${id}`); }
 }
