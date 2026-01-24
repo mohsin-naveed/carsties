@@ -95,12 +95,11 @@ export class AddListingComponent {
       this.models = []; this.generations = []; this.derivatives = []; this.variants = []; this.variantFeatures = [];
       this.form.patchValue({ modelId: null, generationId: null, derivativeId: null, variantId: null }, { emitEvent: false });
       if (!makeId) { this.models$.next([]); this.generations$.next([]); this.derivatives$.next([]); this.refreshVariants(); return; }
-      const makeCode = this.makes.find(m => m.id === makeId)?.code;
-      this.api.getModels(makeCode).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(models => {
+      this.api.getModels(makeId!).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(models => {
         this.models = models; this.models$.next(models);
         if (models.length === 0) { this.refreshVariants(); return; }
-        const genReqs = models.map(m => this.api.getGenerations(m.code));
-        const derReqs = models.map(m => this.api.getDerivatives(m.code));
+        const genReqs = models.map(m => this.api.getGenerations(m.id));
+        const derReqs = models.map(m => this.api.getDerivatives(m.id));
         forkJoin({ gens: forkJoin(genReqs).pipe(map(groups => groups.flat())), ders: forkJoin(derReqs).pipe(map(groups => groups.flat())) })
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe(({ gens, ders }) => { this.generations = gens; this.derivatives = ders; this.generations$.next(gens); this.derivatives$.next(ders); this.refreshVariants(); });
@@ -243,7 +242,7 @@ export class AddListingComponent {
       return inYear && inMake && matchesModel;
     });
     if (gensForYear.length === 0) { this.variants = []; return; }
-    forkJoin(gensForYear.map(g => this.api.getVariantsByGeneration(g.code)))
+    forkJoin(gensForYear.map(g => this.api.getVariantsByGeneration(g.id)))
       .pipe(map(groups => groups.flat()))
       .subscribe(vars => {
         const allowedDerivatives = this.derivatives.filter(d => allowedModelIds.has(d.modelId) && (!modelId || d.modelId === modelId));

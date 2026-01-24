@@ -37,9 +37,9 @@
               <div class="options-container">
                 <div class="filter-option" *ngFor="let m of (makes$ | async) ?? []">
                   <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="(selectedMakeIds$ | async)?.includes(m.id)" (change)="toggleMake(m.id)" />
+                    <input type="checkbox" class="filter-checkbox" [checked]="(selectedMakeCodes$ | async)?.includes(m.code)" (change)="toggleMake(m.code)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    <span class="option-text">{{ m.name }} <span class="count">({{ (makeCounts$ | async)?.get(m.id) ?? 0 }})</span></span>
+                    <span class="option-text">{{ m.name }} <span class="count">({{ (makeCounts$ | async)?.get(m.code) ?? 0 }})</span></span>
                   </label>
                 </div>
               </div>
@@ -58,9 +58,9 @@
               <div class="options-container">
                 <div class="filter-option" *ngFor="let m of (filteredModels$ | async) ?? []">
                   <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="(selectedModelIds$ | async)?.includes(m.id)" (change)="toggleModel(m.id)" />
+                    <input type="checkbox" class="filter-checkbox" [checked]="(selectedModelCodes$ | async)?.includes(m.code)" (change)="toggleModel(m.code)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    <span class="option-text">{{ m.name }} <span class="count">({{ (modelCounts$ | async)?.get(m.id) ?? 0 }})</span></span>
+                    <span class="option-text">{{ m.name }} <span class="count">({{ (modelCounts$ | async)?.get(m.code) ?? 0 }})</span></span>
                   </label>
                 </div>
               </div>
@@ -168,9 +168,9 @@
               <div class="options-container">
                 <div class="filter-option" *ngFor="let t of (transmissions$ | async) ?? []">
                   <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="(selectedTransmissionIds$ | async)?.includes(t.id)" (change)="toggleTransmission(t.id)" />
+                    <input type="checkbox" class="filter-checkbox" [checked]="(selectedTransmissionCodes$ | async)?.includes(t.code)" (change)="toggleTransmission(t.code)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    <span class="option-text">{{ t.name }} <span class="count">({{ (transmissionCounts$ | async)?.get(t.id) ?? 0 }})</span></span>
+                    <span class="option-text">{{ t.name }} <span class="count">({{ (transmissionCounts$ | async)?.get(t.code) ?? 0 }})</span></span>
                   </label>
                 </div>
               </div>
@@ -189,9 +189,9 @@
               <div class="options-container">
                 <div class="filter-option" *ngFor="let b of (bodyTypes$ | async) ?? []">
                   <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="(selectedBodyTypeIds$ | async)?.includes(b.id)" (change)="toggleBodyType(b.id)" />
+                    <input type="checkbox" class="filter-checkbox" [checked]="(selectedBodyTypeCodes$ | async)?.includes(b.code)" (change)="toggleBodyType(b.code)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    <span class="option-text">{{ b.name }} <span class="count">({{ (bodyCounts$ | async)?.get(b.id) ?? 0 }})</span></span>
+                    <span class="option-text">{{ b.name }} <span class="count">({{ (bodyCounts$ | async)?.get(b.code) ?? 0 }})</span></span>
                   </label>
                 </div>
               </div>
@@ -210,9 +210,9 @@
               <div class="options-container">
                 <div class="filter-option" *ngFor="let f of (fuelTypes$ | async) ?? []">
                   <label class="option-label">
-                    <input type="checkbox" class="filter-checkbox" [checked]="(selectedFuelTypeIds$ | async)?.includes(f.id)" (change)="toggleFuelType(f.id)" />
+                    <input type="checkbox" class="filter-checkbox" [checked]="(selectedFuelTypeCodes$ | async)?.includes(f.code)" (change)="toggleFuelType(f.code)" />
                     <span class="custom-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" class="check-icon"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    <span class="option-text">{{ f.name }} <span class="count">({{ (fuelCounts$ | async)?.get(f.id) ?? 0 }})</span></span>
+                    <span class="option-text">{{ f.name }} <span class="count">({{ (fuelCounts$ | async)?.get(f.code) ?? 0 }})</span></span>
                   </label>
                 </div>
               </div>

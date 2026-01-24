@@ -111,11 +111,11 @@ export class ListingsApiService {
     }
     return this.makesCache$;
   }
-  getModels(makeCode?: string): Observable<ModelDto[]> { const params: any = {}; if (makeCode) params.makeCode = makeCode; return this.http.get<ModelDto[]>(`${this.catalogBaseUrl}/models`, { params }); }
-  getGenerations(modelCode?: string): Observable<GenerationDto[]> { const params: any = {}; if (modelCode) params.modelCode = modelCode; return this.http.get<GenerationDto[]>(`${this.catalogBaseUrl}/generations`, { params }); }
-  getDerivatives(modelCode?: string): Observable<DerivativeDto[]> { const params: any = {}; if (modelCode) params.modelCode = modelCode; return this.http.get<DerivativeDto[]>(`${this.catalogBaseUrl}/derivatives`, { params }); }
+  getModels(makeId?: number): Observable<ModelDto[]> { const params: any = {}; if (makeId) params.makeId = makeId; return this.http.get<ModelDto[]>(`${this.catalogBaseUrl}/models`, { params }); }
+  getGenerations(modelId?: number): Observable<GenerationDto[]> { const params: any = {}; if (modelId) params.modelId = modelId; return this.http.get<GenerationDto[]>(`${this.catalogBaseUrl}/generations`, { params }); }
+  getDerivatives(modelId?: number): Observable<DerivativeDto[]> { const params: any = {}; if (modelId) params.modelId = modelId; return this.http.get<DerivativeDto[]>(`${this.catalogBaseUrl}/derivatives`, { params }); }
   // Variants are filtered by generation in CatalogService
-  getVariantsByGeneration(generationCode: string): Observable<VariantDto[]> { const params: any = { generationCode }; return this.http.get<VariantDto[]>(`${this.catalogBaseUrl}/variants`, { params }); }
+  getVariantsByGeneration(generationId: number): Observable<VariantDto[]> { const params: any = { generationId }; return this.http.get<VariantDto[]>(`${this.catalogBaseUrl}/variants`, { params }); }
   // Combine options from two endpoints
   getOptions(): Observable<VariantOptionsDto> {
     if (!this.optionsCache$) {

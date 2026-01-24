@@ -192,11 +192,11 @@ export class ListingEditComponent {
         // Preselect listing features
         (l.featureIds ?? []).forEach(id => this.selectedFeatureIds.add(id));
         // Load models/generations/derivatives for make
-        this.api.getModels(l.makeCode!).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(models => {
+        this.api.getModels(makeId ?? undefined).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(models => {
           this.models = models;
           this.models$.next(models);
-          const genReqs = models.map(m => this.api.getGenerations(m.code));
-          const derReqs = models.map(m => this.api.getDerivatives(m.code));
+          const genReqs = models.map(m => this.api.getGenerations(m.id));
+          const derReqs = models.map(m => this.api.getDerivatives(m.id));
           forkJoin({ gens: forkJoin(genReqs).pipe(map(groups => groups.flat())), ders: forkJoin(derReqs).pipe(map(groups => groups.flat())) })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(({ gens, ders }) => {
@@ -327,7 +327,7 @@ export class ListingEditComponent {
       return inYear && inMake && matchesModel;
     });
     if (gensForYear.length === 0) { this.variants = []; return; }
-    forkJoin(gensForYear.map(g => this.api.getVariantsByGeneration(g.code)))
+    forkJoin(gensForYear.map(g => this.api.getVariantsByGeneration(g.id)))
       .pipe(map(groups => groups.flat()))
       .subscribe(vars => {
         const allowedDerivatives = this.derivatives.filter(d => allowedModelIds.has(d.modelId) && (!modelId || d.modelId === modelId));
