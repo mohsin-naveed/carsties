@@ -179,9 +179,11 @@ export class AddListingComponent {
     const featureInputs: ListingFeatureInputDto[] = Array.from(this.selectedFeatureIds).map(id => {
       const f = this.features.find(x => x.id === id);
       return {
-        featureCode: (f?.code ?? String(id)),
-        featureName: f?.name,
-        featureDescription: f?.description
+        featureCode: f?.code ?? String(id),
+        featureName: f?.name ?? '',
+        featureDescription: f?.description,
+        featureCategoryName: f?.featureCategory ?? '',
+        featureCategoryCode: f?.featureCategoryCode ?? ''
       };
     });
     const dto: CreateListingDto = {
@@ -211,8 +213,7 @@ export class AddListingComponent {
         ?? this.derivatives.find(x => x.id === raw.derivativeId!)?.fuelType,
       seats: derivative?.seats,
       doors: derivative?.doors,
-      features: featureInputs,
-      featureCodes: featureInputs.map(f => f.featureCode)
+      features: featureInputs
     };
     this.api.createListing(dto)
       .subscribe({

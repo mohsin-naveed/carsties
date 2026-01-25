@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 namespace ListingService.DTOs;
 
 public class ListingDto
@@ -42,7 +43,7 @@ public class ListingDto
     public List<ListingFeatureDto>? Features { get; set; }
 }
 
-public class CreateListingDto
+public partial class CreateListingDto : IValidatableObject
 {
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
@@ -80,7 +81,29 @@ public class CreateListingDto
     public string[]? FeatureCodes { get; set; }
 }
 
-public class UpdateListingDto
+public partial class CreateListingDto
+{
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (FeatureCodes is not null && FeatureCodes.Length > 0)
+            yield return new ValidationResult("featureCodes is deprecated. Provide full feature metadata in 'features'.", new[] { nameof(FeatureCodes) });
+        if (Features is null || Features.Count == 0)
+            yield return new ValidationResult("features are required.", new[] { nameof(Features) });
+        else
+        {
+            foreach (var f in Features)
+            {
+                if (string.IsNullOrWhiteSpace(f.FeatureCode)) yield return new ValidationResult("FeatureCode is required for each feature.", new[] { nameof(Features) });
+                if (string.IsNullOrWhiteSpace(f.FeatureName)) yield return new ValidationResult($"FeatureName is required for feature '{f.FeatureCode}'.", new[] { nameof(Features) });
+                if (string.IsNullOrWhiteSpace(f.FeatureCategoryName)) yield return new ValidationResult($"FeatureCategoryName is required for feature '{f.FeatureCode}'.", new[] { nameof(Features) });
+                if (string.IsNullOrWhiteSpace(f.FeatureCategoryCode)) yield return new ValidationResult($"FeatureCategoryCode is required for feature '{f.FeatureCode}'.", new[] { nameof(Features) });
+            }
+        }
+        yield break;
+    }
+}
+
+public partial class UpdateListingDto : IValidatableObject
 {
     public string? Title { get; set; }
     public string? Description { get; set; }
@@ -100,6 +123,29 @@ public class UpdateListingDto
     public short? Doors { get; set; }
     public List<ListingFeatureInputDto>? Features { get; set; }
     public string[]? FeatureCodes { get; set; }
+}
+
+public partial class UpdateListingDto
+{
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (FeatureCodes is not null && FeatureCodes.Length > 0)
+            yield return new ValidationResult("featureCodes is deprecated. Provide full feature metadata in 'features'.", new[] { nameof(FeatureCodes) });
+        // For updates, require features present to align with new policy
+        if (Features is null || Features.Count == 0)
+            yield return new ValidationResult("features are required on update.", new[] { nameof(Features) });
+        else
+        {
+            foreach (var f in Features)
+            {
+                if (string.IsNullOrWhiteSpace(f.FeatureCode)) yield return new ValidationResult("FeatureCode is required for each feature.", new[] { nameof(Features) });
+                if (string.IsNullOrWhiteSpace(f.FeatureName)) yield return new ValidationResult($"FeatureName is required for feature '{f.FeatureCode}'.", new[] { nameof(Features) });
+                if (string.IsNullOrWhiteSpace(f.FeatureCategoryName)) yield return new ValidationResult($"FeatureCategoryName is required for feature '{f.FeatureCode}'.", new[] { nameof(Features) });
+                if (string.IsNullOrWhiteSpace(f.FeatureCategoryCode)) yield return new ValidationResult($"FeatureCategoryCode is required for feature '{f.FeatureCode}'.", new[] { nameof(Features) });
+            }
+        }
+        yield break;
+    }
 }
 
 // Reference DTOs for output

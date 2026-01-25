@@ -1,7 +1,9 @@
 using ListingService.Data;
+using ListingService.Services;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Polly;
+using Polly.Extensions.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +29,14 @@ builder.Services.AddCors(options =>
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
-// Catalog lookup removed; ListingService accepts feature metadata in payload
+// Catalog lookup client (for features and derivative engine/battery)
+builder.Services.AddHttpClient<CatalogClient>()
+    .AddPolicyHandler(HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .WaitAndRetryAsync(3, attempt => TimeSpan.FromMilliseconds(250 * attempt)))
+    .AddPolicyHandler(HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .CircuitBreakerAsync(5, TimeSpan.FromSeconds(10)));
 
 var app = builder.Build();
 

@@ -2,6 +2,7 @@ using AutoMapper;
 using ListingService.Data;
 using ListingService.DTOs;
 using ListingService.Entities;
+using ListingService.Services;
 // using ListingService.Services; // removed unused catalog lookup
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ namespace ListingService.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ListingsController(ListingDbContext context, IMapper mapper) : ControllerBase
+public class ListingsController(ListingDbContext context, IMapper mapper, CatalogClient catalog) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<List<ListingDto>>> GetAll(
@@ -604,44 +605,56 @@ public class ListingsController(ListingDbContext context, IMapper mapper) : Cont
         // Ensure Seats and Doors are persisted from payload
         listing.Seats = dto.Seats;
         listing.Doors = dto.Doors;
-        // Snapshots and codes are provided by client; no catalog lookup required
-        // Persist selected features with snapshot of provided feature metadata
-        var featureInputs = dto.Features;
-        var featureCodes = dto.FeatureCodes ?? Array.Empty<string>();
+
+        // Populate engine size and battery from payload if provided; else from Catalog Derivative
+        if (dto.EngineSizeCC.HasValue) listing.EngineSizeCC = dto.EngineSizeCC.Value;
+        if (dto.EngineL.HasValue) listing.EngineL = dto.EngineL.Value;
+        if (dto.BatteryKWh.HasValue) listing.BatteryKWh = dto.BatteryKWh.Value;
+        if ((!dto.EngineSizeCC.HasValue || !dto.EngineL.HasValue || !dto.BatteryKWh.HasValue)
+            && !string.IsNullOrWhiteSpace(listing.DerivativeCode))
+        {
+            var deriv = await catalog.GetDerivativeByCodeAsync(listing.DerivativeCode);
+            if (deriv is not null)
+            {
+                listing.EngineSizeCC ??= deriv.EngineCC;
+                listing.EngineL ??= deriv.EngineL;
+                listing.BatteryKWh ??= deriv.BatteryKWh;
+            }
+        }
+
+        // Require full feature metadata in request; reject fallback codes-only path
+        var featureInputs = dto.Features ?? new List<ListingFeatureInputDto>();
+        if (featureInputs.Count == 0)
+        {
+            return BadRequest("Features are required. Provide full feature metadata in 'features'.");
+        }
+        // Validate required feature fields
+        foreach (var f in featureInputs)
+        {
+            if (string.IsNullOrWhiteSpace(f.FeatureCode)) return BadRequest("FeatureCode is required for each feature.");
+            if (string.IsNullOrWhiteSpace(f.FeatureName)) return BadRequest($"FeatureName is required for feature '{f.FeatureCode}'.");
+            if (string.IsNullOrWhiteSpace(f.FeatureCategoryName)) return BadRequest($"FeatureCategoryName is required for feature '{f.FeatureCode}'.");
+            if (string.IsNullOrWhiteSpace(f.FeatureCategoryCode)) return BadRequest($"FeatureCategoryCode is required for feature '{f.FeatureCode}'.");
+            // FeatureDescription can be null; if provided, it will be stored
+        }
+
         context.Listings.Add(listing);
         var ok = await context.SaveChangesAsync() > 0;
         if (!ok) return BadRequest("Failed to create listing");
 
-        if (featureInputs is not null && featureInputs.Count > 0)
+        foreach (var f in featureInputs)
         {
-            foreach (var f in featureInputs)
+            context.ListingFeatures.Add(new ListingFeature
             {
-                if (string.IsNullOrWhiteSpace(f.FeatureCode)) continue;
-                context.ListingFeatures.Add(new ListingFeature
-                {
-                    ListingId = listing.Id,
-                    FeatureCode = f.FeatureCode,
-                    FeatureName = string.IsNullOrWhiteSpace(f.FeatureName) ? f.FeatureCode : f.FeatureName,
-                    FeatureDescription = f.FeatureDescription,
-                    FeatureCategoryName = f.FeatureCategoryName,
-                    FeatureCategoryCode = f.FeatureCategoryCode
-                });
-            }
-            await context.SaveChangesAsync();
+                ListingId = listing.Id,
+                FeatureCode = f.FeatureCode,
+                FeatureName = string.IsNullOrWhiteSpace(f.FeatureName) ? f.FeatureCode : f.FeatureName,
+                FeatureDescription = f.FeatureDescription,
+                FeatureCategoryName = f.FeatureCategoryName,
+                FeatureCategoryCode = f.FeatureCategoryCode
+            });
         }
-        else if (featureCodes.Length > 0)
-        {
-            foreach (var code in featureCodes.Distinct(StringComparer.OrdinalIgnoreCase))
-            {
-                context.ListingFeatures.Add(new ListingFeature
-                {
-                    ListingId = listing.Id,
-                    FeatureCode = code,
-                    FeatureName = code
-                });
-            }
-            await context.SaveChangesAsync();
-        }
+        await context.SaveChangesAsync();
         var result = mapper.Map<ListingDto>(listing);
         var savedFeatures = await context.ListingFeatures
             .AsNoTracking()
@@ -664,9 +677,18 @@ public class ListingsController(ListingDbContext context, IMapper mapper) : Cont
         var listing = await context.Listings.FindAsync(id);
         if (listing is null) return NotFound();
         mapper.Map(dto, listing);
-        // Snapshots and codes are provided by client; no catalog lookup required
+        // Populate engine/battery from Catalog Derivative if available
+        if (!string.IsNullOrWhiteSpace(listing.DerivativeCode))
+        {
+            var deriv = await catalog.GetDerivativeByCodeAsync(listing.DerivativeCode);
+            if (deriv is not null)
+            {
+                listing.EngineSizeCC = deriv.EngineCC;
+                listing.EngineL = deriv.EngineL;
+                listing.BatteryKWh = deriv.BatteryKWh;
+            }
+        }
 
-        // Refresh other snapshots if core identifiers changed and client did not supply new snapshots
         // Accept provided snapshot labels; if missing, remain null
         var ok = await context.SaveChangesAsync() > 0;
         if (!ok) return BadRequest("Failed to update listing");
@@ -680,6 +702,16 @@ public class ListingsController(ListingDbContext context, IMapper mapper) : Cont
                 .GroupBy(f => f.FeatureCode, StringComparer.OrdinalIgnoreCase)
                 .Select(g => g.Last()) // last wins
                 .ToDictionary(f => f.FeatureCode, f => f, StringComparer.OrdinalIgnoreCase);
+
+            // Validate required fields for each incoming feature
+            foreach (var kv in incomingByCode)
+            {
+                var f = kv.Value;
+                if (string.IsNullOrWhiteSpace(f.FeatureName)) return BadRequest($"FeatureName is required for feature '{f.FeatureCode}'.");
+                if (string.IsNullOrWhiteSpace(f.FeatureCategoryName)) return BadRequest($"FeatureCategoryName is required for feature '{f.FeatureCode}'.");
+                if (string.IsNullOrWhiteSpace(f.FeatureCategoryCode)) return BadRequest($"FeatureCategoryCode is required for feature '{f.FeatureCode}'.");
+                // FeatureDescription can be null
+            }
 
             // Remove any not in incoming
             var toRemove = existing.Where(e => !incomingByCode.ContainsKey(e.FeatureCode)).ToList();
@@ -712,25 +744,7 @@ public class ListingsController(ListingDbContext context, IMapper mapper) : Cont
             }
             await context.SaveChangesAsync();
         }
-        else if (dto.FeatureCodes is not null)
-        {
-            var existing = await context.ListingFeatures.Where(x => x.ListingId == id).ToListAsync();
-            var newSet = dto.FeatureCodes.Distinct(StringComparer.OrdinalIgnoreCase).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var toRemove = existing.Where(e => !newSet.Contains(e.FeatureCode)).ToList();
-            if (toRemove.Count > 0) context.ListingFeatures.RemoveRange(toRemove);
-            var existingCodes = existing.Select(e => e.FeatureCode).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            foreach (var code in newSet)
-            {
-                if (existingCodes.Contains(code)) continue;
-                context.ListingFeatures.Add(new ListingFeature
-                {
-                    ListingId = id,
-                    FeatureCode = code,
-                    FeatureName = code
-                });
-            }
-            await context.SaveChangesAsync();
-        }
+        // Fallback codes-only path removed; full feature metadata required
         // Return updated DTO with features
         var updated = await context.Listings
             .Include(l => l.Images)

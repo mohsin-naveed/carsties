@@ -19,6 +19,50 @@ public class FeaturesController(CatalogDbContext context, IMapper mapper) : Cont
         return await CodeGenerator.NextFeatureCodeAsync(context);
     }
 
+    // Lookup a single feature by Code (FR-###)
+    [HttpGet("by-code/{code}")]
+    public async Task<ActionResult<FeatureDetailDto>> GetByCode(string code)
+    {
+        if (string.IsNullOrWhiteSpace(code)) return BadRequest("Code is required");
+        code = code.ToUpperInvariant();
+        var feature = await context.Features
+            .Include(f => f.Category)
+            .FirstOrDefaultAsync(f => f.Code == code);
+        if (feature is null) return NotFound();
+        var dto = new FeatureDetailDto(
+            feature.Code,
+            feature.Name,
+            feature.Description,
+            feature.Category?.Name,
+            feature.Category?.Code
+        );
+        return Ok(dto);
+    }
+
+    // Batch lookup features by Code
+    [HttpGet("by-codes")]
+    public async Task<ActionResult<List<FeatureDetailDto>>> GetByCodes([FromQuery(Name = "codes")] string[] codes)
+    {
+        if (codes == null || codes.Length == 0) return Ok(new List<FeatureDetailDto>());
+        var normalized = codes.Where(c => !string.IsNullOrWhiteSpace(c))
+            .Select(c => c.ToUpperInvariant())
+            .Distinct()
+            .ToArray();
+        var features = await context.Features
+            .Include(f => f.Category)
+            .Where(f => normalized.Contains(f.Code))
+            .OrderBy(f => f.Name)
+            .ToListAsync();
+        var result = features.Select(f => new FeatureDetailDto(
+            f.Code,
+            f.Name,
+            f.Description,
+            f.Category?.Name,
+            f.Category?.Code
+        )).ToList();
+        return Ok(result);
+    }
+
     [HttpGet("paged")]
     public async Task<ActionResult<PagedResult<FeatureDto>>> GetPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? sort = null, [FromQuery] string? dir = null)
     {

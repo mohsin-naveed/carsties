@@ -12,7 +12,7 @@ export interface VariantDto { id: number; name: string; code: string; derivative
 export interface OptionDto { id: number; name: string; code?: string; }
 export interface VariantOptionsDto { transmissions: OptionDto[]; fuelTypes: OptionDto[]; bodyTypes: OptionDto[]; }
 export interface VariantFeatureSnapshot { variantId: number; featureId: number; isStandard: boolean; }
-export interface FeatureDto { id: number; name: string; description?: string; code?: string; }
+export interface FeatureDto { id: number; name: string; code: string; description?: string; featureCategory?: string; featureCategoryCode?: string; }
 export interface ListingFeatureInputDto {
   featureCode: string;
   featureName?: string;
@@ -69,7 +69,6 @@ export interface CreateListingDto {
   bodyTypeName?: string; transmissionTypeName?: string; fuelTypeName?: string;
   seats?: number; doors?: number;
   features?: ListingFeatureInputDto[];
-  featureCodes?: string[];
 }
 
 export interface ListingImageDto {
@@ -85,7 +84,6 @@ export interface UpdateListingDto {
   transmissionTypeCode?: string; fuelTypeCode?: string; bodyTypeCode?: string;
   seats?: number; doors?: number;
   features?: ListingFeatureInputDto[];
-  featureCodes?: string[];
 }
 
 export interface FacetCountsDto {

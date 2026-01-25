@@ -13,6 +13,16 @@ namespace CatalogService.Controllers;
 [Route("api/[controller]")]
 public class DerivativesController(CatalogDbContext context, IMapper mapper) : ControllerBase
 {
+    [HttpGet("by-code/{code}")]
+    public async Task<ActionResult<DerivativeDto>> GetByCode(string code)
+    {
+        if (string.IsNullOrWhiteSpace(code)) return BadRequest("Code is required");
+        code = code.ToUpperInvariant();
+        var entity = await context.Derivatives.FirstOrDefaultAsync(d => d.Code == code);
+        if (entity is null) return NotFound();
+        var dto = mapper.Map<DerivativeDto>(entity);
+        return Ok(dto);
+    }
     [HttpGet("options")]
     public ActionResult<List<OptionDto>> GetOptions()
     {

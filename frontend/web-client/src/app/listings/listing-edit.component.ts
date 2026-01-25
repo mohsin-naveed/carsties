@@ -190,11 +190,11 @@ export class ListingEditComponent {
           variantId: null
         });
         // Preselect listing features by codes returned from API
-        const codes = (l.featureCodes ?? (l.features ? l.features.map(f => f.featureCode) : [])) ?? [];
-        codes.forEach(code => {
+        const codes = (l.features ? l.features.map(f => f.featureCode) : (l.featureCodes ?? [])) ?? [];
+        for (const code of codes) {
           const fid = this.features.find(x => x.code === code)?.id;
           if (fid) this.selectedFeatureIds.add(fid);
-        });
+        }
         // Load models/generations/derivatives for make
         this.api.getModels(makeId ?? undefined).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(models => {
           this.models = models;
@@ -233,9 +233,11 @@ export class ListingEditComponent {
     const featureInputs: ListingFeatureInputDto[] = Array.from(this.selectedFeatureIds).map(id => {
       const f = this.features.find(x => x.id === id);
       return {
-        featureCode: (f?.code ?? String(id)),
-        featureName: f?.name,
-        featureDescription: f?.description
+        featureCode: f?.code ?? String(id),
+        featureName: f?.name ?? '',
+        featureDescription: f?.description,
+        featureCategoryName: f?.featureCategory ?? '',
+        featureCategoryCode: f?.featureCategoryCode ?? ''
       };
     });
     const dto: UpdateListingDto = {
@@ -254,8 +256,7 @@ export class ListingEditComponent {
       variantCode: (this.form.value.variantId ? this.variants.find(v => v.id === this.form.value.variantId!)?.code : undefined),
       seats: derivative?.seats,
       doors: derivative?.doors,
-      features: featureInputs,
-      featureCodes: featureInputs.map(f => f.featureCode)
+      features: featureInputs
     };
     this.api.updateListing(this.id, dto).subscribe({
       next: (updated: ListingDto) => {
@@ -275,11 +276,11 @@ export class ListingEditComponent {
         }, { emitEvent: false });
         // Update selected features
         this.selectedFeatureIds.clear();
-        const codes = (updated.featureCodes ?? (updated.features ? updated.features.map(f => f.featureCode) : [])) ?? [];
-        codes.forEach(code => {
+        const codes = (updated.features ? updated.features.map(f => f.featureCode) : (updated.featureCodes ?? [])) ?? [];
+        for (const code of codes) {
           const fid = this.features.find(x => x.code === code)?.id;
           if (fid) this.selectedFeatureIds.add(fid);
-        });
+        }
       },
       error: () => { this.saving = false; }
     });

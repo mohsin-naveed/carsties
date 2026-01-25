@@ -14,10 +14,16 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { ConfirmDialogComponent } from '../shared/confirm-dialog.component';
+import { RouterModule } from '@angular/router';
 let ListingsListComponent = class ListingsListComponent {
     api = inject(ListingsApiService);
+    dialog = inject(MatDialog);
     dataSource = new MatTableDataSource([]);
-    displayedColumns = ['title', 'make', 'model', 'generation', 'derivative', 'variant', 'body', 'transmission', 'fuel', 'price'];
+    displayedColumns = ['title', 'make', 'model', 'generation', 'derivative', 'variant', 'body', 'transmission', 'fuel', 'price', 'actions'];
     loading = true;
     paginator;
     sort;
@@ -33,6 +39,14 @@ let ListingsListComponent = class ListingsListComponent {
         if (this.sort)
             this.dataSource.sort = this.sort;
     }
+    onDelete(l) {
+        const ref = this.dialog.open(ConfirmDialogComponent, { data: { message: `Delete listing '${l.title}'?` } });
+        ref.afterClosed().subscribe(confirmed => {
+            if (!confirmed)
+                return;
+            this.api.deleteListing(l.id).subscribe({ next: () => { this.dataSource.data = this.dataSource.data.filter(x => x.id !== l.id); }, error: () => { } });
+        });
+    }
 };
 __decorate([
     ViewChild(MatPaginator),
@@ -46,7 +60,7 @@ ListingsListComponent = __decorate([
     Component({
         selector: 'app-listings-list',
         standalone: true,
-        imports: [CommonModule, MatTableModule, MatPaginatorModule, MatSortModule, MatProgressBarModule],
+        imports: [CommonModule, MatTableModule, MatPaginatorModule, MatSortModule, MatProgressBarModule, MatIconModule, MatDialogModule, MatButtonModule, ConfirmDialogComponent, RouterModule],
         templateUrl: './listings-list.component.html'
     })
 ], ListingsListComponent);

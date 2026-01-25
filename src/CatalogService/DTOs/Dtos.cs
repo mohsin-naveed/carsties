@@ -17,9 +17,12 @@ public record VariantDto(int Id, string Name, string Code, int DerivativeId, boo
 public record CreateVariantDto(string Name, int DerivativeId, bool? IsPopular, bool? IsImported);
 public record UpdateVariantDto(string? Name, int? DerivativeId, bool? IsPopular, bool? IsImported);
 
-public record FeatureDto(int Id, string Name, string Slug, string? Description, int FeatureCategoryId, string? FeatureCategory);
+public record FeatureDto(int Id, string Name, string Code, string Slug, string? Description, int FeatureCategoryId, string? FeatureCategory, string? FeatureCategoryCode);
 public record CreateFeatureDto(string Name, string? Description, int FeatureCategoryId, string? Slug = null);
 public record UpdateFeatureDto(string? Name, string? Description, int? FeatureCategoryId, string? Slug = null);
+
+// Detailed feature payload used by external services (includes codes)
+public record FeatureDetailDto(string Code, string Name, string? Description, string? FeatureCategoryName, string? FeatureCategoryCode);
 
 public record VariantFeatureDto(int VariantId, int FeatureId, bool IsStandard, DateTime AddedDate);
 public record CreateVariantFeatureDto(int VariantId, int FeatureId, bool IsStandard);

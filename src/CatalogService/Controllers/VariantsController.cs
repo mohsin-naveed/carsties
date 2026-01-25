@@ -14,6 +14,16 @@ namespace CatalogService.Controllers;
 [Route("api/[controller]")]
 public class VariantsController(CatalogDbContext context, IMapper mapper) : ControllerBase
 {
+    [HttpGet("by-code/{code}")]
+    public async Task<ActionResult<VariantDto>> GetByCode(string code)
+    {
+        if (string.IsNullOrWhiteSpace(code)) return BadRequest("Code is required");
+        code = code.ToUpperInvariant();
+        var entity = await context.Variants.FirstOrDefaultAsync(v => v.Code == code);
+        if (entity is null) return NotFound();
+        var dto = mapper.Map<VariantDto>(entity);
+        return Ok(dto);
+    }
     [HttpGet("paged")]
     public async Task<ActionResult<PagedResult<VariantDto>>> GetPaged([FromQuery] int? makeId, [FromQuery] int? modelId, [FromQuery] int? derivativeId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? sort = null, [FromQuery] string? dir = null)
     {

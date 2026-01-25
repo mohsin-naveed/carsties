@@ -18,7 +18,9 @@ public class MappingProfiles : Profile
         CreateMap<CreateVariantDto, Variant>()
             .ForMember(d => d.Id, o => o.Ignore());
         CreateMap<Feature, FeatureDto>()
-            .ForCtorParam("FeatureCategory", o => o.MapFrom(s => s.Category != null ? s.Category.Name : null));
+            .ForCtorParam("FeatureCategory", o => o.MapFrom(s => s.Category != null ? s.Category.Name : null))
+            .ForCtorParam("Code", o => o.MapFrom(s => s.Code))
+            .ForCtorParam("FeatureCategoryCode", o => o.MapFrom(s => s.Category != null ? s.Category.Code : null));
         CreateMap<CreateFeatureDto, Feature>().ForMember(d => d.Id, o => o.Ignore());
         CreateMap<FeatureCategory, OptionDto>()
             .ConstructUsing(s => new OptionDto(s.Id, s.Name, s.Code));
