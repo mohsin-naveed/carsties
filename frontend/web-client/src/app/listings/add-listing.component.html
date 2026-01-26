@@ -68,6 +68,8 @@
           <textarea matInput rows="3" formControlName="description" aria-label="Description" matTooltip="Add highlights like condition, service history, extras"></textarea>
         </mat-form-field>
 
+        <h4 class="subheading">Additional Information!</h4>
+
         <mat-form-field appearance="outline">
           <mat-label>Transmission</mat-label>
           <mat-select formControlName="transmissionId">
@@ -180,24 +182,3 @@
   </div>
 </form>
 
-<mat-card class="preview-card">
-  <h3>Preview</h3>
-  <div class="preview-grid">
-    <div><strong>Year:</strong> {{ form.value.year || '-' }}</div>
-    <div><strong>Make:</strong> {{ findById(makes, form.value.makeId)?.name || '-' }}</div>
-    <div><strong>Model:</strong> {{ findById(models, form.value.modelId)?.name || '-' }}</div>
-    <div><strong>Generation:</strong> {{ findById(generations, form.value.generationId)?.name || '-' }}</div>
-    <div><strong>Derivative:</strong> {{ findById(derivatives, form.value.derivativeId)?.name || '-' }}</div>
-    <div><strong>Variant:</strong> {{ findById(variants, form.value.variantId)?.name || '-' }}</div>
-    <div><strong>Body Type:</strong> {{ findById(derivatives, form.value.derivativeId)?.bodyType || findById(bodyTypes, form.value.bodyTypeId)?.name || '-' }}</div>
-    <div><strong>Transmission:</strong> {{ findById(derivatives, form.value.derivativeId)?.transmission || findById(transmissions, form.value.transmissionId)?.name || '-' }}</div>
-    <div><strong>Fuel:</strong> {{ findById(derivatives, form.value.derivativeId)?.fuelType || findById(fuelTypes, form.value.fuelTypeId)?.name || '-' }}</div>
-    <div><strong>Seats:</strong> {{ findById(derivatives, form.value.derivativeId)?.seats || '-' }}</div>
-    <div><strong>Doors:</strong> {{ findById(derivatives, form.value.derivativeId)?.doors || '-' }}</div>
-    <div><strong>Engine:</strong> {{ findById(derivatives, form.value.derivativeId)?.engine || '-' }}</div>
-    <div><strong>Battery (kWh):</strong> {{ findById(derivatives, form.value.derivativeId)?.batteryCapacityKWh || '-' }}</div>
-    <div class="preview-spanner"><strong>Variant Features:</strong> {{ variantFeatures?.length || 0 }}</div>
-    <div class="preview-spanner"><strong>Selected Features:</strong> {{ selectedFeatureIds.size }}</div>
-    <div class="preview-spanner"><strong>Selected Images:</strong> {{ selectedFiles.length }}</div>
-  </div>
-</mat-card>

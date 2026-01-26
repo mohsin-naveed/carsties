@@ -135,6 +135,17 @@ export class AddListingComponent {
         // Preselect variant features
         vf.forEach(v => this.selectedFeatureIds.add(v.featureId));
       });
+      // Populate additional information from derivative when available
+      const byName = (arr: { id:number; name?:string }[], name?: string | null) => {
+        if (!name) return null; const target = (name || '').toLowerCase();
+        return arr.find(a => (a.name || '').toLowerCase() === target)?.id ?? null;
+      };
+      if (der) {
+        const trId = byName(this.transmissions, der.transmission);
+        const fuId = byName(this.fuelTypes, der.fuelType);
+        const btId = byName(this.bodyTypes, der.bodyType);
+        this.form.patchValue({ transmissionId: trId, fuelTypeId: fuId, bodyTypeId: btId }, { emitEvent: false });
+      }
     });
 
     // Derived variants stream (cached)
