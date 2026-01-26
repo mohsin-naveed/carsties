@@ -35,12 +35,15 @@
           <mat-error *ngIf="form.get('modelId')?.hasError('required') && form.get('modelId')?.touched">Select the model</mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
+        <mat-form-field *ngIf="form.value.modelId && !skipVariant && ((((variants$ | async)?.length ?? (variants?.length ?? 0))) > 0)" appearance="outline">
           <mat-label>Variant</mat-label>
           <mat-select formControlName="variantId">
             <mat-option *ngFor="let v of (variants$ | async) ?? variants" [value]="v.id">{{v.name}}</mat-option>
           </mat-select>
-          <mat-error *ngIf="form.get('variantId')?.hasError('required') && form.get('variantId')?.touched">Choose the specific variant</mat-error>
+          <mat-hint align="end">
+            Can't find a matching variant?
+            <button type="button" class="link-button" (click)="skipVariant = true">Skip and enter details below</button>
+          </mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
@@ -68,47 +71,53 @@
           <textarea matInput rows="3" formControlName="description" aria-label="Description" matTooltip="Add highlights like condition, service history, extras"></textarea>
         </mat-form-field>
 
+        <ng-container *ngIf="skipVariant || form.value.variantId || (form.value.modelId && ((((variants$ | async)?.length ?? (variants?.length ?? 0))) === 0))">
         <h4 class="subheading">Additional Information!</h4>
+        <div class="helper" *ngIf="skipVariant && !form.value.variantId">You chose to skip variant — fill in the details below.</div>
 
         <mat-form-field appearance="outline">
           <mat-label>Transmission</mat-label>
-          <mat-select formControlName="transmissionId">
+          <mat-select formControlName="transmissionId" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)">
             <mat-option *ngFor="let t of (transmissions$ | async) ?? transmissions" [value]="t.id">{{t.name}}</mat-option>
           </mat-select>
+          <mat-hint>Populated from the selected variant when available</mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Fuel Type</mat-label>
-          <mat-select formControlName="fuelTypeId">
+          <mat-select formControlName="fuelTypeId" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)">
             <mat-option *ngFor="let f of (fuelTypes$ | async) ?? fuelTypes" [value]="f.id">{{f.name}}</mat-option>
           </mat-select>
+          <mat-hint>Populated from the selected variant when available</mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Body Type</mat-label>
-          <mat-select formControlName="bodyTypeId">
+          <mat-select formControlName="bodyTypeId" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)">
             <mat-option *ngFor="let b of (bodyTypes$ | async) ?? bodyTypes" [value]="b.id">{{b.name}}</mat-option>
           </mat-select>
           <mat-error *ngIf="form.get('bodyTypeId')?.hasError('required') && form.get('bodyTypeId')?.touched">Please choose a body type</mat-error>
+          <mat-hint>Populated from the selected variant when available</mat-hint>
         </mat-form-field>
-      </div>
+      </ng-container>
 
-      <div class="features">
+      <div class="features" *ngIf="skipVariant || form.value.variantId || (form.value.modelId && ((((variants$ | async)?.length ?? (variants?.length ?? 0))) === 0))">
         <div class="features__title">Features</div>
         <div class="features__grid">
           <!-- Selected features first -->
           <ng-container *ngFor="let f of features">
             <ng-container *ngIf="selectedFeatureIds.has(f.id)">
-              <mat-checkbox color="primary" [checked]="true" (change)="toggleFeature(f.id, $event.checked)">{{f.name}}</mat-checkbox>
+              <mat-checkbox color="primary" [checked]="true" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)" (change)="toggleFeature(f.id, $event.checked)">{{f.name}}</mat-checkbox>
             </ng-container>
           </ng-container>
           <!-- Remaining features -->
           <ng-container *ngFor="let f of features">
             <ng-container *ngIf="!selectedFeatureIds.has(f.id)">
-              <mat-checkbox color="primary" [checked]="false" (change)="toggleFeature(f.id, $event.checked)">{{f.name}}</mat-checkbox>
+              <mat-checkbox color="primary" [checked]="false" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)" (change)="toggleFeature(f.id, $event.checked)">{{f.name}}</mat-checkbox>
             </ng-container>
           </ng-container>
         </div>
+      </div>
       </div>
     </mat-card-content>
   </mat-card>

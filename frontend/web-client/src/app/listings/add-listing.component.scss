@@ -3,14 +3,17 @@
 
 .sell-form { display:grid; gap:24px; }
 
-.section-card { padding-bottom: 8px; max-width: 720px; margin: 0 auto; }
+.section-card { padding-bottom: 8px; }
 
 .grid { display:grid; gap:16px; justify-items: stretch; }
+.grid * { box-sizing: border-box; }
 .grid--car { grid-template-columns: 1fr; }
 .grid--contact { grid-template-columns: 1fr; }
 
 /* Column helpers */
-.grid mat-form-field { grid-column: 1 / -1; width: 100%; }
+.grid mat-form-field { grid-column: 1 / -1; width: 100%; display:block; min-width: 0; }
+.section-card .mat-mdc-form-field { width: 100%; }
+.section-card .mat-mdc-form-field-infix { width: 100%; }
 .grid .grid-col-span-2 { grid-column: 1 / -1; }
 
 /* Force single-column across all screens */
@@ -20,6 +23,9 @@
 .features__grid { display:grid; grid-template-columns: 1fr; gap:12px; align-items:start; justify-items:start; }
 @media (min-width: 1024px) { .features__grid { grid-template-columns: 1fr 1fr; } }
 .subheading { font-weight: 700; margin: 8px 0; }
+.link-button { border:none; background:none; padding:0; margin:0 0 0 4px; color:#2563eb; cursor:pointer; font-weight:600; }
+.link-button:hover { text-decoration: underline; }
+.helper { font-size: 12px; color: #64748b; margin: -4px 0 8px; }
 
 /* Upload area */
 .upload { display:flex; flex-direction:column; gap:12px; }

@@ -46,7 +46,8 @@ export class AddListingComponent {
     // Hidden fields, set programmatically based on selected variant
     generationId: [null as number | null],
     derivativeId: [null as number | null],
-    variantId: [null as number | null, Validators.required],
+    // Variant is now optional per requirements
+    variantId: [null as number | null],
     transmissionId: [null as number | null],
     fuelTypeId: [null as number | null],
     bodyTypeId: [null as number | null, Validators.required]
@@ -79,6 +80,7 @@ export class AddListingComponent {
   selectedFiles: File[] = [];
   previews: string[] = [];
   dragging = false;
+  skipVariant = false;
 
   constructor() {
     // Build years dropdown (descending from current year to 1900)
