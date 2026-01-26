@@ -1,130 +1,191 @@
-<mat-card>
-  <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid" [attr.aria-busy]="saving">
-  <mat-form-field appearance="outline">
-    <mat-label>Year</mat-label>
-    <mat-select formControlName="year">
-      <mat-option *ngFor="let y of years" [value]="y">{{y}}</mat-option>
-    </mat-select>
-    <mat-error *ngIf="form.get('year')?.hasError('required') && form.get('year')?.touched">Year is required</mat-error>
-  </mat-form-field>
-  
+<form [formGroup]="form" (ngSubmit)="submit()" class="sell-form" [attr.aria-busy]="saving">
+  <!-- Section 1: Car Information -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar color="primary">directions_car</mat-icon>
+      <mat-card-title>Car Information</mat-card-title>
+      <mat-card-subtitle>Tell buyers the key details</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="grid grid--car">
+        <mat-form-field appearance="outline">
+          <mat-label>Year</mat-label>
+          <mat-select formControlName="year">
+            <mat-option *ngFor="let y of years" [value]="y">{{y}}</mat-option>
+          </mat-select>
+          <button mat-icon-button matSuffix matTooltip="Year first registered" aria-label="Help about year">
+            <mat-icon>calendar_today</mat-icon>
+          </button>
+          <mat-error *ngIf="form.get('year')?.hasError('required') && form.get('year')?.touched">Please choose the registration year</mat-error>
+        </mat-form-field>
 
-  <mat-form-field appearance="outline"><mat-label>Make</mat-label>
-    <mat-select formControlName="makeId">
-      <mat-option *ngFor="let m of (makes$ | async) ?? makes" [value]="m.id">{{m.name}}</mat-option>
-    </mat-select>
-    <mat-error *ngIf="form.get('makeId')?.hasError('required') && form.get('makeId')?.touched">Make is required</mat-error>
-  </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Make</mat-label>
+          <mat-select formControlName="makeId">
+            <mat-option *ngFor="let m of (makes$ | async) ?? makes" [value]="m.id">{{m.name}}</mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('makeId')?.hasError('required') && form.get('makeId')?.touched">Select the car make</mat-error>
+        </mat-form-field>
 
-  <mat-form-field appearance="outline"><mat-label>Model</mat-label>
-    <mat-select formControlName="modelId">
-      <mat-option *ngFor="let m of (models$ | async) ?? models" [value]="m.id">{{m.name}}</mat-option>
-    </mat-select>
-    <mat-error *ngIf="form.get('modelId')?.hasError('required') && form.get('modelId')?.touched">Model is required</mat-error>
-  </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Model</mat-label>
+          <mat-select formControlName="modelId">
+            <mat-option *ngFor="let m of (models$ | async) ?? models" [value]="m.id">{{m.name}}</mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('modelId')?.hasError('required') && form.get('modelId')?.touched">Select the model</mat-error>
+        </mat-form-field>
 
-  <!-- Generation and Derivative hidden per requirements; set programmatically when a Variant is selected -->
+        <mat-form-field appearance="outline">
+          <mat-label>Variant</mat-label>
+          <mat-select formControlName="variantId">
+            <mat-option *ngFor="let v of (variants$ | async) ?? variants" [value]="v.id">{{v.name}}</mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('variantId')?.hasError('required') && form.get('variantId')?.touched">Choose the specific variant</mat-error>
+        </mat-form-field>
 
-  <mat-form-field appearance="outline"><mat-label>Variant</mat-label>
-    <mat-select formControlName="variantId">
-      <mat-option *ngFor="let v of (variants$ | async) ?? variants" [value]="v.id">{{v.name}}</mat-option>
-    </mat-select>
-    <mat-error *ngIf="form.get('variantId')?.hasError('required') && form.get('variantId')?.touched">Variant is required</mat-error>
-  </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Mileage</mat-label>
+          <input matInput type="number" formControlName="mileage" aria-label="Mileage" />
+          <button mat-icon-button matSuffix matTooltip="Enter the current odometer reading">
+            <mat-icon>speed</mat-icon>
+          </button>
+          <mat-error *ngIf="form.get('mileage')?.hasError('required') && form.get('mileage')?.touched">Please enter the mileage</mat-error>
+          <mat-error *ngIf="form.get('mileage')?.hasError('min') && form.get('mileage')?.touched">Mileage cannot be negative</mat-error>
+        </mat-form-field>
 
-  <!-- Moved under Variant -->
-  <mat-form-field appearance="outline">
-    <mat-label>Mileage</mat-label>
-    <input matInput type="number" formControlName="mileage" />
-    <mat-error *ngIf="form.get('mileage')?.hasError('required') && form.get('mileage')?.touched">Mileage is required</mat-error>
-    <mat-error *ngIf="form.get('mileage')?.hasError('min') && form.get('mileage')?.touched">Must be ≥ 0</mat-error>
-  </mat-form-field>
-  <mat-form-field appearance="outline">
-    <mat-label>Price</mat-label>
-    <input matInput type="number" formControlName="price" />
-    <mat-error *ngIf="form.get('price')?.hasError('required') && form.get('price')?.touched">Price is required</mat-error>
-    <mat-error *ngIf="form.get('price')?.hasError('min') && form.get('price')?.touched">Must be ≥ 0</mat-error>
-  </mat-form-field>
-  <mat-form-field appearance="outline">
-    <mat-label>Description</mat-label>
-    <textarea matInput rows="3" formControlName="description"></textarea>
-  </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Price</mat-label>
+          <input matInput type="number" formControlName="price" aria-label="Price" />
+          <button mat-icon-button matSuffix matTooltip="Set a competitive price">
+            <mat-icon>attach_money</mat-icon>
+          </button>
+          <mat-error *ngIf="form.get('price')?.hasError('required') && form.get('price')?.touched">Please enter the car price</mat-error>
+          <mat-error *ngIf="form.get('price')?.hasError('min') && form.get('price')?.touched">Price must be zero or higher</mat-error>
+        </mat-form-field>
 
-  <mat-form-field appearance="outline"><mat-label>Transmission</mat-label>
-    <mat-select formControlName="transmissionId">
-      <mat-option *ngFor="let t of (transmissions$ | async) ?? transmissions" [value]="t.id">{{t.name}}</mat-option>
-    </mat-select>
-  </mat-form-field>
+        <mat-form-field class="grid-col-span-2" appearance="outline">
+          <mat-label>Description</mat-label>
+          <textarea matInput rows="3" formControlName="description" aria-label="Description" matTooltip="Add highlights like condition, service history, extras"></textarea>
+        </mat-form-field>
 
-  <mat-form-field appearance="outline"><mat-label>Fuel Type</mat-label>
-    <mat-select formControlName="fuelTypeId">
-      <mat-option *ngFor="let f of (fuelTypes$ | async) ?? fuelTypes" [value]="f.id">{{f.name}}</mat-option>
-    </mat-select>
-  </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Transmission</mat-label>
+          <mat-select formControlName="transmissionId">
+            <mat-option *ngFor="let t of (transmissions$ | async) ?? transmissions" [value]="t.id">{{t.name}}</mat-option>
+          </mat-select>
+        </mat-form-field>
 
-  <mat-form-field appearance="outline"><mat-label>Body Type</mat-label>
-    <mat-select formControlName="bodyTypeId">
-      <mat-option *ngFor="let b of (bodyTypes$ | async) ?? bodyTypes" [value]="b.id">{{b.name}}</mat-option>
-    </mat-select>
-    <mat-error *ngIf="form.get('bodyTypeId')?.hasError('required') && form.get('bodyTypeId')?.touched">Body Type is required</mat-error>
-  </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Fuel Type</mat-label>
+          <mat-select formControlName="fuelTypeId">
+            <mat-option *ngFor="let f of (fuelTypes$ | async) ?? fuelTypes" [value]="f.id">{{f.name}}</mat-option>
+          </mat-select>
+        </mat-form-field>
 
-  <!-- Additional Information: Features -->
-  <div style="grid-column:1/-1; margin-top:8px;">
-    <h4>Additional Information</h4>
-    <div><strong>Features</strong></div>
-    <div style="display:flex; flex-wrap:wrap; gap:12px;">
-      <!-- Show variant features first, checked -->
-      <ng-container *ngFor="let f of features">
-        <ng-container *ngIf="selectedFeatureIds.has(f.id)">
-          <mat-checkbox color="primary"
-                        [checked]="true"
-                        (change)="toggleFeature(f.id, $event.checked)">
-            {{f.name}}
-          </mat-checkbox>
-        </ng-container>
-      </ng-container>
-      <!-- Then show remaining features unchecked -->
-      <ng-container *ngFor="let f of features">
-        <ng-container *ngIf="!selectedFeatureIds.has(f.id)">
-          <mat-checkbox color="primary"
-                        [checked]="false"
-                        (change)="toggleFeature(f.id, $event.checked)">
-            {{f.name}}
-          </mat-checkbox>
-        </ng-container>
-      </ng-container>
-    </div>
+        <mat-form-field appearance="outline">
+          <mat-label>Body Type</mat-label>
+          <mat-select formControlName="bodyTypeId">
+            <mat-option *ngFor="let b of (bodyTypes$ | async) ?? bodyTypes" [value]="b.id">{{b.name}}</mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('bodyTypeId')?.hasError('required') && form.get('bodyTypeId')?.touched">Please choose a body type</mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="features">
+        <div class="features__title">Features</div>
+        <div class="features__grid">
+          <!-- Selected features first -->
+          <ng-container *ngFor="let f of features">
+            <ng-container *ngIf="selectedFeatureIds.has(f.id)">
+              <mat-checkbox color="primary" [checked]="true" (change)="toggleFeature(f.id, $event.checked)">{{f.name}}</mat-checkbox>
+            </ng-container>
+          </ng-container>
+          <!-- Remaining features -->
+          <ng-container *ngFor="let f of features">
+            <ng-container *ngIf="!selectedFeatureIds.has(f.id)">
+              <mat-checkbox color="primary" [checked]="false" (change)="toggleFeature(f.id, $event.checked)">{{f.name}}</mat-checkbox>
+            </ng-container>
+          </ng-container>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-divider></mat-divider>
+
+  <!-- Section 2: Upload Media -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar color="primary">photo_library</mat-icon>
+      <mat-card-title>Upload Media</mat-card-title>
+      <mat-card-subtitle>High‑quality photos sell faster</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="upload">
+        <div class="upload__drop" [class.upload__drop--dragging]="dragging"
+             (click)="fileInput.click()" (keydown.enter)="fileInput.click()" tabindex="0" role="button"
+             aria-label="Upload images" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
+          <mat-icon>cloud_upload</mat-icon>
+          <div>Drag & drop images here or <span class="u-link">browse</span></div>
+          <div class="upload__hint" matTooltip="JPG, PNG, WEBP up to 5MB. Aim for 6–10 photos.">JPG, PNG, WEBP • Max 5MB each</div>
+        </div>
+        <input #fileInput type="file" class="visually-hidden" multiple accept="image/*" (change)="onFilesSelected($event)" />
+
+        <div class="upload__meta">Selected: {{ selectedFiles.length }} file(s)</div>
+
+        <div class="upload__grid">
+          <div class="upload__item" *ngFor="let p of previews; let i = index">
+            <img [src]="p" alt="preview image" />
+            <div class="upload__badge" *ngIf="i === 0">Cover</div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-divider></mat-divider>
+
+  <!-- Section 3: Contact Information (UI-only) -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar color="primary">person</mat-icon>
+      <mat-card-title>Contact Information</mat-card-title>
+      <mat-card-subtitle>Your details are only shared with interested buyers</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="grid grid--contact">
+        <mat-form-field appearance="outline">
+          <mat-label>Name</mat-label>
+          <input matInput aria-label="Name" placeholder="Your full name" />
+          <mat-hint>Shown to buyers when they message you</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Phone</mat-label>
+          <input matInput type="tel" aria-label="Phone" placeholder="e.g. 07123 456789" />
+          <mat-hint>Keep your phone on for quick responses</mat-hint>
+        </mat-form-field>
+        <mat-form-field class="grid-col-span-2" appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" aria-label="Email" placeholder="you@example.com" />
+        </mat-form-field>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <div class="actions">
+    <button mat-raised-button color="primary" type="submit" [disabled]="saving || form.invalid">
+      <mat-progress-spinner *ngIf="saving" mode="indeterminate" diameter="18" strokeWidth="3"></mat-progress-spinner>
+      <span *ngIf="!saving">Add Listing</span>
+    </button>
   </div>
-
-  <!-- Images -->
-  <div style="grid-column:1/-1; margin-top:12px;">
-    <h4>Images</h4>
-    <input type="file" multiple accept="image/*" (change)="onFilesSelected($event)" />
-    <div style="margin-top:6px; font-size:12px; color:#666;">
-      Selected: {{ selectedFiles.length }} file(s)
-    </div>
-    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
-      <img *ngFor="let p of previews" [src]="p" style="width:120px; height:90px; object-fit:cover; border-radius:4px; border:1px solid #ddd;" alt="preview" />
-    </div>
-  </div>
-
-    <div class="actions">
-      <button mat-raised-button color="primary" type="submit" [disabled]="saving || form.invalid">
-        <mat-progress-spinner *ngIf="saving" mode="indeterminate" diameter="18" strokeWidth="3"></mat-progress-spinner>
-        <span *ngIf="!saving">Add Listing</span>
-      </button>
-    </div>
-  </form>
-</mat-card>
+</form>
 
 <mat-card class="preview-card">
   <h3>Preview</h3>
-  <div class="form-grid" style="gap:8px;">
+  <div class="preview-grid">
     <div><strong>Year:</strong> {{ form.value.year || '-' }}</div>
     <div><strong>Make:</strong> {{ findById(makes, form.value.makeId)?.name || '-' }}</div>
     <div><strong>Model:</strong> {{ findById(models, form.value.modelId)?.name || '-' }}</div>
-    <!-- Generation and Derivative hidden in form; still shown in preview if available -->
     <div><strong>Generation:</strong> {{ findById(generations, form.value.generationId)?.name || '-' }}</div>
     <div><strong>Derivative:</strong> {{ findById(derivatives, form.value.derivativeId)?.name || '-' }}</div>
     <div><strong>Variant:</strong> {{ findById(variants, form.value.variantId)?.name || '-' }}</div>
@@ -135,8 +196,8 @@
     <div><strong>Doors:</strong> {{ findById(derivatives, form.value.derivativeId)?.doors || '-' }}</div>
     <div><strong>Engine:</strong> {{ findById(derivatives, form.value.derivativeId)?.engine || '-' }}</div>
     <div><strong>Battery (kWh):</strong> {{ findById(derivatives, form.value.derivativeId)?.batteryCapacityKWh || '-' }}</div>
-    <div style="grid-column:1/-1"><strong>Variant Features:</strong> {{ variantFeatures?.length || 0 }}</div>
-    <div style="grid-column:1/-1"><strong>Selected Features:</strong> {{ selectedFeatureIds.size }}</div>
-    <div style="grid-column:1/-1"><strong>Selected Images:</strong> {{ selectedFiles.length }}</div>
+    <div class="preview-spanner"><strong>Variant Features:</strong> {{ variantFeatures?.length || 0 }}</div>
+    <div class="preview-spanner"><strong>Selected Features:</strong> {{ selectedFeatureIds.size }}</div>
+    <div class="preview-spanner"><strong>Selected Images:</strong> {{ selectedFiles.length }}</div>
   </div>
 </mat-card>

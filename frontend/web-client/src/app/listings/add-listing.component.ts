@@ -8,6 +8,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatOptionModule } from '@angular/material/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDividerModule } from '@angular/material/divider';
 import { ObserversModule } from '@angular/cdk/observers';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ListingsApiService, MakeDto, ModelDto, GenerationDto, DerivativeDto, VariantDto, OptionDto, CreateListingDto, VariantFeatureSnapshot, FeatureDto, ListingFeatureInputDto } from './listings-api.service';
@@ -20,7 +23,7 @@ import { DestroyRef } from '@angular/core';
 @Component({
   selector: 'app-add-listing',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ObserversModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatOptionModule, MatButtonModule, MatCardModule, MatProgressSpinnerModule, MatCheckboxModule],
+  imports: [CommonModule, ReactiveFormsModule, ObserversModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatOptionModule, MatButtonModule, MatCardModule, MatProgressSpinnerModule, MatCheckboxModule, MatIconModule, MatTooltipModule, MatDividerModule],
   templateUrl: './add-listing.component.html',
   styleUrls: ['./add-listing.component.scss']
 })
@@ -75,6 +78,7 @@ export class AddListingComponent {
   selectedFeatureIds = new Set<number>();
   selectedFiles: File[] = [];
   previews: string[] = [];
+  dragging = false;
 
   constructor() {
     // Build years dropdown (descending from current year to 1900)
@@ -296,5 +300,15 @@ export class AddListingComponent {
     this.selectedFiles = [];
     this.previews.forEach(url => URL.revokeObjectURL(url));
     this.previews = [];
+  }
+
+  // Drag & drop helpers (UI only)
+  onDragOver(event: DragEvent) { event.preventDefault(); this.dragging = true; }
+  onDragLeave(event: DragEvent) { event.preventDefault(); this.dragging = false; }
+  onDrop(event: DragEvent) {
+    event.preventDefault(); this.dragging = false;
+    const files = event.dataTransfer?.files; if (!files || files.length === 0) return;
+    const inputEvent = { target: { files } } as any as Event;
+    this.onFilesSelected(inputEvent);
   }
 }

@@ -1,24 +1,49 @@
-// Form layout styles for Add Listing
-:host {
-  display: block;
+/* Sell a Car page - responsive, accessible, clean visuals */
+:host { display:block; }
+
+.sell-form { display:grid; gap:24px; }
+
+.section-card { padding-bottom: 8px; }
+
+.grid { display:grid; gap:16px; }
+.grid--car { grid-template-columns: repeat(12, 1fr); }
+.grid--contact { grid-template-columns: repeat(12, 1fr); }
+
+/* Column helpers */
+.grid mat-form-field { grid-column: span 12; }
+.grid .grid-col-span-2 { grid-column: span 12; }
+
+@media (min-width: 768px) {
+  .grid--car mat-form-field { grid-column: span 6; }
+  .grid--contact mat-form-field { grid-column: span 6; }
+  .grid .grid-col-span-2 { grid-column: span 12; }
+}
+@media (min-width: 1024px) {
+  .grid--car mat-form-field { grid-column: span 4; }
+  .grid .grid-col-span-2 { grid-column: span 8; }
 }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr; /* one control per row */
-  gap: 16px;
-}
+.features { margin-top: 8px; }
+.features__title { font-weight: 600; margin-bottom: 6px; }
+.features__grid { display:flex; flex-wrap:wrap; gap:12px; }
 
-.actions {
-  grid-column: 1 / -1;
-  display: flex;
-  justify-content: flex-end;
-}
+/* Upload area */
+.upload { display:flex; flex-direction:column; gap:12px; }
+.upload__drop { border:2px dashed #cbd5e1; border-radius:10px; background:#f8fafc; padding:24px; text-align:center; color:#334155; display:flex; flex-direction:column; gap:8px; align-items:center; justify-content:center; cursor:pointer; outline: none; }
+.upload__drop:focus-visible { box-shadow: 0 0 0 3px rgba(37,99,235,.35); }
+.upload__drop mat-icon { color:#64748b; }
+.upload__drop--dragging { background:#eef2ff; border-color:#94a3b8; }
+.upload__hint { font-size:12px; color:#64748b; }
+.u-link { color:#2563eb; text-decoration:underline; }
+.visually-hidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+.upload__meta { font-size:12px; color:#475569; }
+.upload__grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap:10px; }
+.upload__item { position:relative; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; background:#fff; }
+.upload__item img { width:100%; height:100%; aspect-ratio: 4 / 3; object-fit:cover; display:block; }
+.upload__badge { position:absolute; left:8px; top:8px; background:#111827; color:#fff; font-size:11px; padding:2px 6px; border-radius:999px; }
 
-.preview-card {
-  margin-top: 16px;
-}
+.actions { display:flex; justify-content:flex-end; }
 
-/* removed top-year header */
-
-/* Single column layout already enforced */
+.preview-card { margin-top: 8px; }
+.preview-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:8px; }
+.preview-spanner { grid-column: 1 / -1; }
