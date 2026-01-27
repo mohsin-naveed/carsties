@@ -1,0 +1,18 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start web-client",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"Push-Location \"$PWD\"; Push-Location \"c:\\Dev\\Cars\\carsties\\frontend\\web-client\"; npm start; Pop-Location; Pop-Location"
+			],
+			"isBackground": false,
+			"group": "build"
+		}
+	]
+}

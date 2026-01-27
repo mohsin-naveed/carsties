@@ -35,25 +35,25 @@
           <mat-error *ngIf="form.get('modelId')?.hasError('required') && form.get('modelId')?.touched">Select the model</mat-error>
         </mat-form-field>
 
-        <mat-form-field *ngIf="form.value.modelId && !skipVariant && ((((variants$ | async)?.length ?? (variants?.length ?? 0))) > 0)" appearance="outline">
+        <mat-form-field *ngIf="form.value.modelId && ((((variants$ | async)?.length ?? (variants?.length ?? 0))) > 0)" appearance="outline">
           <mat-label>Variant</mat-label>
           <mat-select formControlName="variantId">
             <mat-option *ngFor="let v of (variants$ | async) ?? variants" [value]="v.id">{{v.name}}</mat-option>
           </mat-select>
           <mat-hint align="end">
             Can't find a matching variant?
-            <button type="button" class="link-button" (click)="skipVariant = true">Skip and enter details below</button>
+            <button type="button" class="link-button" (click)="onSkip()">Skip</button>
           </mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Mileage</mat-label>
-          <input matInput type="number" formControlName="mileage" aria-label="Mileage" />
+          <input matInput type="number" formControlName="mileage" aria-label="Mileage" #mileageInput />
           <button mat-icon-button matSuffix matTooltip="Enter the current odometer reading">
             <mat-icon>speed</mat-icon>
           </button>
           <mat-error *ngIf="form.get('mileage')?.hasError('required') && form.get('mileage')?.touched">Please enter the mileage</mat-error>
-          <mat-error *ngIf="form.get('mileage')?.hasError('min') && form.get('mileage')?.touched">Mileage cannot be negative</mat-error>
+          <mat-error *ngIf="form.get('mileage')?.hasError('min') && form.get('mileage')?.touched">Mileage must be greater than zero</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
@@ -63,7 +63,7 @@
             <mat-icon>attach_money</mat-icon>
           </button>
           <mat-error *ngIf="form.get('price')?.hasError('required') && form.get('price')?.touched">Please enter the car price</mat-error>
-          <mat-error *ngIf="form.get('price')?.hasError('min') && form.get('price')?.touched">Price must be zero or higher</mat-error>
+          <mat-error *ngIf="form.get('price')?.hasError('min') && form.get('price')?.touched">Price must be greater than zero</mat-error>
         </mat-form-field>
 
         <mat-form-field class="grid-col-span-2" appearance="outline">
@@ -80,7 +80,6 @@
           <mat-select formControlName="transmissionId" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)">
             <mat-option *ngFor="let t of (transmissions$ | async) ?? transmissions" [value]="t.id">{{t.name}}</mat-option>
           </mat-select>
-          <mat-hint>Populated from the selected variant when available</mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
@@ -88,7 +87,6 @@
           <mat-select formControlName="fuelTypeId" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)">
             <mat-option *ngFor="let f of (fuelTypes$ | async) ?? fuelTypes" [value]="f.id">{{f.name}}</mat-option>
           </mat-select>
-          <mat-hint>Populated from the selected variant when available</mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
@@ -97,7 +95,6 @@
             <mat-option *ngFor="let b of (bodyTypes$ | async) ?? bodyTypes" [value]="b.id">{{b.name}}</mat-option>
           </mat-select>
           <mat-error *ngIf="form.get('bodyTypeId')?.hasError('required') && form.get('bodyTypeId')?.touched">Please choose a body type</mat-error>
-          <mat-hint>Populated from the selected variant when available</mat-hint>
         </mat-form-field>
       </ng-container>
 

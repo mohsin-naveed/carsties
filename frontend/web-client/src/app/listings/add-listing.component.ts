@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -39,8 +39,8 @@ export class AddListingComponent {
   form = this.fb.group({
     description: [''],
     year: [null as number | null, [Validators.required, Validators.min(1900)]],
-    mileage: [0, [Validators.required, Validators.min(0)]],
-    price: [0, [Validators.required, Validators.min(0)]],
+    mileage: [null as number | null, [Validators.required, Validators.min(1)]],
+    price: [null as number | null, [Validators.required, Validators.min(1)]],
     makeId: [null as number | null, Validators.required],
     modelId: [null as number | null, Validators.required],
     // Hidden fields, set programmatically based on selected variant
@@ -81,6 +81,7 @@ export class AddListingComponent {
   previews: string[] = [];
   dragging = false;
   skipVariant = false;
+  @ViewChild('mileageInput') mileageInput!: ElementRef<HTMLInputElement>;
 
   constructor() {
     // Build years dropdown (descending from current year to 1900)
@@ -181,6 +182,12 @@ export class AddListingComponent {
   findById(list: { id: number }[], id: number | null | undefined) {
     if (id == null) return undefined as any;
     return list.find(x => x.id === id) as any;
+  }
+
+  onSkip() {
+    this.skipVariant = true;
+    // Move focus to the next control (Mileage)
+    setTimeout(() => this.mileageInput?.nativeElement?.focus(), 0);
   }
 
   submit() {
