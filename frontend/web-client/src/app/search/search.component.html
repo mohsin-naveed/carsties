@@ -290,20 +290,15 @@
           <div class="card-body">
             <div class="title">{{ car.makeName || car.makeId }} {{ car.modelName || car.modelId }}</div>
             <div class="subtitle">{{ car.variantName || car.derivativeName || '' }}</div>
-            <div class="chips">
+            <div class="chips chips--inline">
               <span class="chip">{{ car.year }}</span>
               <span class="chip">{{ car.mileage | number }} miles</span>
-              <span class="chip" *ngIf="car.engineL as el">{{ (el | number:'1.1-1') }}L</span>
-              <span class="chip" *ngIf="!car.engineL && car.engineSizeCC as ecc">{{ ecc }} CC</span>
-              <span class="chip" *ngIf="car.transmissionName as tn">{{ tn }}</span>
+              <span class="chip" *ngIf="car.fuelTypeName as f">{{ f }}</span>
             </div>
-            <div class="fuel-pill" *ngIf="car.fuelTypeName as f">{{ f }}</div>
             <div class="price-row">
               <div class="price">£{{ car.price | number:'1.0-0' }}</div>
-              <div class="monthly">£{{ monthly(car.price) | number:'1.0-0' }} / monthly</div>
             </div>
             <div class="actions">
-              <button class="btn btn-secondary" disabled>Reserve</button>
               <a class="btn btn-primary" [routerLink]="['/listings', car.id]" [queryParamsHandling]="'preserve'">View Details</a>
             </div>
           </div>
