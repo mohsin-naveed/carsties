@@ -7,18 +7,18 @@
     <strong>Carsties</strong>
   </span>
   <nav class="nav__links" aria-label="Main">
-    <a mat-button [routerLink]="['/search']"><mat-icon>search</mat-icon> Buy Cars</a>
-    <a mat-button [routerLink]="['/sell']"><mat-icon>sell</mat-icon> Sell Car</a>
-    <a mat-button [routerLink]="['/dealers']"><mat-icon>store</mat-icon> Dealers</a>
-    <a mat-button [routerLink]="['/about']"><mat-icon>info</mat-icon> About</a>
+    <button mat-button [routerLink]="['/search']">Buy Cars</button>
+    <button mat-button [routerLink]="['/sell']">Sell Car</button>
+    <button mat-button>Dealers</button>
+    <button mat-button>About</button>
   </nav>
   <span class="spacer"></span>
   <div class="nav__auth">
-    <a mat-button [routerLink]="['/login']">Login</a>
-    <button mat-button [matMenuTriggerFor]="registerMenu">Register</button>
-    <mat-menu #registerMenu="matMenu" xPosition="before" yPosition="below">
-      <button mat-menu-item [routerLink]="['/register','individual']">Register as Individual</button>
-      <button mat-menu-item [routerLink]="['/register','dealer']">Register as Dealer</button>
+    <button mat-stroked-button color="accent">Login</button>
+    <button mat-raised-button color="accent" [matMenuTriggerFor]="registerMenu">Register</button>
+    <mat-menu #registerMenu="matMenu">
+      <button mat-menu-item>Register as Individual</button>
+      <button mat-menu-item>Register as Dealer</button>
     </mat-menu>
   </div>
 </mat-toolbar>
@@ -34,7 +34,20 @@
 </mat-menu>
 
 <main class="page-container">
-  <section class="elevated page-content">
+  <section class="page-content">
     <router-outlet></router-outlet>
   </section>
 </main>
+
+<app-footer></app-footer>
+
+<mat-menu #mobileMenu="matMenu">
+  <button mat-menu-item [routerLink]="['/search']">Buy Cars</button>
+  <button mat-menu-item [routerLink]="['/sell']">Sell Car</button>
+  <button mat-menu-item>Dealers</button>
+  <button mat-menu-item>About</button>
+  <mat-divider></mat-divider>
+  <button mat-menu-item>Login</button>
+  <button mat-menu-item>Register as Individual</button>
+  <button mat-menu-item>Register as Dealer</button>
+</mat-menu>

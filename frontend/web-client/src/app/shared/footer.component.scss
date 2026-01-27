@@ -1,0 +1,13 @@
+.site-footer { background: #0b1023; color: #c7d2fe; }
+.footer__top { max-width: 1280px; margin: 0 auto; padding: 32px 16px; display: grid; grid-template-columns: 280px 1fr; gap: 24px; }
+.footer__brand { display: flex; flex-direction: column; gap: 8px; color: #e0e7ff; }
+.footer__nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.footer__col h4 { margin: 0 0 8px; color: #ffffff; font-size: 0.95rem; }
+.footer__col a { display: block; color: #c7d2fe; text-decoration: none; padding: 6px 0; }
+.footer__col a:hover { color: #ffffff; }
+.footer__bottom { max-width: 1280px; margin: 0 auto; padding: 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.footer__social { display: flex; gap: 8px; }
+.icon-btn { background: transparent; border: 1px solid #334155; color: #e0e7ff; border-radius: 999px; padding: 6px; }
+.icon-btn:hover { background: #111827; }
+.footer__copy { color: #94a3b8; }
+@media (max-width: 959px) { .footer__top { grid-template-columns: 1fr; } .footer__nav { grid-template-columns: repeat(2, 1fr); } .footer__bottom { flex-direction: column; align-items: flex-start; } }

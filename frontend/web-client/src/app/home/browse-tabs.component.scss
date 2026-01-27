@@ -1,5 +1,5 @@
 .browse-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 12px; }
-.browse-card { cursor: pointer; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.browse-card { cursor: pointer; padding: 16px; display: flex; flex-direction: column; gap: 6px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
 .browse-card__title { font-weight: 600; }
 .browse-card__count { color: #64748b; }
 @media (max-width: 1199px) { .browse-grid { grid-template-columns: repeat(3, 1fr); } }

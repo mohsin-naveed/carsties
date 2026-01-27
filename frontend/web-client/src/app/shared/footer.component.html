@@ -1,0 +1,44 @@
+<footer class="site-footer" role="contentinfo">
+  <div class="footer__top">
+    <div class="footer__brand">
+      <mat-icon>directions_car</mat-icon>
+      <strong>Carsties</strong>
+      <p>Find your next car with confidence.</p>
+    </div>
+    <nav class="footer__nav" aria-label="Footer">
+      <div class="footer__col">
+        <h4>Marketplace</h4>
+        <a [routerLink]="['/search']">Buy Cars</a>
+        <a [routerLink]="['/sell']">Sell Car</a>
+        <a>Dealers</a>
+      </div>
+      <div class="footer__col">
+        <h4>Company</h4>
+        <a>About</a>
+        <a>Careers</a>
+        <a>Press</a>
+      </div>
+      <div class="footer__col">
+        <h4>Support</h4>
+        <a>Help Center</a>
+        <a>Contact</a>
+        <a>Safety</a>
+      </div>
+      <div class="footer__col">
+        <h4>Legal</h4>
+        <a>Terms</a>
+        <a>Privacy</a>
+        <a>Cookie Policy</a>
+      </div>
+    </nav>
+  </div>
+  <mat-divider></mat-divider>
+  <div class="footer__bottom">
+    <div class="footer__social" aria-label="Social">
+      <button aria-label="Twitter" class="icon-btn"><mat-icon>travel_explore</mat-icon></button>
+      <button aria-label="Facebook" class="icon-btn"><mat-icon>thumb_up</mat-icon></button>
+      <button aria-label="Instagram" class="icon-btn"><mat-icon>photo_camera</mat-icon></button>
+    </div>
+    <div class="footer__copy">© {{ year }} Carsties. All rights reserved.</div>
+  </div>
+</footer>

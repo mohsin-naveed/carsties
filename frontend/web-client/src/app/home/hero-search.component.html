@@ -1,31 +1,44 @@
-<mat-card class="hero-search" aria-label="Find a car search panel">
+<mat-card class="hero-search" aria-label="Find used cars online">
   <form class="hero-search__form" (ngSubmit)="onSearch()" aria-describedby="search-desc">
-    <p id="search-desc" class="visually-hidden">Select make and model with optional maximum price to search available cars.</p>
+    <h3 class="hero-search__title">Find used cars online</h3>
+    <p id="search-desc" class="visually-hidden">Select a make, then a model, and an optional maximum total price to search available cars.</p>
 
+    <!-- Row: Make -->
     <div class="hero-search__row">
       <mat-form-field appearance="fill" class="hero-search__field hero-search__field--make">
-        <mat-label>Make</mat-label>
+        <mat-label>Select a make</mat-label>
         <mat-select [disabled]="false" (selectionChange)="make$.next($event.value)" [value]="make$.value" aria-label="Select Make">
           <mat-option *ngFor="let m of (makes$ | async)" [value]="m.code">{{ m.name }} ({{ m.count }})</mat-option>
         </mat-select>
         <mat-icon matSuffix>factory</mat-icon>
       </mat-form-field>
+    </div>
 
+    <!-- Row: Model -->
+    <div class="hero-search__row">
       <mat-form-field appearance="fill" class="hero-search__field hero-search__field--model">
-        <mat-label>Model</mat-label>
+        <mat-label>Select a model</mat-label>
         <mat-select [disabled]="!make$.value" (selectionChange)="model$.next($event.value)" [value]="model$.value" aria-label="Select Model">
           <mat-option *ngFor="let m of (models$ | async)" [value]="m.code">{{ m.name }} ({{ m.count }})</mat-option>
         </mat-select>
         <mat-icon matSuffix>directions_car</mat-icon>
       </mat-form-field>
+    </div>
 
+    <!-- Row: Max total price dropdown -->
+    <div class="hero-search__row">
       <mat-form-field appearance="fill" class="hero-search__field hero-search__field--price">
-        <mat-label>Max Total Price</mat-label>
-        <input matInput type="number" min="0" step="1000" (input)="maxPrice$.next($any($event.target).valueAsNumber || undefined)" [value]="maxPrice$.value ?? ''" aria-label="Max price">
+        <mat-label>Max total price</mat-label>
+        <mat-select (selectionChange)="maxPrice$.next($event.value)" [value]="maxPrice$.value" aria-label="Max total price">
+          <mat-option [value]="undefined">No max</mat-option>
+          <mat-option *ngFor="let p of (priceOptions$ | async)" [value]="p">{{ p | currency:'USD':'symbol':'1.0-0' }}</mat-option>
+        </mat-select>
         <mat-icon matSuffix>attach_money</mat-icon>
-        <mat-hint>Set a budget cap</mat-hint>
       </mat-form-field>
+    </div>
 
+    <!-- Row: Search button full width -->
+    <div class="hero-search__row">
       <button mat-raised-button color="accent" class="hero-search__button" [disabled]="(totalCount$ | async) === 0" aria-label="Search cars" type="submit">
         <mat-icon>search</mat-icon>
         <span>Search {{ (totalCount$ | async) ?? 0 }} Cars</span>

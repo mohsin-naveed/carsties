@@ -1,9 +1,15 @@
 <section class="hero">
   <div class="hero__bg" aria-hidden="true"></div>
-  <div class="hero__content">
-    <h1 class="hero__title">Find your next car with confidence</h1>
-    <p class="hero__subtitle">Trusted marketplace with quality listings, fair prices, and verified dealers.</p>
-    <app-hero-search></app-hero-search>
+  <div class="hero__grid">
+    <div class="hero__left">
+      <app-hero-search></app-hero-search>
+    </div>
+    <div class="hero__right">
+      <h1 class="hero__title">Bargains<br />without the faff</h1>
+      <p class="hero__subtitle">1000s of cars under $199 a month</p>
+      <a class="hero__cta" [routerLink]="['/search']">View cars on offer</a>
+      <div class="hero__cars" aria-hidden="true"></div>
+    </div>
   </div>
 </section>
 

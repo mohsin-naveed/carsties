@@ -7,15 +7,16 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
 import { BehaviorSubject, combineLatest } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, shareReplay, switchMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, shareReplay, switchMap, take } from 'rxjs/operators';
 import { ListingsApiService } from '../listings/listings-api.service';
 
 @Component({
   selector: 'app-hero-search',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatCardModule, MatFormFieldModule, MatSelectModule, MatInputModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, FormsModule, MatCardModule, MatFormFieldModule, MatSelectModule, MatInputModule, MatButtonModule, MatIconModule, RouterModule],
   templateUrl: './hero-search.component.html',
   styleUrls: ['./hero-search.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,6 +29,26 @@ export class HeroSearchComponent {
   readonly make$ = new BehaviorSubject<string | undefined>(undefined);
   readonly model$ = new BehaviorSubject<string | undefined>(undefined);
   readonly maxPrice$ = new BehaviorSubject<number | undefined>(undefined);
+
+  // Determine maximum available price from listings to build dropdown options
+  private readonly maxAvailablePrice$ = this.api.searchListings({ page: 1, pageSize: 1, sortBy: 'price', sortDirection: 'desc' }).pipe(
+    map(r => {
+      const top = Array.isArray(r.data) && r.data.length ? r.data[0] : undefined;
+      const price = (top as any)?.price as number | undefined;
+      return price && price > 0 ? price : 0;
+    }),
+    shareReplay(1)
+  );
+
+  readonly priceOptions$ = this.maxAvailablePrice$.pipe(
+    map(max => {
+      const ceil = Math.ceil(max / 1000) * 1000;
+      const arr: number[] = [];
+      for (let p = 1000; p <= ceil; p += 1000) arr.push(p);
+      return arr;
+    }),
+    shareReplay(1)
+  );
 
   private readonly facetParams$ = combineLatest([this.make$, this.model$, this.maxPrice$]).pipe(
     debounceTime(150),
@@ -81,11 +102,19 @@ export class HeroSearchComponent {
   );
 
   onSearch() {
-    const make = this.make$.value; const model = this.model$.value; const priceMax = this.maxPrice$.value;
+    const make = this.make$.value; const model = this.model$.value;
+    const priceMax = this.maxPrice$.value;
     const query: any = {};
     if (make) query.makeCodes = [make];
     if (model) query.modelCodes = [model];
     if (priceMax != null) query.priceMax = priceMax;
     this.router.navigate(['/search'], { queryParams: query });
+  }
+
+  constructor() {
+    // Auto-select a default make on first load if none chosen
+    this.makes$.pipe(take(1)).subscribe(list => {
+      if (!this.make$.value && list.length) this.make$.next(list[0].code);
+    });
   }
 }
