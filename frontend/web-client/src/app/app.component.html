@@ -2,10 +2,10 @@
   <button class="nav__mobile-toggle" mat-icon-button [matMenuTriggerFor]="mobileMenu" aria-label="Open navigation">
     <mat-icon>menu</mat-icon>
   </button>
-  <span class="nav__brand">
+  <a class="nav__brand" [routerLink]="['/']" style="text-decoration:none; color:inherit; cursor:pointer;">
     <mat-icon aria-hidden="true">directions_car</mat-icon>
     <strong>Carsties</strong>
-  </span>
+  </a>
   <nav class="nav__links" aria-label="Main">
     <button mat-button [routerLink]="['/search']">Buy Cars</button>
     <button mat-button [routerLink]="['/sell']">Sell Car</button>
