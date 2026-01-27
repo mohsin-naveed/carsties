@@ -1,0 +1,26 @@
+<mat-tab-group aria-label="Browse used cars">
+  <mat-tab label="Make">
+    <div class="browse-grid">
+      <mat-card class="browse-card" *ngFor="let m of (makes$ | async)" (click)="goToMake(m.code)" tabindex="0" (keyup.enter)="goToMake(m.code)" aria-label="Browse by make">
+        <div class="browse-card__title">{{ m.name }}</div>
+        <div class="browse-card__count">{{ m.count }} listings</div>
+      </mat-card>
+    </div>
+  </mat-tab>
+  <mat-tab label="Model">
+    <div class="browse-grid">
+      <mat-card class="browse-card" *ngFor="let m of (models$ | async)" (click)="goToModel(m.code)" tabindex="0" (keyup.enter)="goToModel(m.code)" aria-label="Browse by model">
+        <div class="browse-card__title">{{ m.name }}</div>
+        <div class="browse-card__count">{{ m.count }} listings</div>
+      </mat-card>
+    </div>
+  </mat-tab>
+  <mat-tab label="Body Type">
+    <div class="browse-grid">
+      <mat-card class="browse-card" *ngFor="let b of (bodies$ | async)" (click)="goToBody(b.code)" tabindex="0" (keyup.enter)="goToBody(b.code)" aria-label="Browse by body type">
+        <div class="browse-card__title">{{ b.name }}</div>
+        <div class="browse-card__count">{{ b.count }} listings</div>
+      </mat-card>
+    </div>
+  </mat-tab>
+</mat-tab-group>

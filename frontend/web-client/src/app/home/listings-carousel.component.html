@@ -1,0 +1,24 @@
+<div class="carousel">
+  <button class="carousel__nav carousel__nav--left" mat-icon-button (click)="scrollLeft()" aria-label="Previous">
+    <mat-icon>chevron_left</mat-icon>
+  </button>
+
+  <div #track class="carousel__track" role="region" aria-label="Latest listings">
+    <div class="carousel__items">
+      <mat-card class="listing-card" *ngFor="let item of (listings$ | async)" (click)="navigateTo(item)" tabindex="0" (keyup.enter)="navigateTo(item)" aria-label="View listing details">
+        <img class="listing-card__image" [src]="item.images?.[0]?.url || 'assets/placeholder-car.jpg'" alt="{{ item.makeName }} {{ item.modelName }} image" />
+        <mat-card-content class="listing-card__content">
+          <div class="listing-card__title">{{ item.makeName }} {{ item.modelName }} • {{ item.year }}</div>
+          <div class="listing-card__meta">
+            <span class="listing-card__price">${{ item.price | number:'1.0-0' }}</span>
+            <span class="listing-card__mileage">{{ item.mileage | number }} mi</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <button class="carousel__nav carousel__nav--right" mat-icon-button (click)="scrollRight()" aria-label="Next">
+    <mat-icon>chevron_right</mat-icon>
+  </button>
+</div>

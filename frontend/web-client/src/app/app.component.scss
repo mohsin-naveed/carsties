@@ -1,1 +1,19 @@
-/* root styles */
+/* Sticky header with subtle shadow */
+.app-toolbar { position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+.spacer { flex: 1 1 auto; }
+
+.nav__brand { display: inline-flex; align-items: center; gap: 8px; }
+.nav__links { display: none; gap: 8px; }
+.nav__auth { display: none; gap: 4px; }
+.nav__mobile-toggle { margin-right: 8px; }
+
+@media (min-width: 768px) {
+	.nav__links { display: inline-flex; }
+}
+@media (min-width: 992px) {
+	.nav__auth { display: inline-flex; }
+	.nav__mobile-toggle { display: none; }
+}
+
+.page-container { background: #f8fafc; }
+.page-content { padding: 16px; margin: 0 auto; max-width: 1400px; background: #fff; }

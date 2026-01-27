@@ -1,0 +1,14 @@
+.hero { position: relative; display: grid; place-items: center; min-height: 56vh; color: #fff; text-align: center; }
+.hero__bg { position: absolute; inset: 0; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0ea5e9 100%); opacity: 0.9; }
+.hero__content { position: relative; padding: 32px 16px; max-width: 1200px; width: 100%; }
+.hero__title { font-size: clamp(1.8rem, 3.5vw, 3rem); margin: 0 0 8px; font-weight: 700; }
+.hero__subtitle { font-size: clamp(1rem, 1.6vw, 1.25rem); margin: 0 0 24px; opacity: 0.9; }
+
+.section { padding: 32px 16px; max-width: 1200px; margin: 0 auto; }
+.section__header { margin-bottom: 12px; }
+.section__title { font-size: 1.5rem; margin: 0; }
+.section__subtitle { margin: 4px 0 0; color: #64748b; }
+
+@media (max-width: 599px) {
+  .hero { min-height: 64vh; }
+}

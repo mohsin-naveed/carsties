@@ -1,0 +1,35 @@
+<mat-card class="hero-search" aria-label="Find a car search panel">
+  <form class="hero-search__form" (ngSubmit)="onSearch()" aria-describedby="search-desc">
+    <p id="search-desc" class="visually-hidden">Select make and model with optional maximum price to search available cars.</p>
+
+    <div class="hero-search__row">
+      <mat-form-field appearance="fill" class="hero-search__field hero-search__field--make">
+        <mat-label>Make</mat-label>
+        <mat-select [disabled]="false" (selectionChange)="make$.next($event.value)" [value]="make$.value" aria-label="Select Make">
+          <mat-option *ngFor="let m of (makes$ | async)" [value]="m.code">{{ m.name }} ({{ m.count }})</mat-option>
+        </mat-select>
+        <mat-icon matSuffix>factory</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="hero-search__field hero-search__field--model">
+        <mat-label>Model</mat-label>
+        <mat-select [disabled]="!make$.value" (selectionChange)="model$.next($event.value)" [value]="model$.value" aria-label="Select Model">
+          <mat-option *ngFor="let m of (models$ | async)" [value]="m.code">{{ m.name }} ({{ m.count }})</mat-option>
+        </mat-select>
+        <mat-icon matSuffix>directions_car</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="hero-search__field hero-search__field--price">
+        <mat-label>Max Total Price</mat-label>
+        <input matInput type="number" min="0" step="1000" (input)="maxPrice$.next($any($event.target).valueAsNumber || undefined)" [value]="maxPrice$.value ?? ''" aria-label="Max price">
+        <mat-icon matSuffix>attach_money</mat-icon>
+        <mat-hint>Set a budget cap</mat-hint>
+      </mat-form-field>
+
+      <button mat-raised-button color="accent" class="hero-search__button" [disabled]="(totalCount$ | async) === 0" aria-label="Search cars" type="submit">
+        <mat-icon>search</mat-icon>
+        <span>Search {{ (totalCount$ | async) ?? 0 }} Cars</span>
+      </button>
+    </div>
+  </form>
+</mat-card>

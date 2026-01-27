@@ -1,16 +1,40 @@
-<mat-toolbar color="primary" class="app-toolbar">
-  <span class="flex align-center gap-sm">
-    <mat-icon>directions_car</mat-icon>
+<mat-toolbar color="primary" class="app-toolbar" role="navigation" aria-label="Primary">
+  <button class="nav__mobile-toggle" mat-icon-button [matMenuTriggerFor]="mobileMenu" aria-label="Open navigation">
+    <mat-icon>menu</mat-icon>
+  </button>
+  <span class="nav__brand">
+    <mat-icon aria-hidden="true">directions_car</mat-icon>
     <strong>Carsties</strong>
   </span>
+  <nav class="nav__links" aria-label="Main">
+    <a mat-button [routerLink]="['/search']"><mat-icon>search</mat-icon> Buy Cars</a>
+    <a mat-button [routerLink]="['/sell']"><mat-icon>sell</mat-icon> Sell Car</a>
+    <a mat-button [routerLink]="['/dealers']"><mat-icon>store</mat-icon> Dealers</a>
+    <a mat-button [routerLink]="['/about']"><mat-icon>info</mat-icon> About</a>
+  </nav>
   <span class="spacer"></span>
-  <button mat-button [routerLink]="['/listings']">Listings</button>
-  <button mat-button [routerLink]="['/search']">Search</button>
-  <button mat-button [routerLink]="['/sell']">Sell a Car</button>
+  <div class="nav__auth">
+    <a mat-button [routerLink]="['/login']">Login</a>
+    <button mat-button [matMenuTriggerFor]="registerMenu">Register</button>
+    <mat-menu #registerMenu="matMenu" xPosition="before" yPosition="below">
+      <button mat-menu-item [routerLink]="['/register','individual']">Register as Individual</button>
+      <button mat-menu-item [routerLink]="['/register','dealer']">Register as Dealer</button>
+    </mat-menu>
+  </div>
 </mat-toolbar>
 
+<mat-menu #mobileMenu="matMenu">
+  <button mat-menu-item [routerLink]="['/search']"><mat-icon>search</mat-icon> <span>Buy Cars</span></button>
+  <button mat-menu-item [routerLink]="['/sell']"><mat-icon>sell</mat-icon> <span>Sell Car</span></button>
+  <button mat-menu-item [routerLink]="['/dealers']"><mat-icon>store</mat-icon> <span>Dealers</span></button>
+  <button mat-menu-item [routerLink]="['/about']"><mat-icon>info</mat-icon> <span>About</span></button>
+  <mat-divider></mat-divider>
+  <button mat-menu-item [routerLink]="['/login']">Login</button>
+  <button mat-menu-item [matMenuTriggerFor]="registerMenu">Register</button>
+</mat-menu>
+
 <main class="page-container">
-  <section class="elevated" style="padding:16px;">
+  <section class="elevated page-content">
     <router-outlet></router-outlet>
   </section>
 </main>

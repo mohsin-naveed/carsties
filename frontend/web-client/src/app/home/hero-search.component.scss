@@ -1,0 +1,15 @@
+.hero-search { max-width: 1000px; margin: 0 auto; border-radius: 12px; }
+.hero-search__form { display: flex; flex-direction: column; gap: 12px; }
+.hero-search__row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end; }
+.hero-search__field { width: 100%; }
+.hero-search__button { height: 56px; white-space: nowrap; }
+
+@media (max-width: 959px) {
+  .hero-search__row { grid-template-columns: 1fr 1fr; }
+  .hero-search__button { grid-column: 1 / -1; height: 48px; }
+}
+@media (max-width: 599px) {
+  .hero-search__row { grid-template-columns: 1fr; }
+}
+
+.visually-hidden { position: absolute !important; height: 1px; width: 1px; overflow: hidden; clip: rect(1px, 1px, 1px, 1px); white-space: nowrap; }
