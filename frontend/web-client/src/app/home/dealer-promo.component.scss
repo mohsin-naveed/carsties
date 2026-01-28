@@ -1,6 +1,0 @@
-.dealer { padding: 24px 0; }
-.dealer__box { border: 1px dashed #c7d2fe; background: #f8fafc; border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.dealer__text h2 { margin: 0 0 6px; font-size: 1.4rem; font-weight: 800; color: #0f172a; }
-.dealer__text ul { margin: 0; padding-left: 18px; color: #475569; }
-.btn--dealer { display: inline-flex; align-items: center; justify-content: center; background: #0f766e; color: #fff; padding: 10px 14px; border-radius: 10px; font-weight: 700; text-decoration: none; white-space: nowrap; }
-@media (max-width: 767px) { .dealer__box { flex-direction: column; align-items: flex-start; } }

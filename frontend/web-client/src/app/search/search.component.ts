@@ -27,6 +27,7 @@ export class SearchComponent {
   private readonly api = inject(ListingsApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private seedingFromUrl = false;
 
   // Sorting options (used in template)
   readonly sortOptions = [
@@ -736,10 +737,13 @@ export class SearchComponent {
       this.allBodyTypes$.pipe(startWith([] as any[])),
       this.allFuelTypes$.pipe(startWith([] as any[]))
     ]).subscribe(([q, makes, models, transmissions, bodies, fuels]) => {
+      this.seedingFromUrl = true;
       const namesToCodes = (param: string | null, list: { code: string; name: string }[]) => {
         if (!param) return [] as string[];
-        const wanted = param.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-        return list.filter(x => wanted.includes((x.name ?? '').toLowerCase())).map(x => x.code);
+        const normalizeQuery = (s: string) => s.trim().toLowerCase().replace(/[+\-]+/g, ' ').replace(/\s+/g, ' ');
+        const normalizeLabel = (s: string) => (s || '').trim().toLowerCase().replace(/[\s_\-]+/g, ' ').replace(/\s+/g, ' ');
+        const wanted = param.split(',').map(normalizeQuery).filter(Boolean);
+        return list.filter(x => wanted.includes(normalizeLabel(x.name ?? ''))).map(x => x.code);
       };
       const codesFrom = (key: string) => q.getAll(key).filter(Boolean);
       const numbersFromCsv = (param: string | null) => {
@@ -779,6 +783,7 @@ export class SearchComponent {
       if ((this.selectedFuelTypeCodes$.value?.length ?? 0) > 0) this.fuelPref$.next(true);
       if ((this.selectedSeats$.value?.length ?? 0) > 0) this.seatsPref$.next(true);
       if ((this.selectedDoors$.value?.length ?? 0) > 0) this.doorsPref$.next(true);
+      this.seedingFromUrl = false;
     });
 
     // Persist to URL on changes
@@ -794,14 +799,20 @@ export class SearchComponent {
       this.mileageMin$, this.mileageMax$,
       this.sort$, this.page$
     ]).pipe(debounceTime(50)).subscribe(([mkIds, makes, mdIds, models, trIds, transmissions, btIds, bodies, fuIds, fuels, seats, doors, pmin, pmax, ymin, ymax, mmin, mmax, sort, page]) => {
-      const namesFor = (codes: string[], list: { code: string; name: string }[]) => codes.map(code => list.find(x => x.code === code)?.name).filter(Boolean) as string[];
+      const slug = (s: string) => (s || '').toLowerCase().trim().replace(/[\s_]+/g, '+').replace(/[+]+/g, '+');
+      const namesFor = (codes: string[], list: { code: string; name: string }[]) =>
+        codes
+          .map(code => list.find(x => x.code === code)?.name)
+          .filter((nm): nm is string => typeof nm === 'string' && nm.length > 0)
+          .map(slug);
+      const current = this.route.snapshot.queryParamMap;
       // Build params without default sort/page; append them at the end if changed
       const qp: any = {
-        make: namesFor(mkIds, makes).join(',') || undefined,
-        model: namesFor(mdIds, models).join(',') || undefined,
-        trans: namesFor(trIds, transmissions).join(',') || undefined,
-        body: namesFor(btIds, bodies).join(',') || undefined,
-        fuel: namesFor(fuIds, fuels).join(',') || undefined,
+        make: namesFor(mkIds, makes).join(',') || current.get('make') || undefined,
+        model: namesFor(mdIds, models).join(',') || current.get('model') || undefined,
+        trans: namesFor(trIds, transmissions).join(',') || current.get('trans') || undefined,
+        body: namesFor(btIds, bodies).join(',') || current.get('body') || undefined,
+        fuel: namesFor(fuIds, fuels).join(',') || current.get('fuel') || undefined,
         seats: (seats?.length ? seats.join(',') : undefined),
         doors: (doors?.length ? doors.join(',') : undefined),
         pmin: (pmin != null ? pmin : undefined),
@@ -811,6 +822,16 @@ export class SearchComponent {
         mmin: (mmin != null ? mmin : undefined),
         mmax: (mmax != null ? mmax : undefined)
       };
+      // Remove any code-based params so URL stays name-based
+      qp.makeCodes = null;
+      qp.modelCodes = null;
+      qp.transmissionTypeCodes = null;
+      qp.bodyTypeCodes = null;
+      qp.fuelTypeCodes = null;
+      qp.priceMin = null;
+      qp.priceMax = null;
+      qp.mileageMin = null;
+      qp.mileageMax = null;
       // Append non-default sort/page to the end
       if (sort !== 'price-asc') qp.sort = sort;
       if (page !== 1) qp.page = page;
@@ -828,6 +849,7 @@ export class SearchComponent {
 
     // Reset dependent selections to avoid stale combos
     this.selectedMakeCodes$.pipe(distinctUntilChanged()).subscribe(() => {
+      if (this.seedingFromUrl) return;
       this.selectedModelCodes$.next([]);
     });
     // Variant dependency removed

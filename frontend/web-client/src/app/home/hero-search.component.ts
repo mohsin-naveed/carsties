@@ -102,13 +102,22 @@ export class HeroSearchComponent {
   );
 
   onSearch() {
-    const make = this.make$.value; const model = this.model$.value;
+    const makeCode = this.make$.value; const modelCode = this.model$.value;
     const priceMax = this.maxPrice$.value;
-    const query: any = {};
-    if (make) query.makeCodes = [make];
-    if (model) query.modelCodes = [model];
-    if (priceMax != null) query.priceMax = priceMax;
-    this.router.navigate(['/search'], { queryParams: query });
+    // Resolve names from facet label maps and navigate with name-based params only
+    combineLatest([this.makes$, this.models$]).pipe(take(1)).subscribe(([makes, models]) => {
+      const makeName = makes.find(m => m.code === makeCode)?.name;
+      const modelName = models.find(m => m.code === modelCode)?.name;
+      const qp: any = {};
+      if (makeName) qp.make = this.slug(makeName);
+      if (modelName) qp.model = this.slug(modelName);
+      if (priceMax != null) qp.pmax = priceMax;
+      this.router.navigate(['/search'], { queryParams: qp });
+    });
+  }
+
+  private slug(s: string) {
+    return (s || '').toLowerCase().trim().replace(/[\s_]+/g, '+').replace(/[+]+/g, '+');
   }
 
   constructor() { }
