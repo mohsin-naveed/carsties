@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ListingsApiService, ListingDto, PaginationResponse } from '../listings/listings-api.service';
 import { BehaviorSubject, combineLatest, forkJoin, of } from 'rxjs';
@@ -28,6 +28,7 @@ export class SearchComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private seedingFromUrl = false;
+  private hasSeeded = false;
 
   // Sorting options (used in template)
   readonly sortOptions = [
@@ -67,6 +68,10 @@ export class SearchComponent {
 
   // Loading indicator
   readonly loading$ = new BehaviorSubject<boolean>(true);
+  // UI state: grid/list view and mobile filters visibility
+  readonly view$ = new BehaviorSubject<'grid'|'list'>('grid');
+  readonly filtersVisible$ = new BehaviorSubject<boolean>(false);
+  readonly mobileSortOpen$ = new BehaviorSubject<boolean>(false);
 
   // Reference data derived from ListingService facet labels (no Catalog dependency)
   // Facet params and counts (base stream used throughout)
@@ -228,11 +233,19 @@ export class SearchComponent {
   readonly doorsCounts$ = this.facetCounts$.pipe(map(x => x.doors));
   // Options show only values with count > 0 (self-excluding counts already applied)
   readonly seats$ = this.seatsCounts$.pipe(
-    map(m => Array.from(m.entries()).filter(([_,c]) => (c ?? 0) > 0).map(([v]) => v).sort((a,b)=>a-b)),
+    map(m => {
+      const defaults = [2,3,4,5,6,7,8,9];
+      const fromCounts = Array.from(m.keys());
+      return Array.from(new Set([...defaults, ...fromCounts])).sort((a,b)=>a-b);
+    }),
     shareReplay(1)
   );
   readonly doors$ = this.doorsCounts$.pipe(
-    map(m => Array.from(m.entries()).filter(([_,c]) => (c ?? 0) > 0).map(([v]) => v).sort((a,b)=>a-b)),
+    map(m => {
+      const defaults = [2,3,4,5];
+      const fromCounts = Array.from(m.keys());
+      return Array.from(new Set([...defaults, ...fromCounts])).sort((a,b)=>a-b);
+    }),
     shareReplay(1)
   );
   // Models already depend on selected make; apply counts filter too
@@ -266,6 +279,11 @@ export class SearchComponent {
   toggleFuelFacet() { this.fuelPref$.next(!this.fuelPref$.value); }
   toggleSeatsFacet() { this.seatsPref$.next(!this.seatsPref$.value); }
   toggleDoorsFacet() { this.doorsPref$.next(!this.doorsPref$.value); }
+  // Topbar controls
+  setView(v: 'grid'|'list') { this.view$.next(v); }
+  toggleFilters() { this.filtersVisible$.next(!this.filtersVisible$.value); }
+  toggleMobileSort() { this.mobileSortOpen$.next(!this.mobileSortOpen$.value); }
+  setSort(v: string) { this.sort$.next(v); this.mobileSortOpen$.next(false); }
 
   // Range facet collapse preferences and open states
   readonly pricePref$ = new BehaviorSubject<boolean>(false);
@@ -728,6 +746,13 @@ export class SearchComponent {
   );
 
   constructor() {
+    // Enforce grid view on small screens and hide list option
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      const mq = window.matchMedia('(max-width: 767px)');
+      const enforce = () => { if (mq.matches && this.view$.value !== 'grid') this.view$.next('grid'); };
+      enforce();
+      mq.addEventListener?.('change', enforce);
+    }
     // Seed from URL using names (comma-separated)
     combineLatest([
       this.route.queryParamMap,
@@ -737,7 +762,9 @@ export class SearchComponent {
       this.allBodyTypes$.pipe(startWith([] as any[])),
       this.allFuelTypes$.pipe(startWith([] as any[]))
     ]).subscribe(([q, makes, models, transmissions, bodies, fuels]) => {
-      this.seedingFromUrl = true;
+      // Only treat the first emission as initial seeding
+      const isFirstSeed = !this.hasSeeded;
+      if (isFirstSeed) this.seedingFromUrl = true;
       const namesToCodes = (param: string | null, list: { code: string; name: string }[]) => {
         if (!param) return [] as string[];
         const normalizeQuery = (s: string) => s.trim().toLowerCase().replace(/[+\-]+/g, ' ').replace(/\s+/g, ' ');
@@ -773,7 +800,9 @@ export class SearchComponent {
       this.mileageMin$.next(toNum(q.get('mmin')) ?? toNum(q.get('mileageMin')));
       this.mileageMax$.next(toNum(q.get('mmax')) ?? toNum(q.get('mileageMax')));
       const s = q.get('sort'); if (s) this.sort$.next(s);
+      const v = (q.get('view') || '').toLowerCase(); if (v === 'list' || v === 'grid') this.view$.next(v as any);
       const p = q.get('page'); this.page$.next(p ? Number(p) : 1);
+      const fv = (q.get('filters') || '').toLowerCase(); if (fv && (fv === '1' || fv === 'true' || fv === 'open')) this.filtersVisible$.next(true);
 
       // On initial load, open facets that have selections
       if ((this.selectedMakeCodes$.value?.length ?? 0) > 0) this.makePref$.next(true);
@@ -783,7 +812,7 @@ export class SearchComponent {
       if ((this.selectedFuelTypeCodes$.value?.length ?? 0) > 0) this.fuelPref$.next(true);
       if ((this.selectedSeats$.value?.length ?? 0) > 0) this.seatsPref$.next(true);
       if ((this.selectedDoors$.value?.length ?? 0) > 0) this.doorsPref$.next(true);
-      this.seedingFromUrl = false;
+      if (isFirstSeed) { this.hasSeeded = true; this.seedingFromUrl = false; }
     });
 
     // Persist to URL on changes
@@ -797,8 +826,9 @@ export class SearchComponent {
       this.priceMin$, this.priceMax$,
       this.yearMin$, this.yearMax$,
       this.mileageMin$, this.mileageMax$,
-      this.sort$, this.page$
-    ]).pipe(debounceTime(50)).subscribe(([mkIds, makes, mdIds, models, trIds, transmissions, btIds, bodies, fuIds, fuels, seats, doors, pmin, pmax, ymin, ymax, mmin, mmax, sort, page]) => {
+      this.sort$, this.page$,
+      this.filtersVisible$
+    ]).pipe(debounceTime(50)).subscribe(([mkIds, makes, mdIds, models, trIds, transmissions, btIds, bodies, fuIds, fuels, seats, doors, pmin, pmax, ymin, ymax, mmin, mmax, sort, page, filtersVisible]) => {
       const slug = (s: string) => (s || '').toLowerCase().trim().replace(/[\s_]+/g, '+').replace(/[+]+/g, '+');
       const namesFor = (codes: string[], list: { code: string; name: string }[]) =>
         codes
@@ -806,21 +836,22 @@ export class SearchComponent {
           .filter((nm): nm is string => typeof nm === 'string' && nm.length > 0)
           .map(slug);
       const current = this.route.snapshot.queryParamMap;
+      const useFallback = this.seedingFromUrl && !this.hasSeeded;
       // Build params without default sort/page; append them at the end if changed
       const qp: any = {
-        make: namesFor(mkIds, makes).join(',') || current.get('make') || undefined,
-        model: namesFor(mdIds, models).join(',') || current.get('model') || undefined,
-        trans: namesFor(trIds, transmissions).join(',') || current.get('trans') || undefined,
-        body: namesFor(btIds, bodies).join(',') || current.get('body') || undefined,
-        fuel: namesFor(fuIds, fuels).join(',') || current.get('fuel') || undefined,
-        seats: (seats?.length ? seats.join(',') : undefined),
-        doors: (doors?.length ? doors.join(',') : undefined),
-        pmin: (pmin != null ? pmin : undefined),
-        pmax: (pmax != null ? pmax : undefined),
-        ymin: (ymin != null ? ymin : undefined),
-        ymax: (ymax != null ? ymax : undefined),
-        mmin: (mmin != null ? mmin : undefined),
-        mmax: (mmax != null ? mmax : undefined)
+        make: (() => { const v = namesFor(mkIds, makes).join(','); return v || (useFallback ? current.get('make') : undefined); })(),
+        model: (() => { const v = namesFor(mdIds, models).join(','); return v || (useFallback ? current.get('model') : undefined); })(),
+        trans: (() => { const v = namesFor(trIds, transmissions).join(','); return v || (useFallback ? current.get('trans') : undefined); })(),
+        body: (() => { const v = namesFor(btIds, bodies).join(','); return v || (useFallback ? current.get('body') : undefined); })(),
+        fuel: (() => { const v = namesFor(fuIds, fuels).join(','); return v || (useFallback ? current.get('fuel') : undefined); })(),
+        seats: (seats?.length ? seats.join(',') : (useFallback ? (current.get('seats') ?? undefined) : undefined)),
+        doors: (doors?.length ? doors.join(',') : (useFallback ? (current.get('doors') ?? undefined) : undefined)),
+        pmin: (pmin != null ? pmin : (useFallback ? (current.get('pmin') ?? undefined) : undefined)),
+        pmax: (pmax != null ? pmax : (useFallback ? (current.get('pmax') ?? undefined) : undefined)),
+        ymin: (ymin != null ? ymin : (useFallback ? (current.get('ymin') ?? undefined) : undefined)),
+        ymax: (ymax != null ? ymax : (useFallback ? (current.get('ymax') ?? undefined) : undefined)),
+        mmin: (mmin != null ? mmin : (useFallback ? (current.get('mmin') ?? undefined) : undefined)),
+        mmax: (mmax != null ? mmax : (useFallback ? (current.get('mmax') ?? undefined) : undefined))
       };
       // Remove any code-based params so URL stays name-based
       qp.makeCodes = null;
@@ -832,10 +863,14 @@ export class SearchComponent {
       qp.priceMax = null;
       qp.mileageMin = null;
       qp.mileageMax = null;
+      // Persist view (only when not default)
+      if ((this.view$.value ?? 'grid') === 'list') qp.view = 'list'; else qp.view = null;
+      // Persist filters panel visibility (best UX: only include when open)
+      qp.filters = filtersVisible ? '1' : null;
       // Append non-default sort/page to the end
       if (sort !== 'price-asc') qp.sort = sort;
       if (page !== 1) qp.page = page;
-      this.router.navigate([], { queryParams: qp, queryParamsHandling: 'merge' });
+      this.router.navigate([], { queryParams: qp });
     });
 
     // Reset to first page when filters or sort change
@@ -968,6 +1003,25 @@ export class SearchComponent {
     this.mileageMax$.next(val);
     if (currentMin != null && val < currentMin) {
       this.mileageMin$.next(val);
+    }
+  }
+
+  // Keyboard shortcuts: g = grid, l = list, f = filters, esc = close panels
+  @HostListener('document:keydown', ['$event'])
+  handleKeydown(ev: KeyboardEvent) {
+    const tag = (ev.target as HTMLElement)?.tagName?.toLowerCase();
+    if (tag === 'input' || tag === 'select' || tag === 'textarea' || (ev as any).isComposing) return;
+    const key = ev.key?.toLowerCase();
+    if (key === 'g') {
+      this.setView('grid');
+    } else if (key === 'l') {
+      // Respect small screens: list view will be forced to grid by media enforcement
+      this.setView('list');
+    } else if (key === 'f') {
+      this.toggleFilters();
+    } else if (key === 'escape') {
+      if (this.mobileSortOpen$.value) this.mobileSortOpen$.next(false);
+      if (this.filtersVisible$.value) this.filtersVisible$.next(false);
     }
   }
 }

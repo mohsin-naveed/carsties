@@ -1,25 +1,46 @@
 <div class="find-car-container">
   <!-- Top search + sort bar, desktop style mirroring screenshot -->
   <div class="topbar">
+    <button class="filters-toggle" (click)="toggleFilters()" [attr.aria-expanded]="(filtersVisible$ | async) ? 'true' : 'false'" aria-controls="filters-panel">
+      <mat-icon>tune</mat-icon>
+      <span>Filters</span>
+    </button>
     <div class="sort-wrap">
-      <label for="sort-select" class="sort-label">Sort</label>
-      <select id="sort-select" class="sort-select" [ngModel]="(sort$ | async)" (ngModelChange)="sort$.next($event)">
+      <label for="sort-select" class="sort-label desktop-only">Sort</label>
+      <select id="sort-select" class="sort-select desktop-only" [ngModel]="(sort$ | async)" (ngModelChange)="sort$.next($event)">
         <option *ngFor="let option of sortOptions" [value]="option.value">{{ option.label }}</option>
       </select>
+      <!-- Mobile sort button -->
+      <button class="mobile-sort-btn" (click)="toggleMobileSort()" [attr.aria-expanded]="(mobileSortOpen$ | async) ? 'true' : 'false'" aria-controls="mobile-sort-panel">
+        <span>Sort</span>
+        <mat-icon>expand_more</mat-icon>
+      </button>
+      <div class="sort-panel" id="mobile-sort-panel" *ngIf="(mobileSortOpen$ | async)">
+        <button class="sort-item" *ngFor="let option of sortOptions" [class.active]="(sort$ | async) === option.value" (click)="setSort(option.value)">{{ option.label }}</button>
+      </div>
+    </div>
+    <div class="view-wrap">
+      <span class="view-label">View</span>
+      <button class="view-btn" [class.active]="(view$ | async) === 'grid'" (click)="setView('grid')" title="Grid view" [attr.aria-pressed]="(view$ | async) === 'grid' ? 'true' : 'false'" aria-label="Grid view">
+        <mat-icon>grid_view</mat-icon>
+      </button>
+      <button class="view-btn" [class.active]="(view$ | async) === 'list'" (click)="setView('list')" title="List view" [attr.aria-pressed]="(view$ | async) === 'list' ? 'true' : 'false'" aria-label="List view">
+        <mat-icon>list</mat-icon>
+      </button>
     </div>
   </div>
 
   <div class="main-content">
     <!-- Filter Sidebar -->
-    <aside class="filter-sidebar">
-      <div class="filter-sidebar">
+    <aside class="filter-sidebar" id="filters-panel" [class.show-mobile]="(filtersVisible$ | async)">
+      <div class="filters-panel-inner">
         <div class="filter-header">
           <h3 class="filter-title">Filters</h3>
           <a href="#" class="clear-all" (click)="$event.preventDefault(); clearAll()">Clear all</a>
         </div>
         <div class="filter-content">
           <div class="filter-section">
-            <div class="section-header" role="button" [attr.aria-expanded]="(makeOpen$ | async) ? 'true' : 'false'" (click)="toggleMakeFacet()">
+            <div class="section-header" role="button" tabindex="0" [attr.aria-expanded]="(makeOpen$ | async) ? 'true' : 'false'" (click)="toggleMakeFacet()" (keydown.enter)="toggleMakeFacet()" (keydown.space)="$event.preventDefault(); toggleMakeFacet()">
               <div class="section-title-container">
                 <h4 class="section-title">Make</h4>
               </div>
@@ -42,7 +63,7 @@
           </div>
 
           <div class="filter-section">
-            <div class="section-header" role="button" [attr.aria-expanded]="(modelOpen$ | async) ? 'true' : 'false'" (click)="toggleModelFacet()">
+            <div class="section-header" role="button" tabindex="0" [attr.aria-expanded]="(modelOpen$ | async) ? 'true' : 'false'" (click)="toggleModelFacet()" (keydown.enter)="toggleModelFacet()" (keydown.space)="$event.preventDefault(); toggleModelFacet()">
               <div class="section-title-container"><h4 class="section-title">Model</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(modelOpen$ | async)">expand_more</mat-icon>
@@ -64,7 +85,7 @@
 
           <!-- Price Range -->
           <div class="filter-section">
-            <div class="section-header" role="button" [attr.aria-expanded]="(priceOpen$ | async) ? 'true' : 'false'" (click)="togglePriceFacet()">
+            <div class="section-header" role="button" tabindex="0" [attr.aria-expanded]="(priceOpen$ | async) ? 'true' : 'false'" (click)="togglePriceFacet()" (keydown.enter)="togglePriceFacet()" (keydown.space)="$event.preventDefault(); togglePriceFacet()">
               <div class="section-title-container"><h4 class="section-title">Price</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(priceOpen$ | async)">expand_more</mat-icon>
@@ -93,7 +114,7 @@
 
           <!-- Year Range -->
           <div class="filter-section">
-            <div class="section-header" role="button" [attr.aria-expanded]="(yearOpen$ | async) ? 'true' : 'false'" (click)="toggleYearFacet()">
+            <div class="section-header" role="button" tabindex="0" [attr.aria-expanded]="(yearOpen$ | async) ? 'true' : 'false'" (click)="toggleYearFacet()" (keydown.enter)="toggleYearFacet()" (keydown.space)="$event.preventDefault(); toggleYearFacet()">
               <div class="section-title-container"><h4 class="section-title">Year</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(yearOpen$ | async)">expand_more</mat-icon>
@@ -122,7 +143,7 @@
 
           <!-- Mileage Range -->
           <div class="filter-section">
-            <div class="section-header" role="button" [attr.aria-expanded]="(mileageOpen$ | async) ? 'true' : 'false'" (click)="toggleMileageFacet()">
+            <div class="section-header" role="button" tabindex="0" [attr.aria-expanded]="(mileageOpen$ | async) ? 'true' : 'false'" (click)="toggleMileageFacet()" (keydown.enter)="toggleMileageFacet()" (keydown.space)="$event.preventDefault(); toggleMileageFacet()">
               <div class="section-title-container"><h4 class="section-title">Mileage</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(mileageOpen$ | async)">expand_more</mat-icon>
@@ -152,7 +173,7 @@
           
 
           <div class="filter-section">
-            <div class="section-header" role="button" [attr.aria-expanded]="(transOpen$ | async) ? 'true' : 'false'" (click)="toggleTransmissionFacet()">
+            <div class="section-header" role="button" tabindex="0" [attr.aria-expanded]="(transOpen$ | async) ? 'true' : 'false'" (click)="toggleTransmissionFacet()" (keydown.enter)="toggleTransmissionFacet()" (keydown.space)="$event.preventDefault(); toggleTransmissionFacet()">
               <div class="section-title-container"><h4 class="section-title">Gearbox</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(transOpen$ | async)">expand_more</mat-icon>
@@ -173,7 +194,7 @@
           </div>
 
           <div class="filter-section">
-            <div class="section-header" role="button" [attr.aria-expanded]="(bodyOpen$ | async) ? 'true' : 'false'" (click)="toggleBodyFacet()">
+            <div class="section-header" role="button" tabindex="0" [attr.aria-expanded]="(bodyOpen$ | async) ? 'true' : 'false'" (click)="toggleBodyFacet()" (keydown.enter)="toggleBodyFacet()" (keydown.space)="$event.preventDefault(); toggleBodyFacet()">
               <div class="section-title-container"><h4 class="section-title">Body type</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(bodyOpen$ | async)">expand_more</mat-icon>
@@ -194,7 +215,7 @@
           </div>
 
           <div class="filter-section">
-            <div class="section-header" role="button" [attr.aria-expanded]="(fuelOpen$ | async) ? 'true' : 'false'" (click)="toggleFuelFacet()">
+            <div class="section-header" role="button" tabindex="0" [attr.aria-expanded]="(fuelOpen$ | async) ? 'true' : 'false'" (click)="toggleFuelFacet()" (keydown.enter)="toggleFuelFacet()" (keydown.space)="$event.preventDefault(); toggleFuelFacet()">
               <div class="section-title-container"><h4 class="section-title">Fuel type</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(fuelOpen$ | async)">expand_more</mat-icon>
@@ -275,8 +296,8 @@
         </span>
         <button class="clear-filters" (click)="clearAll()">Clear all</button>
       </div>
-      <div class="car-grid">
-        <div class="car-card" *ngFor="let car of (listings$ | async) ?? []">
+      <div class="car-grid" [class.list-view]="(view$ | async) === 'list'">
+        <div class="car-card" [class.list]="(view$ | async) === 'list'" *ngFor="let car of (listings$ | async) ?? []">
           <div class="card-media" [routerLink]="['/listings', car.id]" [queryParamsHandling]="'preserve'" title="View details">
             <img *ngIf="car.images?.length" [src]="car.images[0].thumbUrl || car.images[0].url" alt="car image" />
             <div *ngIf="!car.images?.length" class="media-placeholder"><mat-icon>directions_car</mat-icon></div>

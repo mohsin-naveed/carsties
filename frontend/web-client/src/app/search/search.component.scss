@@ -64,18 +64,18 @@
 .muted { color: rgba(0,0,0,0.6); }
 
 /* Filter sidebar visuals */
-.filter-sidebar .filter-sidebar { background: white; border-radius: 8px; overflow: hidden; }
+.filter-sidebar .filters-panel-inner { background: white; border-radius: 8px; overflow: hidden; }
 .filter-header { padding: 12px 16px; border-bottom: 1px solid #e9ecef; background: #fff; color: #111827; display: flex; align-items: center; justify-content: space-between; }
 .filter-title { margin: 0; font-size: 16px; font-weight: 700; }
 .clear-all { color: #2563eb; text-decoration: none; font-weight: 600; font-size: 12px; }
 .filter-content { max-height: calc(100vh - 200px); overflow-y: auto; }
 .filter-section { border-bottom: 1px solid #e9ecef; }
 .filter-section:last-child { border-bottom: none; }
-.section-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; cursor: pointer; background: #f8f9fa; transition: all 0.3s ease; border-bottom: 1px solid #e9ecef; }
-.section-title { margin: 0; font-size: 15px; font-weight: 600; color: #2c3e50; }
+.section-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; cursor: pointer; background: #f8f9fa; transition: all 0.3s ease; border-bottom: 1px solid #e9ecef; }
+.section-title { margin: 0; font-size: 16px; font-weight: 600; color: #2c3e50; }
 .section-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
 .section-content.expanded { max-height: 400px; overflow-y: auto; }
-.options-container { padding: 16px 20px; }
+.options-container { padding: 12px 12px; }
 .filter-option { margin-bottom: 12px; }
 .option-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; line-height: 1.4; transition: all 0.3s ease; padding: 4px 0; }
 .filter-checkbox { display: none; }
@@ -131,3 +131,43 @@
 .range-mini-label { font-size: 14px; font-weight: 600; color: #374151; }
 .range-select { width: 100%; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px; background: #fff; }
 .range-sep { color: #6b7280; }
+
+/* --- Enhancements: Filters toggle + View toggle, compact checkbox/labels, list view --- */
+.topbar { display: flex; gap: 12px; align-items: center; justify-content: flex-start; padding: 8px 0 16px; flex-wrap: wrap; }
+.filters-toggle { display: none; align-items: center; gap: 6px; border: 1px solid #e5e7eb; background: #fff; color: #374151; padding: 6px 10px; border-radius: 6px; font-size: 13px; }
+.filters-toggle mat-icon { font-size: 18px; height: 18px; width: 18px; }
+.view-wrap { display: inline-flex; align-items: center; gap: 6px; }
+.view-label { font-size: 13px; color: #495057; }
+.view-btn { border: 1px solid #e5e7eb; background: #fff; color: #374151; padding: 6px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; }
+.view-btn mat-icon { font-size: 18px; height: 18px; width: 18px; }
+.view-btn.active { background: #eef2ff; border-color: #a5b4fc; color: #1f2937; }
+.desktop-only { display: inline-flex; }
+.mobile-sort-btn { display: none; align-items: center; gap: 6px; border: 1px solid #e5e7eb; background: #fff; color: #374151; padding: 6px 10px; border-radius: 6px; font-size: 13px; }
+.sort-panel { position: absolute; left: 0; margin-top: 8px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); padding: 6px; z-index: 10; display: flex; flex-direction: column; min-width: 200px; }
+.sort-wrap { position: relative; }
+.sort-item { text-align: left; background: transparent; border: none; padding: 8px 10px; border-radius: 6px; font-size: 14px; color: #374151; }
+.sort-item:hover { background: #f3f4f6; }
+.sort-item.active { background: #eef2ff; color: #111827; }
+
+@media (max-width: 767px) {
+	.topbar { justify-content: space-between; }
+	.filters-toggle { display: inline-flex; }
+	.view-wrap { display: none; }
+	.desktop-only { display: none !important; }
+	.mobile-sort-btn { display: inline-flex; margin-left: auto; }
+}
+.filter-sidebar.show-mobile { display: block !important; }
+
+/* Compact filter labels and checkbox size */
+.option-label { font-size: 13px; gap: 8px; padding: 2px 0; align-items: center; }
+.custom-checkbox { width: 16px; height: 16px; }
+.filter-checkbox { display: none; }
+.filter-checkbox:checked + .custom-checkbox { background: #007bff; border-color: #007bff; }
+.filter-checkbox:checked + .custom-checkbox .check-icon { opacity: 1; transform: scale(1); }
+.check-icon { color: white; opacity: 0; transform: scale(0); transition: all 0.3s ease; }
+
+/* List view: single column grid */
+.car-grid.list-view { grid-template-columns: 1fr; }
+.car-card.list { flex-direction: row; }
+.car-card.list .card-media { width: 40%; }
+.car-card.list .card-body { width: 60%; }
