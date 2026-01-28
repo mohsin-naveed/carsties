@@ -1,0 +1,13 @@
+<section class="quick-browse" aria-label="Quick browse categories">
+  <div class="quick-browse__grid">
+    <button class="qb-card" *ngFor="let c of cards" (click)="go(c)" (keyup.enter)="go(c)" tabindex="0" aria-label="{{ c.title }}">
+      <div class="qb-card__icon" aria-hidden="true">
+        <span class="mat-icon" [class.placeholder]="!c.icon">{{ c.icon || 'directions_car' }}</span>
+      </div>
+      <div class="qb-card__text">
+        <div class="qb-card__title">{{ c.title }}</div>
+        <div class="qb-card__subtitle" *ngIf="c.subtitle">{{ c.subtitle }}</div>
+      </div>
+    </button>
+  </div>
+</section>

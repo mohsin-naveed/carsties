@@ -7,15 +7,16 @@
     <strong>Carsties</strong>
   </a>
   <nav class="nav__links" aria-label="Main">
-    <button mat-button [routerLink]="['/search']">Buy Cars</button>
-    <button mat-button [routerLink]="['/sell']">Sell Car</button>
-    <button mat-button>Dealers</button>
-    <button mat-button>About</button>
+    <button mat-button [routerLink]="['/search']">Buy</button>
+    <button mat-button [routerLink]="['/sell']">Sell</button>
+    <button mat-button [routerLink]="['/dealers']">Dealers</button>
+    <button mat-button [routerLink]="['/']" fragment="reviews">Reviews</button>
   </nav>
   <span class="spacer"></span>
   <div class="nav__auth">
     <button mat-stroked-button color="accent">Login</button>
     <button mat-raised-button color="accent" [matMenuTriggerFor]="registerMenu">Register</button>
+    <a mat-raised-button color="warn" [routerLink]="['/sell']" class="cta-list">List your car</a>
     <mat-menu #registerMenu="matMenu">
       <button mat-menu-item>Register as Individual</button>
       <button mat-menu-item>Register as Dealer</button>
@@ -24,13 +25,14 @@
 </mat-toolbar>
 
 <mat-menu #mobileMenu="matMenu">
-  <button mat-menu-item [routerLink]="['/search']"><mat-icon>search</mat-icon> <span>Buy Cars</span></button>
-  <button mat-menu-item [routerLink]="['/sell']"><mat-icon>sell</mat-icon> <span>Sell Car</span></button>
+  <button mat-menu-item [routerLink]="['/search']"><mat-icon>search</mat-icon> <span>Buy</span></button>
+  <button mat-menu-item [routerLink]="['/sell']"><mat-icon>sell</mat-icon> <span>Sell</span></button>
   <button mat-menu-item [routerLink]="['/dealers']"><mat-icon>store</mat-icon> <span>Dealers</span></button>
-  <button mat-menu-item [routerLink]="['/about']"><mat-icon>info</mat-icon> <span>About</span></button>
+  <button mat-menu-item [routerLink]="['/']" fragment="reviews"><mat-icon>star</mat-icon> <span>Reviews</span></button>
   <mat-divider></mat-divider>
-  <button mat-menu-item [routerLink]="['/login']">Login</button>
+  <button mat-menu-item>Login</button>
   <button mat-menu-item [matMenuTriggerFor]="registerMenu">Register</button>
+  <button mat-menu-item [routerLink]="['/sell']"><mat-icon>add_circle</mat-icon> <span>List your car</span></button>
 </mat-menu>
 
 <main class="page-container">
@@ -40,14 +42,4 @@
 </main>
 
 <app-footer></app-footer>
-
-<mat-menu #mobileMenu="matMenu">
-  <button mat-menu-item [routerLink]="['/search']">Buy Cars</button>
-  <button mat-menu-item [routerLink]="['/sell']">Sell Car</button>
-  <button mat-menu-item>Dealers</button>
-  <button mat-menu-item>About</button>
-  <mat-divider></mat-divider>
-  <button mat-menu-item>Login</button>
-  <button mat-menu-item>Register as Individual</button>
-  <button mat-menu-item>Register as Dealer</button>
-</mat-menu>
+ 

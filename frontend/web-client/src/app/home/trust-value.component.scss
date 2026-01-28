@@ -1,0 +1,8 @@
+.trust { padding: 28px 0; background: linear-gradient(180deg, #f8fafc, #fff); }
+.trust__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.trust__item { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 6px; }
+.trust__icon { font-size: 28px; }
+.trust__item h3 { margin: 0; font-size: 16px; font-weight: 800; color: #0f172a; }
+.trust__item p { margin: 0; color: #64748b; }
+@media (max-width: 1199px) { .trust__grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 599px) { .trust__grid { grid-template-columns: 1fr; } }

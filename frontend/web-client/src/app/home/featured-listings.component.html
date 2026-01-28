@@ -1,0 +1,42 @@
+<section class="featured" aria-label="Featured listings">
+  <div class="featured__header">
+    <h2>Featured Listings</h2>
+  </div>
+
+  <div class="carousel" *ngIf="(listings$ | async) as items; else loadingOrError">
+    <button class="carousel__nav carousel__nav--left" aria-label="Previous" (click)="scrollLeft()">‹</button>
+    <div #track class="carousel__track" role="region" aria-label="Featured listings">
+      <div class="carousel__items">
+        <article class="feat-card" *ngFor="let car of items" tabindex="0" (keyup.enter)="navigateTo(car)">
+          <div class="feat-card__media" (click)="navigateTo(car)">
+            <img [src]="(car.images?.[currentIndex(car)]?.url) || car.images?.[0]?.url || 'assets/placeholder-car.jpg'" alt="{{car.makeName}} {{car.modelName}}" />
+            <div class="feat-card__price">£{{ car.price | number:'1.0-0' }}</div>
+          </div>
+          <div class="feat-card__body">
+            <h3 class="feat-card__title">{{ car.makeName }} {{ car.modelName }} <span class="year">{{ car.year }}</span></h3>
+            <div class="feat-card__meta">
+              <span>{{ car.mileage | number }} mi</span>
+              <span *ngIf="car.fuelTypeName">{{ car.fuelTypeName }}</span>
+              <span *ngIf="car.transmissionTypeName">{{ car.transmissionTypeName }}</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+    <button class="carousel__nav carousel__nav--right" aria-label="Next" (click)="scrollRight()">›</button>
+  </div>
+
+  <ng-template #loadingOrError>
+    <div class="featured__grid" *ngIf="!(error$ | async); else errorTpl">
+      <div class="skeleton" *ngFor="let n of [1,2,3,4,5,6,7,8]"></div>
+    </div>
+  </ng-template>
+
+  <ng-template #emptyState>
+    <div class="empty">No featured cars right now. Check back soon.</div>
+  </ng-template>
+
+  <ng-template #errorTpl>
+    <div class="error">Could not load featured listings.</div>
+  </ng-template>
+</section>

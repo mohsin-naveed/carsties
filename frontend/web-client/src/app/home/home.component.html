@@ -5,20 +5,12 @@
       <app-hero-search></app-hero-search>
     </div>
     <div class="hero__right">
-      <h1 class="hero__title">Bargains<br />without the faff</h1>
-      <p class="hero__subtitle">1000s of cars under $199 a month</p>
-      <a class="hero__cta" [routerLink]="['/search']">View cars on offer</a>
+      <h1 class="hero__title">Find your next car with confidence</h1>
+      <p class="hero__subtitle">Browse thousands of verified listings from trusted sellers.</p>
+      <a class="hero__cta" [routerLink]="['/search']">Start browsing</a>
       <div class="hero__cars" aria-hidden="true"></div>
     </div>
   </div>
-</section>
-
-<section class="section section--latest">
-  <div class="section__header">
-    <h2 class="section__title">Shop Used Cars</h2>
-    <p class="section__subtitle">Latest cars added to the marketplace</p>
-  </div>
-  <app-listings-carousel></app-listings-carousel>
 </section>
 
 <section class="section section--browse">
@@ -26,4 +18,9 @@
     <h2 class="section__title">Browse Used Cars</h2>
   </div>
   <app-browse-tabs></app-browse-tabs>
+</section>
+
+<section class="section">
+  <app-featured-listings></app-featured-listings>
+  <app-sell-your-car></app-sell-your-car>
 </section>

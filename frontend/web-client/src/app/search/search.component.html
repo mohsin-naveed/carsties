@@ -14,12 +14,7 @@
     <aside class="filter-sidebar">
       <div class="filter-sidebar">
         <div class="filter-header">
-          <h3 class="filter-title">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="filter-icon">
-              <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-            Filters
-          </h3>
+          <h3 class="filter-title">Filters</h3>
           <a href="#" class="clear-all" (click)="$event.preventDefault(); clearAll()">Clear all ({{ (activeFilterCount$ | async) ?? 0 }})</a>
         </div>
         <div class="filter-content">

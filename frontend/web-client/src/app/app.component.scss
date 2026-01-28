@@ -6,6 +6,7 @@
 .nav__links { display: none; gap: 8px; }
 .nav__auth { display: none; gap: 4px; }
 .nav__mobile-toggle { margin-right: 8px; }
+.cta-list { margin-left: 8px; }
 
 @media (min-width: 768px) {
 	.nav__links { display: inline-flex; }

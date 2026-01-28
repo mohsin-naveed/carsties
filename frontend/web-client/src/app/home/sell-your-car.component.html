@@ -1,0 +1,17 @@
+<section class="sell" aria-label="Sell your car">
+  <div class="sell__box">
+    <div class="sell__text">
+      <h2>Sell your car the easy way</h2>
+      <p>Choose a path that suits you. Private sale or instant dealer valuation.</p>
+      <ol class="sell__steps" aria-label="3 steps">
+        <li>Tell us about your car</li>
+        <li>Get a fair price estimate</li>
+        <li>List or sell instantly</li>
+      </ol>
+    </div>
+    <div class="sell__ctas">
+      <a class="btn btn--primary" [routerLink]="['/sell']">Sell privately</a>
+      <a class="btn btn--ghost" [routerLink]="['/sell']" [queryParams]="{ mode: 'valuation' }">Get instant dealer valuation</a>
+    </div>
+  </div>
+</section>

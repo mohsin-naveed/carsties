@@ -111,10 +111,5 @@ export class HeroSearchComponent {
     this.router.navigate(['/search'], { queryParams: query });
   }
 
-  constructor() {
-    // Auto-select a default make on first load if none chosen
-    this.makes$.pipe(take(1)).subscribe(list => {
-      if (!this.make$.value && list.length) this.make$.next(list[0].code);
-    });
-  }
+  constructor() { }
 }

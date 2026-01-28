@@ -250,13 +250,13 @@ export class SearchComponent {
   readonly seatsPref$ = new BehaviorSubject<boolean>(false);
   readonly doorsPref$ = new BehaviorSubject<boolean>(false);
 
-  readonly makeOpen$ = combineLatest([this.selectedMakeCodes$, this.makePref$]).pipe(map(([codes, pref]) => (codes.length > 0) ? true : pref), shareReplay(1));
-  readonly modelOpen$ = combineLatest([this.selectedModelCodes$, this.modelPref$]).pipe(map(([codes, pref]) => (codes.length > 0) ? true : pref), shareReplay(1));
-  readonly transOpen$ = combineLatest([this.selectedTransmissionCodes$, this.transPref$]).pipe(map(([codes, pref]) => (codes.length > 0) ? true : pref), shareReplay(1));
-  readonly bodyOpen$ = combineLatest([this.selectedBodyTypeCodes$, this.bodyPref$]).pipe(map(([codes, pref]) => (codes.length > 0) ? true : pref), shareReplay(1));
-  readonly fuelOpen$ = combineLatest([this.selectedFuelTypeCodes$, this.fuelPref$]).pipe(map(([codes, pref]) => (codes.length > 0) ? true : pref), shareReplay(1));
-  readonly seatsOpen$ = combineLatest([this.selectedSeats$, this.seatsPref$]).pipe(map(([ids, pref]) => (ids.length > 0) ? true : pref), shareReplay(1));
-  readonly doorsOpen$ = combineLatest([this.selectedDoors$, this.doorsPref$]).pipe(map(([ids, pref]) => (ids.length > 0) ? true : pref), shareReplay(1));
+  readonly makeOpen$ = this.makePref$.asObservable();
+  readonly modelOpen$ = this.modelPref$.asObservable();
+  readonly transOpen$ = this.transPref$.asObservable();
+  readonly bodyOpen$ = this.bodyPref$.asObservable();
+  readonly fuelOpen$ = this.fuelPref$.asObservable();
+  readonly seatsOpen$ = this.seatsPref$.asObservable();
+  readonly doorsOpen$ = this.doorsPref$.asObservable();
 
   toggleMakeFacet() { this.makePref$.next(!this.makePref$.value); }
   toggleModelFacet() { this.modelPref$.next(!this.modelPref$.value); }
@@ -741,27 +741,44 @@ export class SearchComponent {
         const wanted = param.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
         return list.filter(x => wanted.includes((x.name ?? '').toLowerCase())).map(x => x.code);
       };
+      const codesFrom = (key: string) => q.getAll(key).filter(Boolean);
       const numbersFromCsv = (param: string | null) => {
         if (!param) return [] as number[];
         return param.split(',').map(s => Number(s.trim())).filter(n => !Number.isNaN(n));
       };
-      this.selectedMakeCodes$.next(namesToCodes(q.get('make'), makes));
-      this.selectedModelCodes$.next(namesToCodes(q.get('model'), models));
-      this.selectedTransmissionCodes$.next(namesToCodes(q.get('trans'), transmissions));
-      this.selectedBodyTypeCodes$.next(namesToCodes(q.get('body'), bodies));
-      this.selectedFuelTypeCodes$.next(namesToCodes(q.get('fuel'), fuels));
+      // Prefer code-based params when present; fallback to names
+      const mkCodes = codesFrom('makeCodes');
+      const mdCodes = codesFrom('modelCodes');
+      const trCodes = codesFrom('transmissionTypeCodes');
+      const btCodes = codesFrom('bodyTypeCodes');
+      const fuCodes = codesFrom('fuelTypeCodes');
+
+      this.selectedMakeCodes$.next(mkCodes.length ? mkCodes : namesToCodes(q.get('make'), makes));
+      this.selectedModelCodes$.next(mdCodes.length ? mdCodes : namesToCodes(q.get('model'), models));
+      this.selectedTransmissionCodes$.next(trCodes.length ? trCodes : namesToCodes(q.get('trans'), transmissions));
+      this.selectedBodyTypeCodes$.next(btCodes.length ? btCodes : namesToCodes(q.get('body'), bodies));
+      this.selectedFuelTypeCodes$.next(fuCodes.length ? fuCodes : namesToCodes(q.get('fuel'), fuels));
       // Numeric facets and ranges
       this.selectedSeats$.next(numbersFromCsv(q.get('seats')));
       this.selectedDoors$.next(numbersFromCsv(q.get('doors')));
       const toNum = (v: string | null) => (v == null || v === '') ? undefined : Number(v);
-      this.priceMin$.next(toNum(q.get('pmin')));
-      this.priceMax$.next(toNum(q.get('pmax')));
+      this.priceMin$.next(toNum(q.get('pmin')) ?? toNum(q.get('priceMin')));
+      this.priceMax$.next(toNum(q.get('pmax')) ?? toNum(q.get('priceMax')));
       this.yearMin$.next(toNum(q.get('ymin')));
       this.yearMax$.next(toNum(q.get('ymax')));
-      this.mileageMin$.next(toNum(q.get('mmin')));
-      this.mileageMax$.next(toNum(q.get('mmax')));
+      this.mileageMin$.next(toNum(q.get('mmin')) ?? toNum(q.get('mileageMin')));
+      this.mileageMax$.next(toNum(q.get('mmax')) ?? toNum(q.get('mileageMax')));
       const s = q.get('sort'); if (s) this.sort$.next(s);
       const p = q.get('page'); this.page$.next(p ? Number(p) : 1);
+
+      // On initial load, open facets that have selections
+      if ((this.selectedMakeCodes$.value?.length ?? 0) > 0) this.makePref$.next(true);
+      if ((this.selectedModelCodes$.value?.length ?? 0) > 0) this.modelPref$.next(true);
+      if ((this.selectedTransmissionCodes$.value?.length ?? 0) > 0) this.transPref$.next(true);
+      if ((this.selectedBodyTypeCodes$.value?.length ?? 0) > 0) this.bodyPref$.next(true);
+      if ((this.selectedFuelTypeCodes$.value?.length ?? 0) > 0) this.fuelPref$.next(true);
+      if ((this.selectedSeats$.value?.length ?? 0) > 0) this.seatsPref$.next(true);
+      if ((this.selectedDoors$.value?.length ?? 0) > 0) this.doorsPref$.next(true);
     });
 
     // Persist to URL on changes
@@ -778,6 +795,7 @@ export class SearchComponent {
       this.sort$, this.page$
     ]).pipe(debounceTime(50)).subscribe(([mkIds, makes, mdIds, models, trIds, transmissions, btIds, bodies, fuIds, fuels, seats, doors, pmin, pmax, ymin, ymax, mmin, mmax, sort, page]) => {
       const namesFor = (codes: string[], list: { code: string; name: string }[]) => codes.map(code => list.find(x => x.code === code)?.name).filter(Boolean) as string[];
+      // Build params without default sort/page; append them at the end if changed
       const qp: any = {
         make: namesFor(mkIds, makes).join(',') || undefined,
         model: namesFor(mdIds, models).join(',') || undefined,
@@ -791,9 +809,11 @@ export class SearchComponent {
         ymin: (ymin != null ? ymin : undefined),
         ymax: (ymax != null ? ymax : undefined),
         mmin: (mmin != null ? mmin : undefined),
-        mmax: (mmax != null ? mmax : undefined),
-        sort, page
+        mmax: (mmax != null ? mmax : undefined)
       };
+      // Append non-default sort/page to the end
+      if (sort !== 'price-asc') qp.sort = sort;
+      if (page !== 1) qp.page = page;
       this.router.navigate([], { queryParams: qp, queryParamsHandling: 'merge' });
     });
 

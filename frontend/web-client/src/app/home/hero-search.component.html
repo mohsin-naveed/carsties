@@ -44,5 +44,10 @@
         <span>Search {{ (totalCount$ | async) ?? 0 }} Cars</span>
       </button>
     </div>
+
+    <div class="hero-search__row hero-search__links" aria-label="More options">
+      <a class="hero-link" [routerLink]="['/search']" [queryParams]="{ }">Browse all cars</a>
+      <a class="hero-link" [routerLink]="['/search']" [queryParams]="{ }">Advanced search</a>
+    </div>
   </form>
 </mat-card>

@@ -1,0 +1,11 @@
+.reviews { padding: 28px 0; background: #fff; }
+.reviews__header { text-align: center; margin-bottom: 16px; }
+.reviews__header h2 { margin: 0; font-size: 1.4rem; font-weight: 800; }
+.stars { color: #f59e0b; font-size: 20px; letter-spacing: 2px; }
+.reviews__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.review { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; background: #fafafa; }
+.review blockquote { margin: 0 0 8px; color: #0f172a; }
+.review figcaption { color: #64748b; }
+.rating { color: #0f172a; font-weight: 700; }
+@media (max-width: 959px) { .reviews__grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 599px) { .reviews__grid { grid-template-columns: 1fr; } }
