@@ -53,6 +53,7 @@
           <div class="filter-section">
             <div class="section-header" role="button" tabindex="0" [attr.aria-expanded]="(makeOpen$ | async) ? 'true' : 'false'" (click)="toggleMakeFacet()" (keydown.enter)="toggleMakeFacet()" (keydown.space)="$event.preventDefault(); toggleMakeFacet()">
               <div class="section-title-container">
+                <mat-icon class="facet-icon" aria-hidden="true">directions_car</mat-icon>
                 <h4 class="section-title">Make</h4>
               </div>
               <span class="chevron">
@@ -75,7 +76,7 @@
 
           <div class="filter-section">
             <div class="section-header" role="button" tabindex="0" [attr.aria-expanded]="(modelOpen$ | async) ? 'true' : 'false'" (click)="toggleModelFacet()" (keydown.enter)="toggleModelFacet()" (keydown.space)="$event.preventDefault(); toggleModelFacet()">
-              <div class="section-title-container"><h4 class="section-title">Model</h4></div>
+              <div class="section-title-container"><mat-icon class="facet-icon" aria-hidden="true">directions_car</mat-icon><h4 class="section-title">Model</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(modelOpen$ | async)">expand_more</mat-icon>
                 <mat-icon *ngIf="(modelOpen$ | async)">expand_less</mat-icon>
@@ -97,7 +98,7 @@
           <!-- Price Range -->
           <div class="filter-section">
             <div class="section-header" role="button" tabindex="0" [attr.aria-expanded]="(priceOpen$ | async) ? 'true' : 'false'" (click)="togglePriceFacet()" (keydown.enter)="togglePriceFacet()" (keydown.space)="$event.preventDefault(); togglePriceFacet()">
-              <div class="section-title-container"><h4 class="section-title">Price</h4></div>
+              <div class="section-title-container"><mat-icon class="facet-icon" aria-hidden="true">price_change</mat-icon><h4 class="section-title">Price</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(priceOpen$ | async)">expand_more</mat-icon>
                 <mat-icon *ngIf="(priceOpen$ | async)">expand_less</mat-icon>
@@ -126,7 +127,7 @@
           <!-- Year Range -->
           <div class="filter-section">
             <div class="section-header" role="button" tabindex="0" [attr.aria-expanded]="(yearOpen$ | async) ? 'true' : 'false'" (click)="toggleYearFacet()" (keydown.enter)="toggleYearFacet()" (keydown.space)="$event.preventDefault(); toggleYearFacet()">
-              <div class="section-title-container"><h4 class="section-title">Year</h4></div>
+              <div class="section-title-container"><mat-icon class="facet-icon" aria-hidden="true">calendar_today</mat-icon><h4 class="section-title">Year</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(yearOpen$ | async)">expand_more</mat-icon>
                 <mat-icon *ngIf="(yearOpen$ | async)">expand_less</mat-icon>
@@ -155,7 +156,7 @@
           <!-- Mileage Range -->
           <div class="filter-section">
             <div class="section-header" role="button" tabindex="0" [attr.aria-expanded]="(mileageOpen$ | async) ? 'true' : 'false'" (click)="toggleMileageFacet()" (keydown.enter)="toggleMileageFacet()" (keydown.space)="$event.preventDefault(); toggleMileageFacet()">
-              <div class="section-title-container"><h4 class="section-title">Mileage</h4></div>
+              <div class="section-title-container"><mat-icon class="facet-icon" aria-hidden="true">speed</mat-icon><h4 class="section-title">Mileage</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(mileageOpen$ | async)">expand_more</mat-icon>
                 <mat-icon *ngIf="(mileageOpen$ | async)">expand_less</mat-icon>
@@ -185,7 +186,7 @@
 
           <div class="filter-section">
             <div class="section-header" role="button" tabindex="0" [attr.aria-expanded]="(transOpen$ | async) ? 'true' : 'false'" (click)="toggleTransmissionFacet()" (keydown.enter)="toggleTransmissionFacet()" (keydown.space)="$event.preventDefault(); toggleTransmissionFacet()">
-              <div class="section-title-container"><h4 class="section-title">Gearbox</h4></div>
+              <div class="section-title-container"><mat-icon class="facet-icon" aria-hidden="true">tune</mat-icon><h4 class="section-title">Gearbox</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(transOpen$ | async)">expand_more</mat-icon>
                 <mat-icon *ngIf="(transOpen$ | async)">expand_less</mat-icon>
@@ -206,7 +207,7 @@
 
           <div class="filter-section">
             <div class="section-header" role="button" tabindex="0" [attr.aria-expanded]="(bodyOpen$ | async) ? 'true' : 'false'" (click)="toggleBodyFacet()" (keydown.enter)="toggleBodyFacet()" (keydown.space)="$event.preventDefault(); toggleBodyFacet()">
-              <div class="section-title-container"><h4 class="section-title">Body type</h4></div>
+              <div class="section-title-container"><mat-icon class="facet-icon" aria-hidden="true">category</mat-icon><h4 class="section-title">Body type</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(bodyOpen$ | async)">expand_more</mat-icon>
                 <mat-icon *ngIf="(bodyOpen$ | async)">expand_less</mat-icon>
@@ -227,7 +228,7 @@
 
           <div class="filter-section">
             <div class="section-header" role="button" tabindex="0" [attr.aria-expanded]="(fuelOpen$ | async) ? 'true' : 'false'" (click)="toggleFuelFacet()" (keydown.enter)="toggleFuelFacet()" (keydown.space)="$event.preventDefault(); toggleFuelFacet()">
-              <div class="section-title-container"><h4 class="section-title">Fuel type</h4></div>
+              <div class="section-title-container"><mat-icon class="facet-icon" aria-hidden="true">local_gas_station</mat-icon><h4 class="section-title">Fuel type</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(fuelOpen$ | async)">expand_more</mat-icon>
                 <mat-icon *ngIf="(fuelOpen$ | async)">expand_less</mat-icon>
@@ -249,7 +250,7 @@
           <!-- Seats -->
           <div class="filter-section">
             <div class="section-header" role="button" [attr.aria-expanded]="(seatsOpen$ | async) ? 'true' : 'false'" (click)="toggleSeatsFacet()">
-              <div class="section-title-container"><h4 class="section-title">Seats</h4></div>
+              <div class="section-title-container"><mat-icon class="facet-icon" aria-hidden="true">event_seat</mat-icon><h4 class="section-title">Seats</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(seatsOpen$ | async)">expand_more</mat-icon>
                 <mat-icon *ngIf="(seatsOpen$ | async)">expand_less</mat-icon>
@@ -271,7 +272,7 @@
           <!-- Doors -->
           <div class="filter-section">
             <div class="section-header" role="button" [attr.aria-expanded]="(doorsOpen$ | async) ? 'true' : 'false'" (click)="toggleDoorsFacet()">
-              <div class="section-title-container"><h4 class="section-title">Doors</h4></div>
+              <div class="section-title-container"><mat-icon class="facet-icon" aria-hidden="true">meeting_room</mat-icon><h4 class="section-title">Doors</h4></div>
               <span class="chevron">
                 <mat-icon *ngIf="!(doorsOpen$ | async)">expand_more</mat-icon>
                 <mat-icon *ngIf="(doorsOpen$ | async)">expand_less</mat-icon>

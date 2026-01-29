@@ -31,13 +31,21 @@ body {
 	background: #f5f7fa;
 	color: #222;
 	-webkit-font-smoothing: antialiased;
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
 }
 
 // Reusable container
 .page-container {
 	max-width: 1280px;
 	margin: 0 auto;
-	padding: 1rem 1.25rem 3rem;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	padding-left: 0px;
+	padding-right: 0px;
+	width: 100%;
+	flex: 1 0 auto;
 }
 
 // Elevation utility shortcut

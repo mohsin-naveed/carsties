@@ -71,8 +71,10 @@
 .filter-content { max-height: calc(100vh - 200px); overflow-y: auto; }
 .filter-section { border-bottom: 1px solid #e9ecef; }
 .filter-section:last-child { border-bottom: none; }
-.section-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; cursor: pointer; background: #f8f9fa; transition: all 0.3s ease; border-bottom: 1px solid #e9ecef; }
+.section-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; cursor: pointer; background: #ffffff; transition: all 0.3s ease; border-bottom: 1px solid #e9ecef; }
 .section-title { margin: 0; font-size: 16px; font-weight: 600; color: #2c3e50; }
+.section-title-container { display: inline-flex; align-items: center; gap: 10px; }
+.facet-icon { color: #1e3a8a; opacity: .9; }
 .section-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
 .section-content.expanded { max-height: 400px; overflow-y: auto; }
 .options-container { padding: 8px 8px; }
@@ -211,6 +213,6 @@
 
 /* Final mobile overrides: remove layout and card gaps for full-width cards */
 @media (max-width: 767px) {
-	.main-content { gap: 0; }
+	.main-content { display: block; grid-template-columns: none; gap: 0; }
 	.car-grid { gap: 0; }
 }
