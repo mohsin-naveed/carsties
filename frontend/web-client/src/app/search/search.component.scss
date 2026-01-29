@@ -22,7 +22,7 @@
 .page-btn { padding:8px 12px; border:1px solid #ddd; background:#fff; border-radius:6px; }
 .page-btn[disabled] { opacity:.5; }
 .active-filters { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:8px 0 16px; }
-.filter-chip { background:#eef2ff; color:#1f2937; padding:6px 12px; border-radius:999px; font-size:12px; border:1px solid #c7d2fe; display:inline-flex; align-items:center; gap:6px; transition:background .15s, box-shadow .15s, border-color .15s; }
+.filter-chip { background:#eef2ff; color:#1f2937; padding:4px 8px; border-radius:999px; font-size:11px; border:1px solid #c7d2fe; display:inline-flex; align-items:center; gap:6px; transition:background .15s, box-shadow .15s, border-color .15s; }
 .filter-chip:hover { background:#e3e8ff; border-color:#a5b4fc; }
 .filter-chip:focus-within { outline: none; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25); border-color:#2563eb; }
 .chip-close { border:none; background:transparent; color:#374151; cursor:pointer; padding:0; display:inline-flex; align-items:center; border-radius:50%; }
@@ -75,7 +75,7 @@
 .section-title { margin: 0; font-size: 16px; font-weight: 600; color: #2c3e50; }
 .section-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
 .section-content.expanded { max-height: 400px; overflow-y: auto; }
-.options-container { padding: 12px 12px; }
+.options-container { padding: 8px 8px; }
 .filter-option { margin-bottom: 12px; }
 .option-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; line-height: 1.4; transition: all 0.3s ease; padding: 4px 0; }
 .filter-checkbox { display: none; }
@@ -101,6 +101,9 @@
 .card-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .media-placeholder { display:flex; align-items:center; justify-content:center; background:#f3f4f6; color:#9ca3af; width:100%; height:100%; }
 .price-tag { position: absolute; right: 8px; top: 8px; background: rgba(0,0,0,0.75); color: #fff; padding: 4px 10px; border-radius: 999px; font-weight: 700; font-size: 13px; }
+.card-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: 1px solid #e5e7eb; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; cursor: pointer; color: #111827; }
+.card-nav--left { left: 8px; }
+.card-nav--right { right: 8px; }
 .card-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; min-height: 136px; }
 .title { font-weight: 700; font-size: 16px; color: #111827; }
 .subtitle { color: #6b7280; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -126,21 +129,22 @@
 .chevron mat-icon { transition: opacity .2s ease; }
 
 /* Range inputs */
-.range-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 20px; }
+.range-row { display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; }
 .range-input { display: flex; flex-direction: column; gap: 4px; width: 100%; }
 .range-mini-label { font-size: 14px; font-weight: 600; color: #374151; }
 .range-select { width: 100%; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px; background: #fff; }
 .range-sep { color: #6b7280; }
 
 /* --- Enhancements: Filters toggle + View toggle, compact checkbox/labels, list view --- */
-.topbar { display: flex; gap: 12px; align-items: center; justify-content: flex-start; padding: 8px 0 16px; flex-wrap: wrap; }
+.topbar { display: flex; gap: 12px; align-items: center; justify-content: flex-end; padding: 8px 0 12px; flex-wrap: wrap; }
 .filters-toggle { display: none; align-items: center; gap: 6px; border: 1px solid #e5e7eb; background: #fff; color: #374151; padding: 6px 10px; border-radius: 6px; font-size: 13px; }
 .filters-toggle mat-icon { font-size: 18px; height: 18px; width: 18px; }
-.view-wrap { display: inline-flex; align-items: center; gap: 6px; }
-.view-label { font-size: 13px; color: #495057; }
+.right-controls { display: inline-flex; align-items: center; gap: 12px; margin-left: auto; }
+.view-wrap { display: inline-flex; align-items: center; }
 .view-btn { border: 1px solid #e5e7eb; background: #fff; color: #374151; padding: 6px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; }
 .view-btn mat-icon { font-size: 18px; height: 18px; width: 18px; }
 .view-btn.active { background: #eef2ff; border-color: #a5b4fc; color: #1f2937; }
+.view-btn--single { width: 36px; height: 32px; }
 .desktop-only { display: inline-flex; }
 .mobile-sort-btn { display: none; align-items: center; gap: 6px; border: 1px solid #e5e7eb; background: #fff; color: #374151; padding: 6px 10px; border-radius: 6px; font-size: 13px; }
 .sort-panel { position: absolute; left: 0; margin-top: 8px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); padding: 6px; z-index: 10; display: flex; flex-direction: column; min-width: 200px; }
@@ -157,6 +161,34 @@
 	.mobile-sort-btn { display: inline-flex; margin-left: auto; }
 }
 .filter-sidebar.show-mobile { display: block !important; }
+.mobile-filter-footer { display: none; }
+
+/* Chip containers: subtle left rule and spacing */
+.active-filters { border-left: 3px solid #e5e7eb; padding-left: 8px; }
+
+/* Chips visibility: filters-only on mobile, results-only on desktop */
+.active-filters--filters { display: none; }
+.active-filters--results { display: flex; }
+
+/* Mobile full-screen filter overlay */
+@media (max-width: 767px) {
+	.filter-sidebar.show-mobile { position: fixed; inset: 0; z-index: 1100; background: #fff; overflow: hidden; border-radius: 0; box-shadow: none; }
+	.filter-sidebar.show-mobile .filters-panel-inner { height: 100%; display: flex; flex-direction: column; }
+	.filter-sidebar.show-mobile .filter-content { flex: 1 1 auto; max-height: none; overflow-y: auto; padding-bottom: 72px; }
+	.mobile-filter-footer { display: block; position: sticky; bottom: 0; left: 0; right: 0; background: #ffffff; border-top: 1px solid #e5e7eb; padding: 10px; box-shadow: 0 -6px 16px rgba(0,0,0,0.06); z-index: 1200; }
+	.see-results-btn { width: 100%; padding: 12px 16px; font-weight: 700; font-size: 16px; color: #fff; background: #dc2626; border: none; border-radius: 8px; }
+	.see-results-btn:hover { background: #b91c1c; }
+	.main-content.mobile-filters-open .car-results { display: none; }
+	.find-car-container { padding: 0; margin: 0; max-width: none; width: 100%; }
+	.main-content { gap: 0; }
+	.car-results { padding: 0; margin: 0; width: 100%; }
+	.car-grid { grid-template-columns: 1fr; gap: 0; width: 100%; }
+	.car-card { border-radius: 0; }
+	.card-media { aspect-ratio: 4 / 3; }
+	.card-body { padding: 8px; }
+	.active-filters--filters { display: flex; }
+	.active-filters--results { display: none; }
+}
 
 /* Compact filter labels and checkbox size */
 .option-label { font-size: 13px; gap: 8px; padding: 2px 0; align-items: center; }
@@ -171,3 +203,14 @@
 .car-card.list { flex-direction: row; }
 .car-card.list .card-media { width: 40%; }
 .car-card.list .card-body { width: 60%; }
+
+/* Reduce global paddings/margins for fuller width */
+.find-car-container { padding: 8px; }
+.main-content { gap: 12px; }
+.results-header { margin: 4px 0 10px; }
+
+/* Final mobile overrides: remove layout and card gaps for full-width cards */
+@media (max-width: 767px) {
+	.main-content { gap: 0; }
+	.car-grid { gap: 0; }
+}

@@ -5,38 +5,49 @@
       <mat-icon>tune</mat-icon>
       <span>Filters</span>
     </button>
-    <div class="sort-wrap">
-      <label for="sort-select" class="sort-label desktop-only">Sort</label>
-      <select id="sort-select" class="sort-select desktop-only" [ngModel]="(sort$ | async)" (ngModelChange)="sort$.next($event)">
-        <option *ngFor="let option of sortOptions" [value]="option.value">{{ option.label }}</option>
-      </select>
-      <!-- Mobile sort button -->
-      <button class="mobile-sort-btn" (click)="toggleMobileSort()" [attr.aria-expanded]="(mobileSortOpen$ | async) ? 'true' : 'false'" aria-controls="mobile-sort-panel">
-        <span>Sort</span>
-        <mat-icon>expand_more</mat-icon>
-      </button>
-      <div class="sort-panel" id="mobile-sort-panel" *ngIf="(mobileSortOpen$ | async)">
-        <button class="sort-item" *ngFor="let option of sortOptions" [class.active]="(sort$ | async) === option.value" (click)="setSort(option.value)">{{ option.label }}</button>
+    <div class="right-controls">
+      <div class="sort-wrap">
+        <label for="sort-select" class="sort-label desktop-only">Sort</label>
+        <select id="sort-select" class="sort-select desktop-only" [ngModel]="(sort$ | async)" (ngModelChange)="sort$.next($event)">
+          <option *ngFor="let option of sortOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+        <!-- Mobile sort button -->
+        <button class="mobile-sort-btn" (click)="toggleMobileSort()" [attr.aria-expanded]="(mobileSortOpen$ | async) ? 'true' : 'false'" aria-controls="mobile-sort-panel">
+          <span>Sort</span>
+          <mat-icon>expand_more</mat-icon>
+        </button>
+        <div class="sort-panel" id="mobile-sort-panel" *ngIf="(mobileSortOpen$ | async)">
+          <button class="sort-item" *ngFor="let option of sortOptions" [class.active]="(sort$ | async) === option.value" (click)="setSort(option.value)">{{ option.label }}</button>
+        </div>
       </div>
-    </div>
-    <div class="view-wrap">
-      <span class="view-label">View</span>
-      <button class="view-btn" [class.active]="(view$ | async) === 'grid'" (click)="setView('grid')" title="Grid view" [attr.aria-pressed]="(view$ | async) === 'grid' ? 'true' : 'false'" aria-label="Grid view">
-        <mat-icon>grid_view</mat-icon>
-      </button>
-      <button class="view-btn" [class.active]="(view$ | async) === 'list'" (click)="setView('list')" title="List view" [attr.aria-pressed]="(view$ | async) === 'list' ? 'true' : 'false'" aria-label="List view">
-        <mat-icon>list</mat-icon>
-      </button>
+      <div class="view-wrap">
+        <button class="view-btn view-btn--single"
+                (click)="toggleView()"
+                [attr.aria-label]="(view$ | async) === 'grid' ? 'Switch to list view' : 'Switch to grid view'"
+                [attr.aria-pressed]="(view$ | async) === 'list' ? 'true' : 'false'">
+          <mat-icon *ngIf="(view$ | async) === 'grid'">grid_view</mat-icon>
+          <mat-icon *ngIf="(view$ | async) === 'list'">list</mat-icon>
+        </button>
+      </div>
     </div>
   </div>
 
-  <div class="main-content">
+  <div class="main-content" [class.mobile-filters-open]="(filtersVisible$ | async)">
     <!-- Filter Sidebar -->
     <aside class="filter-sidebar" id="filters-panel" [class.show-mobile]="(filtersVisible$ | async)">
       <div class="filters-panel-inner">
         <div class="filter-header">
           <h3 class="filter-title">Filters</h3>
           <a href="#" class="clear-all" (click)="$event.preventDefault(); clearAll()">Clear all</a>
+        </div>
+        <!-- Active chips directly under Filters title (remove individually) -->
+        <div class="active-filters active-filters--filters" *ngIf="(activeFilterChips$ | async)?.length">
+          <span class="filter-chip" *ngFor="let c of (activeFilterChips$ | async)">
+            <span class="chip-label">{{ c.label }}</span>
+            <button class="chip-close" title="Remove" (click)="removeChip(c)">
+              <mat-icon>close</mat-icon>
+            </button>
+          </span>
         </div>
         <div class="filter-content">
           <div class="filter-section">
@@ -279,6 +290,10 @@
             </div>
           </div>
         </div>
+        <!-- Mobile sticky footer for results button -->
+        <div class="mobile-filter-footer">
+          <button class="see-results-btn" (click)="filtersVisible$.next(false)">See {{ (totalCount$ | async) ?? 0 }} Results</button>
+        </div>
       </div>
     </aside>
 
@@ -286,21 +301,27 @@
       <div class="results-header">
         We have found {{ (totalCount$ | async) ?? 0 }} vehicles
       </div>
-      <!-- Active filters chips shown under results label -->
-      <div class="active-filters" *ngIf="(activeFilterChips$ | async)?.length">
+      <!-- Active filters chips shown under results label (desktop only via CSS) -->
+      <div class="active-filters active-filters--results" *ngIf="(activeFilterChips$ | async)?.length">
         <span class="filter-chip" *ngFor="let c of (activeFilterChips$ | async)">
           <span class="chip-label">{{ c.label }}</span>
           <button class="chip-close" title="Remove" (click)="removeChip(c)">
             <mat-icon>close</mat-icon>
           </button>
         </span>
-        <button class="clear-filters" (click)="clearAll()">Clear all</button>
       </div>
       <div class="car-grid" [class.list-view]="(view$ | async) === 'list'">
         <div class="car-card" [class.list]="(view$ | async) === 'list'" *ngFor="let car of (listings$ | async) ?? []">
           <div class="card-media" [routerLink]="['/listings', car.id]" [queryParamsHandling]="'preserve'" title="View details">
-            <img *ngIf="car.images?.length" [src]="car.images[0].thumbUrl || car.images[0].url" alt="car image" />
-            <div *ngIf="!car.images?.length" class="media-placeholder"><mat-icon>directions_car</mat-icon></div>
+            <!-- Carousel if multiple images -->
+            <ng-container *ngIf="car.images?.length; else noImage">
+              <img [src]="(car.images?.[currentIndex(car)]?.thumbUrl) || (car.images?.[currentIndex(car)]?.url) || (car.images?.[0]?.thumbUrl) || car.images?.[0]?.url" alt="car image" />
+              <button *ngIf="(car.images?.length ?? 0) > 1" class="card-nav card-nav--left" (click)="$event.preventDefault(); $event.stopPropagation(); prev(car)" aria-label="Previous image">‹</button>
+              <button *ngIf="(car.images?.length ?? 0) > 1" class="card-nav card-nav--right" (click)="$event.preventDefault(); $event.stopPropagation(); next(car)" aria-label="Next image">›</button>
+            </ng-container>
+            <ng-template #noImage>
+              <div class="media-placeholder"><mat-icon>directions_car</mat-icon></div>
+            </ng-template>
             <div class="price-tag">£{{ car.price | number:'1.0-0' }}</div>
           </div>
           <div class="card-body">

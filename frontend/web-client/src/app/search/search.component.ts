@@ -281,6 +281,7 @@ export class SearchComponent {
   toggleDoorsFacet() { this.doorsPref$.next(!this.doorsPref$.value); }
   // Topbar controls
   setView(v: 'grid'|'list') { this.view$.next(v); }
+  toggleView() { const v = this.view$.value; this.view$.next(v === 'grid' ? 'list' : 'grid'); }
   toggleFilters() { this.filtersVisible$.next(!this.filtersVisible$.value); }
   toggleMobileSort() { this.mobileSortOpen$.next(!this.mobileSortOpen$.value); }
   setSort(v: string) { this.sort$.next(v); this.mobileSortOpen$.next(false); }
@@ -1023,5 +1024,21 @@ export class SearchComponent {
       if (this.mobileSortOpen$.value) this.mobileSortOpen$.next(false);
       if (this.filtersVisible$.value) this.filtersVisible$.next(false);
     }
+  }
+
+  // Simple per-card image carousel state (similar to Featured Listings)
+  private readonly indices = new Map<number, number>();
+  currentIndex(l: ListingDto): number { return this.indices.get(l.id) ?? 0; }
+  next(l: ListingDto) {
+    const imgs = l.images ?? [];
+    if (!imgs.length) return;
+    const i = (this.currentIndex(l) + 1) % imgs.length;
+    this.indices.set(l.id, i);
+  }
+  prev(l: ListingDto) {
+    const imgs = l.images ?? [];
+    if (!imgs.length) return;
+    const i = (this.currentIndex(l) - 1 + imgs.length) % imgs.length;
+    this.indices.set(l.id, i);
   }
 }
