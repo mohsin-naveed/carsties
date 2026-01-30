@@ -17,73 +17,109 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatOptionModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { ObserversModule } from '@angular/cdk/observers';
+import { LocationApiService, CityDto, AreaDto } from '../location/location-api.service';
 
 @Component({
   selector: 'app-listing-edit',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatCardModule, MatProgressSpinnerModule, MatSelectModule, MatOptionModule, MatIconModule, MatCheckboxModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, ObserversModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatCardModule, MatProgressSpinnerModule, MatSelectModule, MatOptionModule, MatIconModule, MatCheckboxModule, MatTooltipModule, MatDividerModule, MatAutocompleteModule],
   template: `
-  <mat-card>
-    <h2>Edit Listing</h2>
-    <form [formGroup]="form" (ngSubmit)="save()" class="form-grid">
-      <mat-form-field appearance="outline"><mat-label>Title</mat-label>
-        <input matInput formControlName="title" />
-      </mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Year</mat-label>
-        <input matInput type="number" formControlName="year" />
-      </mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Mileage</mat-label>
-        <input matInput type="number" formControlName="mileage" />
-      </mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Price</mat-label>
-        <input matInput type="number" formControlName="price" />
-      </mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Description</mat-label>
-        <textarea matInput rows="3" formControlName="description"></textarea>
-      </mat-form-field>
+  <form [formGroup]="form" (ngSubmit)="save()" class="sell-form" [attr.aria-busy]="saving">
+    <!-- Car Information -->
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar color="primary">edit</mat-icon>
+        <mat-card-title>Edit Listing</mat-card-title>
+        <mat-card-subtitle>Update your car details</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="grid grid--car">
+          <mat-form-field appearance="outline">
+            <mat-label>Title</mat-label>
+            <input matInput formControlName="title" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Year</mat-label>
+            <input matInput type="number" formControlName="year" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Make</mat-label>
+            <mat-select formControlName="makeId">
+              <mat-option *ngFor="let m of makes" [value]="m.id">{{m.name}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <!-- City above Model -->
+          <mat-form-field appearance="outline">
+            <mat-label>City</mat-label>
+            <input type="text" matInput [matAutocomplete]="cityAuto" formControlName="citySearch" placeholder="Start typing city name" />
+            <mat-autocomplete #cityAuto="matAutocomplete" (optionSelected)="onCitySelected($event.option.value)">
+              <mat-option *ngFor="let c of cities" [value]="c.id">{{c.name}}<span class="muted"> — {{c.provinceName}}</span></mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Model</mat-label>
+            <mat-select formControlName="modelId">
+              <mat-option *ngFor="let m of models" [value]="m.id">{{m.name}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field *ngIf="form.value.cityId" appearance="outline">
+            <mat-label>Area</mat-label>
+            <input type="text" matInput [matAutocomplete]="areaAuto" formControlName="areaSearch" placeholder="Type area (optional)" />
+            <mat-autocomplete #areaAuto="matAutocomplete" (optionSelected)="onAreaSelected($event.option.value)">
+              <mat-option *ngFor="let a of areas" [value]="a.id">{{a.name}}<span class="muted"> — {{a.cityName}}</span></mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Variant</mat-label>
+            <mat-select formControlName="variantId">
+              <mat-option *ngFor="let v of variants" [value]="v.id">{{v.name}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Mileage</mat-label>
+            <input matInput type="number" formControlName="mileage" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Price</mat-label>
+            <input matInput type="number" formControlName="price" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Body Type</mat-label>
+            <mat-select formControlName="bodyTypeId">
+              <mat-option *ngFor="let b of bodyTypes" [value]="b.id">{{b.name}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Transmission</mat-label>
+            <mat-select formControlName="transmissionId">
+              <mat-option *ngFor="let t of transmissions" [value]="t.id">{{t.name}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Fuel Type</mat-label>
+            <mat-select formControlName="fuelTypeId">
+              <mat-option *ngFor="let f of fuelTypes" [value]="f.id">{{f.name}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Engine Size (CC)</mat-label>
+            <input matInput type="number" formControlName="engineSizeCC" />
+          </mat-form-field>
+          <mat-form-field class="grid-col-span-2" appearance="outline">
+            <mat-label>Description</mat-label>
+            <textarea matInput rows="3" formControlName="description"></textarea>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
 
-      <mat-form-field appearance="outline"><mat-label>Make</mat-label>
-        <mat-select formControlName="makeId">
-          <mat-option *ngFor="let m of makes" [value]="m.id">{{m.name}}</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Model</mat-label>
-        <mat-select formControlName="modelId">
-          <mat-option *ngFor="let m of models" [value]="m.id">{{m.name}}</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Variant</mat-label>
-        <mat-select formControlName="variantId">
-          <mat-option *ngFor="let v of variants" [value]="v.id">{{v.name}}</mat-option>
-        </mat-select>
-      </mat-form-field>
+    <mat-divider></mat-divider>
 
-      <mat-form-field appearance="outline"><mat-label>Transmission</mat-label>
-        <mat-select formControlName="transmissionId">
-          <mat-option *ngFor="let t of transmissions" [value]="t.id">{{t.name}}</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Fuel Type</mat-label>
-        <mat-select formControlName="fuelTypeId">
-          <mat-option *ngFor="let f of fuelTypes" [value]="f.id">{{f.name}}</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Body Type</mat-label>
-        <mat-select formControlName="bodyTypeId">
-          <mat-option *ngFor="let b of bodyTypes" [value]="b.id">{{b.name}}</mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <div class="actions">
-        <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || saving">
-          <mat-progress-spinner *ngIf="saving" mode="indeterminate" diameter="18" strokeWidth="3"></mat-progress-spinner>
-          <span *ngIf="!saving">Save</span>
-        </button>
-      </div>
-    </form>
-  </mat-card>
-
-  <mat-card style="margin-top:16px;">
+    <!-- Images -->
+    <mat-card class="section-card">
     <h3>Images</h3>
     <div style="display:flex; gap:8px; flex-wrap:wrap;">
       <div *ngFor="let img of listing?.images" style="position:relative;">
@@ -100,9 +136,12 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
         <img *ngFor="let p of previews" [src]="p" style="width:120px; height:90px; object-fit:cover; border-radius:4px; border:1px solid #ddd;" alt="preview" />
       </div>
     </div>
-  </mat-card>
+    </mat-card>
 
-  <mat-card style="margin-top:16px;">
+    <mat-divider></mat-divider>
+
+    <!-- Features -->
+    <mat-card class="section-card">
     <h3>Additional Information</h3>
     <div><strong>Features</strong></div>
     <div style="display:flex; flex-wrap:wrap; gap:12px;">
@@ -114,13 +153,23 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
         </mat-checkbox>
       </ng-container>
     </div>
-  </mat-card>
+    </mat-card>
+
+    <div class="actions">
+      <button mat-stroked-button type="button" (click)="cancel()">Cancel</button>
+      <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || !form.dirty || saving">
+        <mat-progress-spinner *ngIf="saving" mode="indeterminate" diameter="18" strokeWidth="3"></mat-progress-spinner>
+        <span *ngIf="!saving">Save</span>
+      </button>
+    </div>
+  </form>
   `
 })
 export class ListingEditComponent {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private api = inject(ListingsApiService);
+  private loc = inject(LocationApiService);
   private fb = inject(FormBuilder);
   private destroyRef = inject(DestroyRef);
   private notify = inject(NotificationService);
@@ -147,6 +196,8 @@ export class ListingEditComponent {
   selectedFeatureIds = new Set<number>();
   selectedFiles: File[] = [];
   previews: string[] = [];
+  years: number[] = [];
+  cities: CityDto[] = []; areas: AreaDto[] = [];
 
   form = this.fb.group({
     title: ['', Validators.required],
@@ -161,10 +212,16 @@ export class ListingEditComponent {
     modelId: [null as number | null, Validators.required],
     generationId: [null as number | null],
     derivativeId: [null as number | null],
-    variantId: [null as number | null, Validators.required]
+    variantId: [null as number | null, Validators.required],
+    engineSizeCC: [null as number | null],
+    citySearch: [''], cityId: [null as number | null],
+    areaSearch: [''], areaId: [null as number | null]
   });
 
   ngOnInit() {
+    // Years list
+    const current = new Date().getFullYear();
+    for (let y = current; y >= 1900; y--) this.years.push(y);
     this.id = Number(this.route.snapshot.paramMap.get('id'));
     this.api.getOptions().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(o => { this.transmissions = o.transmissions; this.fuelTypes = o.fuelTypes; this.bodyTypes = o.bodyTypes; });
     this.api.getMakes().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(m => { this.makes = m; this.makes$.next(m); });
@@ -187,7 +244,10 @@ export class ListingEditComponent {
           modelId: null,
           generationId: null,
           derivativeId: null,
-          variantId: null
+          variantId: null,
+          engineSizeCC: l.engineSizeCC ?? null,
+          citySearch: l.cityName ?? '',
+          areaSearch: l.areaName ?? ''
         });
         // Preselect listing features by codes returned from API
         const codes = (l.features ? l.features.map(f => f.featureCode) : (l.featureCodes ?? [])) ?? [];
@@ -226,6 +286,15 @@ export class ListingEditComponent {
     });
   }
 
+  onCitySelected(id: number) {
+    const city = this.cities.find(c => c.id === id);
+    this.form.patchValue({ cityId: id, citySearch: city?.name ?? '', areaId: null, areaSearch: '' }, { emitEvent: false });
+  }
+  onAreaSelected(id: number) {
+    const area = this.areas.find(a => a.id === id);
+    this.form.patchValue({ areaId: id, areaSearch: area?.name ?? '' }, { emitEvent: false });
+  }
+
   save() {
     if (this.form.invalid) return;
     this.saving = true;
@@ -256,6 +325,7 @@ export class ListingEditComponent {
       variantCode: (this.form.value.variantId ? this.variants.find(v => v.id === this.form.value.variantId!)?.code : undefined),
       seats: derivative?.seats,
       doors: derivative?.doors,
+      engineSizeCC: this.form.value.engineSizeCC ?? derivative?.engineCC ?? undefined,
       features: featureInputs
     };
     this.api.updateListing(this.id, dto).subscribe({
@@ -285,6 +355,8 @@ export class ListingEditComponent {
       error: () => { this.saving = false; }
     });
   }
+
+  cancel() { this.router.navigate(['/']); }
 
   onFilesSelected(ev: Event) {
     const input = ev.target as HTMLInputElement;

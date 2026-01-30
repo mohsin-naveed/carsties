@@ -8,6 +8,34 @@
     </mat-card-header>
     <mat-card-content>
       <div class="grid grid--car">
+        <!-- City moved above Year; typeahead styled like dropdown -->
+        <mat-form-field appearance="outline">
+          <mat-label>City</mat-label>
+          <input type="text" matInput [matAutocomplete]="cityAuto" #cityTrigger="matAutocompleteTrigger" formControlName="citySearch" placeholder="Search or select city" />
+          <button *ngIf="!cityLoading" mat-icon-button matSuffix type="button" aria-label="Open city options" (click)="cityTrigger.openPanel()">
+            <mat-icon>arrow_drop_down</mat-icon>
+          </button>
+          <mat-progress-spinner *ngIf="cityLoading" matSuffix diameter="16" strokeWidth="3" mode="indeterminate"></mat-progress-spinner>
+          <mat-autocomplete #cityAuto="matAutocomplete" (optionSelected)="onCitySelectedById($event.option.value)">
+            <mat-option *ngFor="let c of (cities$ | async) ?? cities" [value]="c.id">{{c.name}}<span class="muted"> — {{c.provinceName}}</span></mat-option>
+          </mat-autocomplete>
+          <mat-error *ngIf="cityError">{{cityError}}</mat-error>
+        </mat-form-field>
+
+        <!-- Area shown directly under City; typeahead styled like dropdown -->
+        <mat-form-field *ngIf="hasCitySelected" appearance="outline">
+          <mat-label>Area</mat-label>
+          <input type="text" matInput [matAutocomplete]="areaAuto" #areaTrigger="matAutocompleteTrigger" formControlName="areaSearch" placeholder="Search or select area" />
+          <button *ngIf="!areaLoading" mat-icon-button matSuffix type="button" aria-label="Open area options" (click)="areaTrigger.openPanel()">
+            <mat-icon>arrow_drop_down</mat-icon>
+          </button>
+          <mat-progress-spinner *ngIf="areaLoading" matSuffix diameter="16" strokeWidth="3" mode="indeterminate"></mat-progress-spinner>
+          <mat-autocomplete #areaAuto="matAutocomplete" (optionSelected)="onAreaSelectedById($event.option.value)">
+            <mat-option *ngFor="let a of (areas$ | async) ?? areas" [value]="a.id">{{a.name}}<span class="muted"> — {{a.cityName}}</span></mat-option>
+          </mat-autocomplete>
+          <mat-error *ngIf="areaError">{{areaError}}</mat-error>
+        </mat-form-field>
+
         <mat-form-field appearance="outline">
           <mat-label>Year</mat-label>
           <mat-select formControlName="year">
@@ -35,7 +63,9 @@
           <mat-error *ngIf="form.get('modelId')?.hasError('required') && form.get('modelId')?.touched">Select the model</mat-error>
         </mat-form-field>
 
-        <mat-form-field *ngIf="form.value.modelId && ((((variants$ | async)?.length ?? (variants?.length ?? 0))) > 0)" appearance="outline">
+        
+
+        <mat-form-field *ngIf="showVariantSelector" appearance="outline">
           <mat-label>Variant</mat-label>
           <mat-select formControlName="variantId">
             <mat-option *ngFor="let v of (variants$ | async) ?? variants" [value]="v.id">{{v.name}}</mat-option>
@@ -81,7 +111,7 @@
           <textarea matInput rows="3" formControlName="description" aria-label="Description" matTooltip="Add highlights like condition, service history, extras"></textarea>
         </mat-form-field>
 
-        <ng-container *ngIf="skipVariant || form.value.variantId || (form.value.modelId && ((((variants$ | async)?.length ?? (variants?.length ?? 0))) === 0))">
+        <ng-container *ngIf="showAdditionalInfo">
         <h4 class="subheading">Additional Information!</h4>
         <div class="helper" *ngIf="skipVariant && !form.value.variantId">You chose to skip variant — fill in the details below.</div>
 
@@ -116,7 +146,7 @@
         </mat-form-field>
       </ng-container>
 
-      <div class="features" *ngIf="skipVariant || form.value.variantId || (form.value.modelId && ((((variants$ | async)?.length ?? (variants?.length ?? 0))) === 0))">
+      <div class="features" *ngIf="showAdditionalInfo">
         <div class="features__title">Features</div>
         <div class="features__grid">
           <!-- Selected features first -->
@@ -200,33 +230,7 @@
 
   <mat-divider></mat-divider>
 
-  <!-- Section 4: Location -->
-  <mat-card class="section-card">
-    <mat-card-header>
-      <mat-icon mat-card-avatar color="primary">place</mat-icon>
-      <mat-card-title>Location</mat-card-title>
-      <mat-card-subtitle>City and Area help buyers find your car</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <div class="grid grid--location">
-        <mat-form-field appearance="outline">
-          <mat-label>City</mat-label>
-          <input type="text" matInput [matAutocomplete]="cityAuto" formControlName="citySearch" placeholder="Start typing city name" />
-          <mat-autocomplete #cityAuto="matAutocomplete" (optionSelected)="form.patchValue({ cityId: $event.option.value })">
-            <mat-option *ngFor="let c of (cities$ | async) ?? cities" [value]="c.id">{{c.name}}<span class="muted"> — {{c.provinceName}}</span></mat-option>
-          </mat-autocomplete>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Area</mat-label>
-          <input type="text" matInput [matAutocomplete]="areaAuto" formControlName="areaSearch" placeholder="Type area (optional)" />
-          <mat-autocomplete #areaAuto="matAutocomplete" (optionSelected)="form.patchValue({ areaId: $event.option.value })">
-            <mat-option *ngFor="let a of (areas$ | async) ?? areas" [value]="a.id">{{a.name}}<span class="muted"> — {{a.cityName}}</span></mat-option>
-          </mat-autocomplete>
-        </mat-form-field>
-      </div>
-    </mat-card-content>
-  </mat-card>
+  
 
   <div class="actions">
     <button mat-raised-button color="primary" type="submit" [disabled]="saving || form.invalid">

@@ -81,6 +81,8 @@ export class AddListingComponent {
   readonly variantFeatures$ = new BehaviorSubject<VariantFeatureSnapshot[]>([]);
   readonly cities$ = new BehaviorSubject<CityDto[]>([]);
   readonly areas$ = new BehaviorSubject<AreaDto[]>([]);
+  cityLoading = false; cityError: string | null = null;
+  areaLoading = false; areaError: string | null = null;
 
   // Backing arrays for existing template usage
   makes: MakeDto[] = [];
@@ -100,6 +102,7 @@ export class AddListingComponent {
   previews: string[] = [];
   dragging = false;
   skipVariant = false;
+  hasCitySelected = false;
   @ViewChild('mileageInput') mileageInput!: ElementRef<HTMLInputElement>;
 
   bodyColors: { name: string; hex: string }[] = [
@@ -138,10 +141,14 @@ export class AddListingComponent {
     });
     this.api.getFeatures().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(f => { this.features = f; this.features$.next(f); });
 
-    // City typeahead
+    // City typeahead (dropdown look via suffix icon)
     this.form.get('citySearch')!.valueChanges.pipe(startWith(''), takeUntilDestroyed(this.destroyRef)).subscribe(search => {
       const s = (search || '').toString();
-      this.loc.searchCities(s).subscribe(items => { this.cities = items; this.cities$.next(items); });
+      this.cityLoading = true; this.cityError = null;
+      this.loc.searchCities(s).subscribe({
+        next: items => { this.cities = items; this.cities$.next(items); this.cityLoading = false; },
+        error: () => { this.cityLoading = false; this.cityError = 'Failed to load cities'; }
+      });
     });
     // Area typeahead depends on selected city
     combineLatest([
@@ -149,7 +156,12 @@ export class AddListingComponent {
       this.form.get('cityId')!.valueChanges.pipe(startWith(this.form.value.cityId))
     ]).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(([search, cityId]) => {
       const s = (search || '').toString();
-      this.loc.searchAreas(s, cityId ?? undefined).subscribe(items => { this.areas = items; this.areas$.next(items); });
+      this.hasCitySelected = !!cityId;
+      this.areaLoading = true; this.areaError = null;
+      this.loc.searchAreas(s, cityId ?? undefined).subscribe({
+        next: items => { this.areas = items; this.areas$.next(items); this.areaLoading = false; },
+        error: () => { this.areaLoading = false; this.areaError = 'Failed to load areas'; }
+      });
     });
 
     // When Make changes: load models under make, aggregate derivatives/generations for its models, then refresh variants
@@ -202,7 +214,7 @@ export class AddListingComponent {
         const trId = byName(this.transmissions, der.transmission);
         const fuId = byName(this.fuelTypes, der.fuelType);
         const btId = byName(this.bodyTypes, der.bodyType);
-        this.form.patchValue({ transmissionId: trId, fuelTypeId: fuId, bodyTypeId: btId }, { emitEvent: false });
+        this.form.patchValue({ transmissionId: trId, fuelTypeId: fuId, bodyTypeId: btId, engineSizeCC: der.engineCC ?? null }, { emitEvent: false });
       }
     });
 
@@ -232,6 +244,19 @@ export class AddListingComponent {
       shareReplay(1),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe();
+  }
+
+  // Simplified UI condition getters to avoid complex template expressions
+  get showVariantSelector(): boolean {
+    const hasModel = !!this.form.value.modelId;
+    const count = this.variants.length;
+    return hasModel && count > 0;
+  }
+  get showAdditionalInfo(): boolean {
+    const hasModel = !!this.form.value.modelId;
+    const hasVariant = !!this.form.value.variantId;
+    const count = this.variants.length;
+    return this.skipVariant || hasVariant || (hasModel && count === 0);
   }
 
   findById(list: { id: number }[], id: number | null | undefined) {
@@ -387,6 +412,18 @@ export class AddListingComponent {
     // Build previews
     this.previews.forEach(url => URL.revokeObjectURL(url));
     this.previews = this.selectedFiles.map(f => URL.createObjectURL(f));
+  }
+
+  onCitySelectedById(id: number) {
+    const city = this.cities.find(c => c.id === id);
+    // Set both id and visible text, reset area, and emit for area reload
+    this.form.patchValue({ cityId: id, citySearch: city?.name ?? '', areaId: null, areaSearch: '' }, { emitEvent: true });
+    this.hasCitySelected = !!id;
+  }
+
+  onAreaSelectedById(id: number) {
+    const area = this.areas.find(a => a.id === id);
+    this.form.patchValue({ areaId: id, areaSearch: area?.name ?? '' }, { emitEvent: false });
   }
 
   private afterCreated() {
