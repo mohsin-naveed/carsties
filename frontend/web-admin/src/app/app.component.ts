@@ -19,8 +19,8 @@ import { MatMenuModule } from '@angular/material/menu';
   <button mat-button routerLink="/catalog/generations" routerLinkActive="active">Generations</button>
   <button mat-button routerLink="/catalog/derivatives" routerLinkActive="active">Derivatives</button>
   <button mat-button routerLink="/catalog/variants" routerLinkActive="active">Variants</button>
-  <button mat-button [matMenuTriggerFor]="locationMenu">Location</button>
   <button mat-button routerLink="/catalog/features" routerLinkActive="active">Features</button>
+  <button mat-button [matMenuTriggerFor]="locationMenu" #trigger="matMenuTrigger" (mouseenter)="trigger.openMenu()">Location</button>
   <mat-menu #locationMenu="matMenu">
     <button mat-menu-item routerLink="/location/provinces" routerLinkActive="active">Provinces</button>
     <button mat-menu-item routerLink="/location/cities" routerLinkActive="active">Cities</button>

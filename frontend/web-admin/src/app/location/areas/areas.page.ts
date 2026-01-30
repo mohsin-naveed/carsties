@@ -25,6 +25,7 @@ import { AreaEditDialogComponent } from './area-edit-dialog.component';
     .header { display:flex; align-items:center; gap:.75rem; margin-bottom:.5rem; }
     .spacer { flex:1 1 auto; }
     .controls { display:flex; align-items:end; justify-content:space-between; gap:.75rem; margin-bottom:.75rem; }
+    .controls-left { display:flex; align-items:end; gap:.75rem; }
     .controls-right { display:flex; align-items:end; gap:.75rem; }
     .search { width:320px; max-width:40vw; }
     textarea.bulk { width:540px; min-height:96px; }
@@ -95,20 +96,16 @@ export class AreasPage {
 
   openCreate(){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(AreaEditDialogComponent, { data: { title: 'Add Area' }, width: '520px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { name: string; cityId: number; latitude?: number; longitude?: number } | undefined) => {
+    const provinces = this.provinces$.getValue();
+    const cities = this.cities$.getValue();
+    const ref = this.dialog.open(AreaEditDialogComponent, { data: { title: 'Add Area', provinces, cities, isEdit: false }, width: '520px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name: string; cityId: number } | undefined) => {
       if (res){
         const names = res.name.split(',').map(x => x.trim()).filter(x => x);
-        const unique = names.filter((v,i,a)=>a.findIndex(z=>z.toLowerCase()===v.toLowerCase())===i);
-        let created = 0, failed = 0;
-        const next = () => { this.notify.success(`Created ${created}, Failed ${failed}`); this.load(); };
-        if (!unique.length){ this.notify.error('Name is required'); return; }
-        let remaining = unique.length;
-        unique.forEach(n => {
-          this.api.createArea({ name: n, cityId: res.cityId, latitude: res.latitude, longitude: res.longitude }).subscribe({
-            next: () => { created++; if (--remaining === 0) next(); },
-            error: () => { failed++; if (--remaining === 0) next(); }
-          });
+        if (!names.length){ this.notify.error('Name is required'); return; }
+        this.api.bulkCreateAreas(names.join(','), res.cityId).subscribe({
+          next: r => { this.notify.success(`Created ${r.succeeded}, Failed ${r.failed}`); this.load(); },
+          error: () => this.notify.error('Bulk create failed')
         });
       }
     });
@@ -116,8 +113,11 @@ export class AreasPage {
 
   openEdit(a: AreaDto){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(AreaEditDialogComponent, { data: { title: 'Edit Area', name: a.name, cityId: a.cityId, latitude: a.latitude, longitude: a.longitude }, width: '520px', autoFocus: true, restoreFocus: true });
-    ref.afterClosed().subscribe((res: { name?: string; cityId?: number; latitude?: number; longitude?: number } | undefined) => {
+    const provinces = this.provinces$.getValue();
+    const cities = this.cities$.getValue();
+    const city = cities.find(c => c.id === a.cityId);
+    const ref = this.dialog.open(AreaEditDialogComponent, { data: { title: 'Edit Area', name: a.name, cityId: a.cityId, provinceId: city?.provinceId, provinces, cities, isEdit: true }, width: '520px', autoFocus: true, restoreFocus: true });
+    ref.afterClosed().subscribe((res: { name?: string; cityId?: number } | undefined) => {
       if (res){ this.api.updateArea(a.id, res).subscribe({ next: () => { this.notify.success('Area updated'); this.load(); } }); }
     });
   }

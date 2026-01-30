@@ -80,21 +80,15 @@ export class CitiesPage {
 
   openCreate(){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(CityEditDialogComponent, { data: { title: 'Add City' }, width: '520px', autoFocus: true, restoreFocus: true });
+    const provinces = this.provinces$.getValue();
+    const ref = this.dialog.open(CityEditDialogComponent, { data: { title: 'Add City', provinces, isEdit: false }, width: '520px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { name: string; provinceId: number } | undefined) => {
       if (res){
-        // Support comma-separated names to create multiple entries
         const names = res.name.split(',').map(x => x.trim()).filter(x => x);
-        const unique = names.filter((v,i,a)=>a.findIndex(z=>z.toLowerCase()===v.toLowerCase())===i);
-        let created = 0, failed = 0;
-        const next = () => { this.notify.success(`Created ${created}, Failed ${failed}`); this.load(); };
-        if (!unique.length){ this.notify.error('Name is required'); return; }
-        let remaining = unique.length;
-        unique.forEach(n => {
-          this.api.createCity({ name: n, provinceId: res.provinceId }).subscribe({
-            next: () => { created++; if (--remaining === 0) next(); },
-            error: () => { failed++; if (--remaining === 0) next(); }
-          });
+        if (!names.length){ this.notify.error('Name is required'); return; }
+        this.api.bulkCreateCities(names.join(','), res.provinceId).subscribe({
+          next: r => { this.notify.success(`Created ${r.succeeded}, Failed ${r.failed}`); this.load(); },
+          error: () => this.notify.error('Bulk create failed')
         });
       }
     });
@@ -102,7 +96,8 @@ export class CitiesPage {
 
   openEdit(c: CityDto){
     (document.activeElement as HTMLElement | null)?.blur();
-    const ref = this.dialog.open(CityEditDialogComponent, { data: { title: 'Edit City', name: c.name, provinceId: c.provinceId }, width: '520px', autoFocus: true, restoreFocus: true });
+    const provinces = this.provinces$.getValue();
+    const ref = this.dialog.open(CityEditDialogComponent, { data: { title: 'Edit City', name: c.name, provinceId: c.provinceId, provinces, isEdit: true }, width: '520px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { name?: string; provinceId?: number } | undefined) => {
       if (res){ this.api.updateCity(c.id, res).subscribe({ next: () => { this.notify.success('City updated'); this.load(); } }); }
     });
