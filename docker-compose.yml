@@ -12,6 +12,18 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5  
+  location-svc:
+    build:
+      context: .
+      dockerfile: src/LocationService/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ConnectionStrings__DefaultConnection: Server=postgres;Port=5432;Username=postgres;Password=postgrespw;Database=location
+    depends_on:
+      - postgres
+    ports:
+      - "7010:80"
+    restart: unless-stopped
 volumes:
   pgdata: 
   mongodata:

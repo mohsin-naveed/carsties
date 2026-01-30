@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: location-svc
+spec:
+  selector:
+    matchLabels:
+      app: location-svc
+  template:
+    metadata:
+      labels:
+        app: location-svc
+    spec:
+      containers:
+      - name: location-svc
+        image: trycatchlearn/location-svc
+        imagePullPolicy: Never
+        envFrom:
+         - configMapRef:
+             name: location-svc-config
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: location-clusterip
+spec:
+  type: ClusterIP
+  selector:
+    app: location-svc
+  ports:
+  - port: 80
+    targetPort: 80

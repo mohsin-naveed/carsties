@@ -7,6 +7,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSortModule, Sort } from '@angular/material/sort';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { LocationApiService, CityDto, ProvinceDto } from '../location-api.service';
@@ -17,7 +19,7 @@ import { CityEditDialogComponent } from './city-edit-dialog.component';
 @Component({
   selector: 'app-cities-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatDialogModule],
+  imports: [CommonModule, FormsModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatDialogModule, MatSelectModule, MatSortModule],
   templateUrl: './cities.page.html',
   styles: [`
     .header { display:flex; align-items:center; gap:.75rem; margin-bottom:.5rem; }
@@ -37,27 +39,36 @@ export class CitiesPage {
   private readonly notify = inject(NotificationService);
   private readonly dialog = inject(MatDialog);
 
-  readonly displayedColumns = ['city','province','code','slug','actions'];
+  readonly displayedColumns = ['province','city','code','slug','actions'];
   readonly cities$ = new BehaviorSubject<CityDto[]>([]);
   readonly provinces$ = new BehaviorSubject<ProvinceDto[]>([]);
   readonly filter$ = new BehaviorSubject<string>('');
-  readonly filtered$ = combineLatest([this.cities$, this.filter$]).pipe(
-    map(([items, q]) => {
+  readonly selectedProvinceId$ = new BehaviorSubject<number | null>(null);
+  readonly sort$ = new BehaviorSubject<{ active: string; direction: 'asc'|'desc' }>({ active: 'province', direction: 'asc' });
+  readonly filtered$ = combineLatest([this.cities$, this.filter$, this.selectedProvinceId$, this.sort$]).pipe(
+    map(([items, q, pid, sort]) => {
+      let list = items;
+      if (pid) list = list.filter(i => i.provinceId === pid);
       const query = q.toLowerCase().trim();
-      return query ? items.filter(m => m.name.toLowerCase().includes(query) || (m.provinceName||'').toLowerCase().includes(query)) : items;
+      if (query) list = list.filter(m => m.name.toLowerCase().includes(query) || (m.provinceName||'').toLowerCase().includes(query) || m.code.toLowerCase().includes(query));
+      // client-side sort
+      const dir = sort.direction === 'desc' ? -1 : 1;
+      list = [...list].sort((a,b) => {
+        const key = sort.active;
+        const av = key === 'province' ? (a.provinceName||'') : key === 'city' ? a.name : key === 'code' ? a.code : '';
+        const bv = key === 'province' ? (b.provinceName||'') : key === 'city' ? b.name : key === 'code' ? b.code : '';
+        return av.localeCompare(bv) * dir;
+      });
+      return list;
     })
   );
-
-  bulkProvinceId: number | null = null;
-  bulkNames = '';
-  previewNames: string[] = [];
 
   constructor(){ this.load(); }
 
   load(){
-    // load provinces for bulk target and filter
+    // load provinces for filter and cities
     this.api.getProvinces({ page: 1, pageSize: 200 }).subscribe({ next: res => this.provinces$.next(res.items) });
-    this.api.getCities({ page: 1, pageSize: 1000 }).subscribe({
+    this.api.getCities({ page: 1, pageSize: 2000 }).subscribe({
       next: res => this.cities$.next(res.items),
       error: () => this.notify.error('Failed to load cities')
     });
@@ -65,29 +76,27 @@ export class CitiesPage {
 
   onFilterInput(val: string){ this.filter$.next(val); }
 
-  parsePreview(){
-    const names = (this.bulkNames||'').split(',').map(x => x.trim()).filter(x => x).filter((v,i,a)=>a.findIndex(z=>z.toLowerCase()===v.toLowerCase())===i);
-    this.previewNames = names;
-  }
-
-  doBulkCreate(){
-    if (!this.bulkProvinceId){ this.notify.error('Select a province'); return; }
-    if (!this.previewNames.length){ this.notify.error('Enter comma-separated names'); return; }
-    this.api.bulkCreateCities(this.previewNames.join(','), this.bulkProvinceId).subscribe({
-      next: res => {
-        const msg = `Created ${res.succeeded}, Failed ${res.failed}`;
-        this.notify.success(msg);
-        this.load();
-      },
-      error: () => this.notify.error('Bulk create failed')
-    });
-  }
+  onProvinceFilterChange(id: number | null){ this.selectedProvinceId$.next(id ?? null); }
 
   openCreate(){
     (document.activeElement as HTMLElement | null)?.blur();
     const ref = this.dialog.open(CityEditDialogComponent, { data: { title: 'Add City' }, width: '520px', autoFocus: true, restoreFocus: true });
     ref.afterClosed().subscribe((res: { name: string; provinceId: number } | undefined) => {
-      if (res){ this.api.createCity(res).subscribe({ next: () => { this.notify.success('City created'); this.load(); } }); }
+      if (res){
+        // Support comma-separated names to create multiple entries
+        const names = res.name.split(',').map(x => x.trim()).filter(x => x);
+        const unique = names.filter((v,i,a)=>a.findIndex(z=>z.toLowerCase()===v.toLowerCase())===i);
+        let created = 0, failed = 0;
+        const next = () => { this.notify.success(`Created ${created}, Failed ${failed}`); this.load(); };
+        if (!unique.length){ this.notify.error('Name is required'); return; }
+        let remaining = unique.length;
+        unique.forEach(n => {
+          this.api.createCity({ name: n, provinceId: res.provinceId }).subscribe({
+            next: () => { created++; if (--remaining === 0) next(); },
+            error: () => { failed++; if (--remaining === 0) next(); }
+          });
+        });
+      }
     });
   }
 
@@ -105,4 +114,5 @@ export class CitiesPage {
       if (ok){ this.api.deleteCity(c.id).subscribe({ next: () => { this.notify.success('City deleted'); this.load(); }, error: err => this.notify.error(err?.error || 'Delete failed') }); }
     });
   }
+  onSortChange(ev: Sort){ const dir = (ev.direction || 'asc') as 'asc'|'desc'; const active = ev.active || 'province'; this.sort$.next({ active, direction: dir }); }
 }

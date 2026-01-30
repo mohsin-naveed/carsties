@@ -1,12 +1,26 @@
 <section class="header">
   <h2>Areas</h2>
   <span class="spacer"></span>
-  <a mat-stroked-button routerLink="/location/provinces">Provinces</a>
-  <a mat-stroked-button routerLink="/location/cities">Cities</a>
   <button mat-flat-button color="primary" (click)="openCreate()">Add Area</button>
-</section>
+  </section>
 
 <section class="controls">
+  <div class="controls-left">
+    <mat-form-field appearance="outline">
+      <mat-label>Province</mat-label>
+      <mat-select (selectionChange)="onProvinceFilterChange($event.value)" [value]="(selectedProvinceId$ | async)" placeholder="Select Province">
+        <mat-option [value]="null">All Provinces</mat-option>
+        <mat-option *ngFor="let p of (provinces$ | async) ?? []" [value]="p.id">{{ p.name }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>City</mat-label>
+      <mat-select (selectionChange)="onCityFilterChange($event.value)" [value]="(selectedCityId$ | async)" placeholder="Select City">
+        <mat-option [value]="null">All Cities</mat-option>
+        <mat-option *ngFor="let c of filteredCitiesForProvince$ | async" [value]="c.id">{{ c.name }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
   <div class="controls-right">
     <mat-form-field appearance="outline" class="search">
       <mat-label>Search</mat-label>
@@ -15,17 +29,21 @@
   </div>
 </section>
 
-<table mat-table [dataSource]="(filtered$ | async) ?? []" class="mat-elevation-z1">
-  <ng-container matColumnDef="area">
-    <th mat-header-cell *matHeaderCellDef>Area</th>
-    <td mat-cell *matCellDef="let a">{{ a.name }}</td>
+<table mat-table [dataSource]="(filtered$ | async) ?? []" matSort (matSortChange)="onSortChange($event)" class="mat-elevation-z1">
+  <ng-container matColumnDef="province">
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="province">Province</th>
+    <td mat-cell *matCellDef="let a">{{ a.provinceName }}</td>
   </ng-container>
   <ng-container matColumnDef="city">
-    <th mat-header-cell *matHeaderCellDef>City</th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="city">City</th>
     <td mat-cell *matCellDef="let a">{{ a.cityName }}</td>
   </ng-container>
+  <ng-container matColumnDef="area">
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="area">Area</th>
+    <td mat-cell *matCellDef="let a">{{ a.name }}</td>
+  </ng-container>
   <ng-container matColumnDef="code">
-    <th mat-header-cell *matHeaderCellDef>Code</th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="code">Code</th>
     <td mat-cell *matCellDef="let a">{{ a.code }}</td>
   </ng-container>
   <ng-container matColumnDef="slug">
@@ -44,22 +62,4 @@
   <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
 </table>
 
-<h3>Bulk Create</h3>
-<div class="controls">
-  <div class="controls-right">
-    <mat-form-field appearance="outline">
-      <mat-label>Target City ID</mat-label>
-      <input matInput type="number" [(ngModel)]="bulkCityId" placeholder="City Id" />
-    </mat-form-field>
-  </div>
-</div>
-
-<mat-form-field appearance="outline" class="w-100">
-  <mat-label>Comma-separated area names</mat-label>
-  <textarea matInput class="bulk" [(ngModel)]="bulkNames" (input)="parsePreview()" placeholder="e.g. DHA Phase 5, Bahria Town, Gulberg"></textarea>
-  </mat-form-field>
-
-<p>Preview ({{ previewNames.length }}): {{ previewNames.join(', ') }}</p>
-<div>
-  <button mat-stroked-button color="primary" (click)="doBulkCreate()">Create Areas</button>
-</div>
+<!-- bulk create removed as requested; multiple names handled via Add dialog by comma-separated input -->

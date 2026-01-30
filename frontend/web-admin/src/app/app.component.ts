@@ -4,11 +4,12 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatMenuModule } from '@angular/material/menu';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatToolbarModule, MatButtonModule, MatIconModule, MatSnackBarModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatToolbarModule, MatButtonModule, MatIconModule, MatSnackBarModule, MatMenuModule],
   template: `
     <mat-toolbar color="primary" class="app-toolbar">
       <span>{{ title() }}</span>
@@ -18,7 +19,13 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
   <button mat-button routerLink="/catalog/generations" routerLinkActive="active">Generations</button>
   <button mat-button routerLink="/catalog/derivatives" routerLinkActive="active">Derivatives</button>
   <button mat-button routerLink="/catalog/variants" routerLinkActive="active">Variants</button>
+  <button mat-button [matMenuTriggerFor]="locationMenu">Location</button>
   <button mat-button routerLink="/catalog/features" routerLinkActive="active">Features</button>
+  <mat-menu #locationMenu="matMenu">
+    <button mat-menu-item routerLink="/location/provinces" routerLinkActive="active">Provinces</button>
+    <button mat-menu-item routerLink="/location/cities" routerLinkActive="active">Cities</button>
+    <button mat-menu-item routerLink="/location/areas" routerLinkActive="active">Areas</button>
+  </mat-menu>
   
     </mat-toolbar>
     <main class="app-main">

@@ -6,6 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSortModule, Sort } from '@angular/material/sort';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { LocationApiService, ProvinceDto } from '../location-api.service';
@@ -16,7 +17,7 @@ import { ConfirmDialogComponent } from '../../shared/confirm-dialog.component';
 @Component({
   selector: 'app-provinces-page',
   standalone: true,
-  imports: [CommonModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatDialogModule],
+  imports: [CommonModule, MatTableModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatDialogModule, MatSortModule],
   templateUrl: './provinces.page.html',
   styles: [`
     .header { display:flex; align-items:center; gap:.75rem; margin-bottom:.5rem; }
@@ -38,10 +39,19 @@ export class ProvincesPage {
   readonly displayedColumns = ['name','code','actions'];
   readonly provinces$ = new BehaviorSubject<ProvinceDto[]>([]);
   readonly filter$ = new BehaviorSubject<string>('');
-  readonly filtered$ = combineLatest([this.provinces$, this.filter$]).pipe(
-    map(([items, q]) => {
+  readonly sort$ = new BehaviorSubject<{ active: string; direction: 'asc'|'desc' }>({ active: 'name', direction: 'asc' });
+  readonly filtered$ = combineLatest([this.provinces$, this.filter$, this.sort$]).pipe(
+    map(([items, q, sort]) => {
       const query = q.toLowerCase().trim();
-      return query ? items.filter(m => m.name.toLowerCase().includes(query) || m.code.toLowerCase().includes(query)) : items;
+      let list = query ? items.filter(m => m.name.toLowerCase().includes(query) || m.code.toLowerCase().includes(query)) : items;
+      const dir = sort.direction === 'desc' ? -1 : 1;
+      list = [...list].sort((a,b) => {
+        const key = sort.active;
+        const av = key === 'name' ? a.name : a.code;
+        const bv = key === 'name' ? b.name : b.code;
+        return av.localeCompare(bv) * dir;
+      });
+      return list;
     })
   );
 
@@ -78,4 +88,6 @@ export class ProvincesPage {
       if (ok){ this.api.deleteProvince(p.id).subscribe({ next: () => { this.notify.success('Province deleted'); this.load(); }, error: err => this.notify.error(err?.error || 'Delete failed') }); }
     });
   }
+
+  onSortChange(ev: Sort){ const dir = (ev.direction || 'asc') as 'asc'|'desc'; const active = ev.active || 'name'; this.sort$.next({ active, direction: dir }); }
 }

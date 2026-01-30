@@ -2,8 +2,6 @@
   <h2>Provinces</h2>
   <span class="spacer"></span>
   <button mat-flat-button color="primary" (click)="openCreate()">Add Province</button>
-  <a mat-stroked-button routerLink="/location/cities">Cities</a>
-  <a mat-stroked-button routerLink="/location/areas">Areas</a>
   </section>
 
 <section class="controls">
@@ -15,13 +13,13 @@
   </div>
   </section>
 
-<table mat-table [dataSource]="(filtered$ | async) ?? []" class="mat-elevation-z1">
+<table mat-table [dataSource]="(filtered$ | async) ?? []" matSort (matSortChange)="onSortChange($event)" class="mat-elevation-z1">
   <ng-container matColumnDef="name">
-    <th mat-header-cell *matHeaderCellDef>Province</th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="name">Province</th>
     <td mat-cell *matCellDef="let p">{{ p.name }}</td>
   </ng-container>
   <ng-container matColumnDef="code">
-    <th mat-header-cell *matHeaderCellDef>Code</th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header="code">Code</th>
     <td mat-cell *matCellDef="let p">{{ p.code }}</td>
   </ng-container>
   <ng-container matColumnDef="actions">
