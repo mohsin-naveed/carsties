@@ -84,7 +84,7 @@ public class DbInitializer
             Seats = 5,
             Doors = 4,
             EngineSizeCC = 1998,
-            EngineL = 2.0m,
+            EngineSizeL = 2.0m,
             BatteryKWh = null
         };
 

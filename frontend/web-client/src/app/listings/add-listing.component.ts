@@ -6,6 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatOptionModule } from '@angular/material/core';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,6 +15,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { ObserversModule } from '@angular/cdk/observers';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ListingsApiService, MakeDto, ModelDto, GenerationDto, DerivativeDto, VariantDto, OptionDto, CreateListingDto, VariantFeatureSnapshot, FeatureDto, ListingFeatureInputDto } from './listings-api.service';
+import { LocationApiService, CityDto, AreaDto } from '../location/location-api.service';
 import { BehaviorSubject, combineLatest, forkJoin } from 'rxjs';
 import { map, shareReplay, distinctUntilChanged, switchMap, startWith, finalize } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -23,13 +25,14 @@ import { DestroyRef } from '@angular/core';
 @Component({
   selector: 'app-add-listing',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ObserversModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatOptionModule, MatButtonModule, MatCardModule, MatProgressSpinnerModule, MatCheckboxModule, MatIconModule, MatTooltipModule, MatDividerModule],
+  imports: [CommonModule, ReactiveFormsModule, ObserversModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatOptionModule, MatButtonModule, MatCardModule, MatProgressSpinnerModule, MatCheckboxModule, MatIconModule, MatTooltipModule, MatDividerModule, MatAutocompleteModule],
   templateUrl: './add-listing.component.html',
   styleUrls: ['./add-listing.component.scss']
 })
 export class AddListingComponent {
   private fb = inject(FormBuilder);
   private api = inject(ListingsApiService);
+  private loc = inject(LocationApiService);
   private notify = inject(NotificationService);
   private destroyRef = inject(DestroyRef);
 
@@ -41,6 +44,7 @@ export class AddListingComponent {
     year: [null as number | null, [Validators.required, Validators.min(1900)]],
     mileage: [null as number | null, [Validators.required, Validators.min(1)]],
     price: [null as number | null, [Validators.required, Validators.min(1)]],
+    bodyColor: [null as string | null],
     makeId: [null as number | null, Validators.required],
     modelId: [null as number | null, Validators.required],
     // Hidden fields, set programmatically based on selected variant
@@ -50,7 +54,18 @@ export class AddListingComponent {
     variantId: [null as number | null],
     transmissionId: [null as number | null],
     fuelTypeId: [null as number | null],
-    bodyTypeId: [null as number | null, Validators.required]
+    bodyTypeId: [null as number | null, Validators.required],
+    // Location typeahead controls
+    citySearch: [''],
+    cityId: [null as number | null],
+    areaSearch: [''],
+    areaId: [null as number | null],
+    // Contact info
+    contactName: ['', [Validators.maxLength(100)]],
+    contactPhone: ['', [Validators.maxLength(30)]],
+    contactEmail: ['', [Validators.email, Validators.maxLength(200)]],
+    // Engine CC (optional, shown under Body Type)
+    engineSizeCC: [null as number | null, [Validators.min(0)]]
   });
 
   // State subjects (mirroring web-admin style)
@@ -64,6 +79,8 @@ export class AddListingComponent {
   readonly bodyTypes$ = new BehaviorSubject<OptionDto[]>([]);
   readonly features$ = new BehaviorSubject<FeatureDto[]>([]);
   readonly variantFeatures$ = new BehaviorSubject<VariantFeatureSnapshot[]>([]);
+  readonly cities$ = new BehaviorSubject<CityDto[]>([]);
+  readonly areas$ = new BehaviorSubject<AreaDto[]>([]);
 
   // Backing arrays for existing template usage
   makes: MakeDto[] = [];
@@ -76,12 +93,36 @@ export class AddListingComponent {
   bodyTypes: OptionDto[] = [];
   variantFeatures: VariantFeatureSnapshot[] = [];
   features: FeatureDto[] = [];
+  cities: CityDto[] = [];
+  areas: AreaDto[] = [];
   selectedFeatureIds = new Set<number>();
   selectedFiles: File[] = [];
   previews: string[] = [];
   dragging = false;
   skipVariant = false;
   @ViewChild('mileageInput') mileageInput!: ElementRef<HTMLInputElement>;
+
+  bodyColors: { name: string; hex: string }[] = [
+    { name: 'White', hex: '#FFFFFF' },
+    { name: 'Black', hex: '#000000' },
+    { name: 'Silver', hex: '#C0C0C0' },
+    { name: 'Gray', hex: '#808080' },
+    { name: 'Blue', hex: '#1E40AF' },
+    { name: 'Red', hex: '#DC2626' },
+    { name: 'Green', hex: '#16A34A' },
+    { name: 'Brown', hex: '#8B4513' },
+    { name: 'Beige', hex: '#F5F5DC' },
+    { name: 'Gold', hex: '#D4AF37' },
+    { name: 'Yellow', hex: '#F59E0B' },
+    { name: 'Orange', hex: '#F97316' },
+    { name: 'Purple', hex: '#7C3AED' },
+    { name: 'Maroon', hex: '#800000' },
+    { name: 'Navy', hex: '#001F3F' },
+    { name: 'Teal', hex: '#008080' },
+    { name: 'Burgundy', hex: '#800020' },
+    { name: 'Bronze', hex: '#CD7F32' },
+    { name: 'Champagne', hex: '#F7E7CE' }
+  ];
 
   constructor() {
     // Build years dropdown (descending from current year to 1900)
@@ -96,6 +137,20 @@ export class AddListingComponent {
       this.transmissions$.next(o.transmissions); this.fuelTypes$.next(o.fuelTypes); this.bodyTypes$.next(o.bodyTypes);
     });
     this.api.getFeatures().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(f => { this.features = f; this.features$.next(f); });
+
+    // City typeahead
+    this.form.get('citySearch')!.valueChanges.pipe(startWith(''), takeUntilDestroyed(this.destroyRef)).subscribe(search => {
+      const s = (search || '').toString();
+      this.loc.searchCities(s).subscribe(items => { this.cities = items; this.cities$.next(items); });
+    });
+    // Area typeahead depends on selected city
+    combineLatest([
+      this.form.get('areaSearch')!.valueChanges.pipe(startWith('')),
+      this.form.get('cityId')!.valueChanges.pipe(startWith(this.form.value.cityId))
+    ]).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(([search, cityId]) => {
+      const s = (search || '').toString();
+      this.loc.searchAreas(s, cityId ?? undefined).subscribe(items => { this.areas = items; this.areas$.next(items); });
+    });
 
     // When Make changes: load models under make, aggregate derivatives/generations for its models, then refresh variants
     this.form.get('makeId')!.valueChanges.pipe(distinctUntilChanged(), takeUntilDestroyed(this.destroyRef)).subscribe(makeId => {
@@ -192,6 +247,11 @@ export class AddListingComponent {
 
   submit() {
     if (this.form.invalid || this.saving) return;
+    // Enforce variant selection rule: must select or explicitly skip
+    if (!this.form.value.variantId && !this.skipVariant) {
+      this.notify.error('Please select a Variant or choose Skip.');
+      return;
+    }
     this.saving = true;
     this.form.disable({ emitEvent: false });
     const raw = this.form.value;
@@ -216,6 +276,7 @@ export class AddListingComponent {
       year: raw.year!,
       mileage: raw.mileage!,
       price: raw.price!,
+      bodyColor: raw.bodyColor ?? undefined,
       makeCode: this.makes.find(x => x.id === raw.makeId!)?.code!,
       modelCode: this.models.find(x => x.id === raw.modelId!)?.code!,
       generationCode: this.generations.find(x => x.id === raw.generationId!)?.code!,
@@ -235,11 +296,29 @@ export class AddListingComponent {
         ?? this.derivatives.find(x => x.id === raw.derivativeId!)?.transmission,
       fuelTypeName: (raw.fuelTypeId ? this.fuelTypes.find(x => x.id === raw.fuelTypeId)?.name : undefined)
         ?? this.derivatives.find(x => x.id === raw.derivativeId!)?.fuelType,
+      // Location snapshots
+      cityCode: (raw.cityId ? this.cities.find(c => c.id === raw.cityId!)?.code : undefined),
+      cityName: (raw.cityId ? this.cities.find(c => c.id === raw.cityId!)?.name : undefined),
+      areaCode: (raw.areaId ? this.areas.find(a => a.id === raw.areaId!)?.code : undefined),
+      areaName: (raw.areaId ? this.areas.find(a => a.id === raw.areaId!)?.name : undefined),
+      provinceName: (raw.cityId ? this.cities.find(c => c.id === raw.cityId!)?.provinceName : undefined),
+      // ProvinceCode will be derived server-side if omitted; could fetch via API when needed
       seats: derivative?.seats,
       doors: derivative?.doors,
+      engineSizeCC: raw.engineSizeCC ?? derivative?.engineCC ?? undefined,
+      engineSizeL: derivative?.engineL ?? undefined,
+      // Contact info
+      contactName: raw.contactName || undefined,
+      contactPhone: raw.contactPhone || undefined,
+      contactEmail: raw.contactEmail || undefined,
       features: featureInputs
     };
-    this.api.createListing(dto)
+    const city = (raw.cityId ? this.cities.find(c => c.id === raw.cityId!) : undefined);
+    const ensureProvince$ = (!dto.provinceCode && city?.provinceId)
+      ? this.loc.getProvince(city!.provinceId).pipe(map(p => { dto.provinceCode = p.code; return dto; }))
+      : new BehaviorSubject(dto);
+
+    ensureProvince$.pipe(switchMap(finalDto => this.api.createListing(finalDto)))
       .subscribe({
         next: (created) => {
           const upload$ = this.selectedFiles.length ? this.api.uploadListingImages(created.id, this.selectedFiles) : undefined;

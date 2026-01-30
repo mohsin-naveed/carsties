@@ -10,6 +10,7 @@ public class ListingDto
     public int Mileage { get; set; }
     public decimal Price { get; set; }
     public string? Color { get; set; }
+    public string? BodyColor { get; set; }
     // Codes for Catalog references
     public string? MakeCode { get; set; }
     public string? ModelCode { get; set; }
@@ -19,6 +20,14 @@ public class ListingDto
     public string? TransmissionTypeCode { get; set; }
     public string? FuelTypeCode { get; set; }
     public string? BodyTypeCode { get; set; }
+
+    // Location snapshots
+    public string? ProvinceCode { get; set; }
+    public string? ProvinceName { get; set; }
+    public string? CityCode { get; set; }
+    public string? CityName { get; set; }
+    public string? AreaCode { get; set; }
+    public string? AreaName { get; set; }
 
     // Snapshots
     public string? MakeName { get; set; }
@@ -32,8 +41,13 @@ public class ListingDto
     public short? Seats { get; set; }
     public short? Doors { get; set; }
     public int? EngineSizeCC { get; set; }
-    public decimal? EngineL { get; set; }
+    public decimal? EngineSizeL { get; set; }
     public decimal? BatteryKWh { get; set; }
+
+    // Contact information
+    public string? ContactName { get; set; }
+    public string? ContactPhone { get; set; }
+    public string? ContactEmail { get; set; }
 
     // Note: Codes are already represented above
 
@@ -51,6 +65,7 @@ public partial class CreateListingDto : IValidatableObject
     public int Mileage { get; set; }
     public decimal Price { get; set; }
     public string? Color { get; set; }
+    public string? BodyColor { get; set; }
     // Required codes instead of IDs
     public string MakeCode { get; set; } = string.Empty;
     public string ModelCode { get; set; } = string.Empty;
@@ -60,6 +75,14 @@ public partial class CreateListingDto : IValidatableObject
     public string? TransmissionTypeCode { get; set; }
     public string? FuelTypeCode { get; set; }
     public string BodyTypeCode { get; set; } = string.Empty;
+
+    // Location snapshots
+    public string? ProvinceCode { get; set; }
+    public string? ProvinceName { get; set; }
+    public string? CityCode { get; set; }
+    public string? CityName { get; set; }
+    public string? AreaCode { get; set; }
+    public string? AreaName { get; set; }
 
     // Optional snapshots supplied by client (names only)
     public string? MakeName { get; set; }
@@ -74,8 +97,12 @@ public partial class CreateListingDto : IValidatableObject
     public short? Seats { get; set; }
     public short? Doors { get; set; }
     public int? EngineSizeCC { get; set; }
-    public decimal? EngineL { get; set; }
+    public decimal? EngineSizeL { get; set; }
     public decimal? BatteryKWh { get; set; }
+    // Contact information
+    public string? ContactName { get; set; }
+    public string? ContactPhone { get; set; }
+    public string? ContactEmail { get; set; }
     // Preferred: full feature details; Back-compat: FeatureCodes
     public List<ListingFeatureInputDto>? Features { get; set; }
     public string[]? FeatureCodes { get; set; }
@@ -111,6 +138,7 @@ public partial class UpdateListingDto : IValidatableObject
     public int? Mileage { get; set; }
     public decimal? Price { get; set; }
     public string? Color { get; set; }
+    public string? BodyColor { get; set; }
     public string? MakeCode { get; set; }
     public string? ModelCode { get; set; }
     public string? GenerationCode { get; set; }
@@ -119,8 +147,22 @@ public partial class UpdateListingDto : IValidatableObject
     public string? TransmissionTypeCode { get; set; }
     public string? FuelTypeCode { get; set; }
     public string? BodyTypeCode { get; set; }
+    // Location snapshots
+    public string? ProvinceCode { get; set; }
+    public string? ProvinceName { get; set; }
+    public string? CityCode { get; set; }
+    public string? CityName { get; set; }
+    public string? AreaCode { get; set; }
+    public string? AreaName { get; set; }
     public short? Seats { get; set; }
     public short? Doors { get; set; }
+    public int? EngineSizeCC { get; set; }
+    public decimal? EngineSizeL { get; set; }
+    public decimal? BatteryKWh { get; set; }
+    // Contact information
+    public string? ContactName { get; set; }
+    public string? ContactPhone { get; set; }
+    public string? ContactEmail { get; set; }
     public List<ListingFeatureInputDto>? Features { get; set; }
     public string[]? FeatureCodes { get; set; }
 }

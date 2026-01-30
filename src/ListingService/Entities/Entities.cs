@@ -8,6 +8,7 @@ public class Listing {
     public int Mileage { get; set; }
     public decimal Price { get; set; }
     public string? Color { get; set; }
+    public string? BodyColor { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 
@@ -20,6 +21,19 @@ public class Listing {
     public string? TransmissionTypeCode { get; set; }
     public string? FuelTypeCode { get; set; }
     public string? BodyTypeCode { get; set; }
+
+    // Location snapshots (codes + names)
+    public string? ProvinceCode { get; set; }
+    public string? ProvinceName { get; set; }
+    public string? CityCode { get; set; }
+    public string? CityName { get; set; }
+    public string? AreaCode { get; set; }
+    public string? AreaName { get; set; }
+
+    // Contact information
+    public string? ContactName { get; set; }
+    public string? ContactPhone { get; set; }
+    public string? ContactEmail { get; set; }
 
     // Snapshot names from Catalog DB
 
@@ -35,7 +49,7 @@ public class Listing {
     public short? Seats { get; set; }
     public short? Doors { get; set; }
     public int? EngineSizeCC { get; set; }
-    public decimal? EngineL { get; set; }
+    public decimal? EngineSizeL { get; set; }
     public decimal? BatteryKWh { get; set; }
 
     // Images

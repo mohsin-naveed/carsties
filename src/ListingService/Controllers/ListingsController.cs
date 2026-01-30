@@ -608,16 +608,16 @@ public class ListingsController(ListingDbContext context, IMapper mapper, Catalo
 
         // Populate engine size and battery from payload if provided; else from Catalog Derivative
         if (dto.EngineSizeCC.HasValue) listing.EngineSizeCC = dto.EngineSizeCC.Value;
-        if (dto.EngineL.HasValue) listing.EngineL = dto.EngineL.Value;
+        if (dto.EngineSizeL.HasValue) listing.EngineSizeL = dto.EngineSizeL.Value;
         if (dto.BatteryKWh.HasValue) listing.BatteryKWh = dto.BatteryKWh.Value;
-        if ((!dto.EngineSizeCC.HasValue || !dto.EngineL.HasValue || !dto.BatteryKWh.HasValue)
+        if ((!dto.EngineSizeCC.HasValue || !dto.EngineSizeL.HasValue || !dto.BatteryKWh.HasValue)
             && !string.IsNullOrWhiteSpace(listing.DerivativeCode))
         {
             var deriv = await catalog.GetDerivativeByCodeAsync(listing.DerivativeCode);
             if (deriv is not null)
             {
                 listing.EngineSizeCC ??= deriv.EngineCC;
-                listing.EngineL ??= deriv.EngineL;
+                listing.EngineSizeL ??= deriv.EngineL;
                 listing.BatteryKWh ??= deriv.BatteryKWh;
             }
         }
@@ -684,7 +684,7 @@ public class ListingsController(ListingDbContext context, IMapper mapper, Catalo
             if (deriv is not null)
             {
                 listing.EngineSizeCC = deriv.EngineCC;
-                listing.EngineL = deriv.EngineL;
+                listing.EngineSizeL = deriv.EngineL;
                 listing.BatteryKWh = deriv.BatteryKWh;
             }
         }

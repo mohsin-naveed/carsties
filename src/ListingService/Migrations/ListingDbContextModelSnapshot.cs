@@ -30,8 +30,20 @@ namespace ListingService.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AreaCode")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("AreaName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<decimal?>("BatteryKWh")
                         .HasColumnType("numeric");
+
+                    b.Property<string>("BodyColor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("BodyTypeCode")
                         .HasMaxLength(100)
@@ -41,9 +53,29 @@ namespace ListingService.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("CityCode")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("CityName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("Color")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ContactEmail")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ContactName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ContactPhone")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -65,11 +97,11 @@ namespace ListingService.Migrations
                     b.Property<short?>("Doors")
                         .HasColumnType("smallint");
 
-                    b.Property<decimal?>("EngineL")
-                        .HasColumnType("numeric");
-
                     b.Property<int?>("EngineSizeCC")
                         .HasColumnType("integer");
+
+                    b.Property<decimal?>("EngineSizeL")
+                        .HasColumnType("numeric");
 
                     b.Property<string>("FuelTypeCode")
                         .HasMaxLength(50)
@@ -108,6 +140,14 @@ namespace ListingService.Migrations
 
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("ProvinceCode")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("ProvinceName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<short?>("Seats")
                         .HasColumnType("smallint");

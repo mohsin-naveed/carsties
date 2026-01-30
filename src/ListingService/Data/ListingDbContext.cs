@@ -23,6 +23,7 @@ public class ListingDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(x => x.Title).IsRequired().HasMaxLength(200);
             entity.Property(x => x.Description).HasMaxLength(2000);
             entity.Property(x => x.Color).HasMaxLength(50);
+            entity.Property(x => x.BodyColor).HasMaxLength(50);
             entity.Property(x => x.Price).HasColumnType("numeric(18,2)");
             entity.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
 
@@ -37,6 +38,19 @@ public class ListingDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(x => x.BodyTypeName).HasMaxLength(50);
             entity.Property(x => x.TransmissionTypeName).HasMaxLength(50);
             entity.Property(x => x.FuelTypeName).HasMaxLength(50);
+
+            // Location snapshot columns
+            entity.Property(x => x.ProvinceCode).HasMaxLength(120);
+            entity.Property(x => x.ProvinceName).HasMaxLength(100);
+            entity.Property(x => x.CityCode).HasMaxLength(120);
+            entity.Property(x => x.CityName).HasMaxLength(100);
+            entity.Property(x => x.AreaCode).HasMaxLength(120);
+            entity.Property(x => x.AreaName).HasMaxLength(100);
+
+            // Contact info columns
+            entity.Property(x => x.ContactName).HasMaxLength(100);
+            entity.Property(x => x.ContactPhone).HasMaxLength(30);
+            entity.Property(x => x.ContactEmail).HasMaxLength(200);
 
             // Code snapshots
             entity.Property(x => x.MakeCode).HasMaxLength(120);

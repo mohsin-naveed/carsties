@@ -28,12 +28,16 @@ export interface ListingFeatureDto {
   featureCategoryCode?: string;
 }
 export interface ListingDto {
-  id: number; title: string; description?: string; year: number; mileage: number; price: number; color?: string;
+  id: number; title: string; description?: string; year: number; mileage: number; price: number; color?: string; bodyColor?: string;
   makeCode?: string; modelCode?: string; generationCode?: string; derivativeCode?: string; variantCode?: string;
   transmissionTypeCode?: string; fuelTypeCode?: string; bodyTypeCode?: string;
+  // Location snapshots
+  provinceCode?: string; provinceName?: string; cityCode?: string; cityName?: string; areaCode?: string; areaName?: string;
   makeName?: string; modelName?: string; generationName?: string; derivativeName?: string; variantName?: string;
   bodyTypeName?: string; transmissionTypeName?: string; fuelTypeName?: string;
-  seats?: number; doors?: number; engineSizeCC?: number; engineL?: number; batteryKWh?: number;
+  seats?: number; doors?: number; engineSizeCC?: number; engineSizeL?: number; batteryKWh?: number;
+  // Contact info
+  contactName?: string; contactPhone?: string; contactEmail?: string;
   images?: ListingImageDto[];
   features?: ListingFeatureDto[];
   featureCodes?: string[];
@@ -61,13 +65,17 @@ export interface PaginationResponse<T> {
 }
 
 export interface CreateListingDto {
-  title: string; description?: string; year: number; mileage: number; price: number; color?: string;
+  title: string; description?: string; year: number; mileage: number; price: number; color?: string; bodyColor?: string;
   makeCode: string; modelCode: string; generationCode: string; derivativeCode: string; variantCode: string;
   transmissionTypeCode?: string; fuelTypeCode?: string; bodyTypeCode: string;
+  // Location snapshots
+  provinceCode?: string; provinceName?: string; cityCode?: string; cityName?: string; areaCode?: string; areaName?: string;
   // Optional labels (client provides snapshot labels)
   makeName?: string; modelName?: string; generationName?: string; derivativeName?: string; variantName?: string;
   bodyTypeName?: string; transmissionTypeName?: string; fuelTypeName?: string;
-  seats?: number; doors?: number;
+  seats?: number; doors?: number; engineSizeCC?: number; engineSizeL?: number; batteryKWh?: number;
+  // Contact info
+  contactName?: string; contactPhone?: string; contactEmail?: string;
   features?: ListingFeatureInputDto[];
 }
 
@@ -79,10 +87,14 @@ export interface ListingImageDto {
 }
 
 export interface UpdateListingDto {
-  title?: string; description?: string; year?: number; mileage?: number; price?: number; color?: string;
+  title?: string; description?: string; year?: number; mileage?: number; price?: number; color?: string; bodyColor?: string;
   makeCode?: string; modelCode?: string; generationCode?: string; derivativeCode?: string; variantCode?: string;
   transmissionTypeCode?: string; fuelTypeCode?: string; bodyTypeCode?: string;
-  seats?: number; doors?: number;
+  // Location snapshots
+  provinceCode?: string; provinceName?: string; cityCode?: string; cityName?: string; areaCode?: string; areaName?: string;
+  seats?: number; doors?: number; engineSizeCC?: number; engineSizeL?: number; batteryKWh?: number;
+  // Contact info
+  contactName?: string; contactPhone?: string; contactEmail?: string;
   features?: ListingFeatureInputDto[];
 }
 
