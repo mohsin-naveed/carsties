@@ -35,5 +35,13 @@ export const routes: Routes = [
 			},
 			// variant-features route removed
 		]
+	},
+	{
+		path: 'location',
+		children: [
+			{ path: 'provinces', loadComponent: () => import('./location/provinces/provinces.page').then(m => m.ProvincesPage) },
+			{ path: 'cities', loadComponent: () => import('./location/cities/cities.page').then(m => m.CitiesPage) },
+			{ path: 'areas', loadComponent: () => import('./location/areas/areas.page').then(m => m.AreasPage) }
+		]
 	}
 ];

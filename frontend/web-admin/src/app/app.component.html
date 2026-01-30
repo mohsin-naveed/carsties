@@ -334,3 +334,18 @@
 
 
 <router-outlet />
+
+<nav style="position:fixed; top:0; left:0; right:0; padding:.5rem 1rem; background:#fafafa; border-bottom:1px solid #e0e0e0; display:flex; gap:1rem; z-index:1000;">
+  <strong>Catalog:</strong>
+  <a routerLink="/catalog/makes">Makes</a>
+  <a routerLink="/catalog/models">Models</a>
+  <a routerLink="/catalog/generations">Generations</a>
+  <a routerLink="/catalog/variants">Variants</a>
+  <a routerLink="/catalog/derivatives">Derivatives</a>
+  <a routerLink="/catalog/features">Features</a>
+  <span class="spacer" style="flex:1 1 auto;"></span>
+  <strong>Location:</strong>
+  <a routerLink="/location/provinces">Province</a>
+  <a routerLink="/location/cities">City</a>
+  <a routerLink="/location/areas">Area</a>
+  </nav>

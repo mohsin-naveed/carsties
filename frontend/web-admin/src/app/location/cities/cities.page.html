@@ -1,0 +1,65 @@
+<section class="header">
+  <h2>Cities</h2>
+  <span class="spacer"></span>
+  <a mat-stroked-button routerLink="/location/provinces">Provinces</a>
+  <a mat-stroked-button routerLink="/location/areas">Areas</a>
+  <button mat-flat-button color="primary" (click)="openCreate()">Add City</button>
+</section>
+
+<section class="controls">
+  <div class="controls-right">
+    <mat-form-field appearance="outline" class="search">
+      <mat-label>Search</mat-label>
+      <input matInput (input)="onFilterInput($any($event.target).value)" placeholder="Filter cities" />
+    </mat-form-field>
+  </div>
+</section>
+
+<table mat-table [dataSource]="(filtered$ | async) ?? []" class="mat-elevation-z1">
+  <ng-container matColumnDef="city">
+    <th mat-header-cell *matHeaderCellDef>City</th>
+    <td mat-cell *matCellDef="let c">{{ c.name }}</td>
+  </ng-container>
+  <ng-container matColumnDef="province">
+    <th mat-header-cell *matHeaderCellDef>Province</th>
+    <td mat-cell *matCellDef="let c">{{ c.provinceName }}</td>
+  </ng-container>
+  <ng-container matColumnDef="code">
+    <th mat-header-cell *matHeaderCellDef>Code</th>
+    <td mat-cell *matCellDef="let c">{{ c.code }}</td>
+  </ng-container>
+  <ng-container matColumnDef="slug">
+    <th mat-header-cell *matHeaderCellDef>Slug</th>
+    <td mat-cell *matCellDef="let c">{{ c.slug }}</td>
+  </ng-container>
+  <ng-container matColumnDef="actions">
+    <th mat-header-cell *matHeaderCellDef>Actions</th>
+    <td mat-cell *matCellDef="let c" class="actions-cell">
+      <button mat-icon-button color="primary" (click)="openEdit(c)" matTooltip="Edit"><mat-icon>edit</mat-icon></button>
+      <button mat-icon-button color="warn" (click)="confirmDelete(c)" matTooltip="Delete"><mat-icon>delete</mat-icon></button>
+    </td>
+  </ng-container>
+
+  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+</table>
+
+<h3>Bulk Create</h3>
+<div class="controls">
+  <div class="controls-right">
+    <mat-form-field appearance="outline">
+      <mat-label>Target Province ID</mat-label>
+      <input matInput type="number" [(ngModel)]="bulkProvinceId" placeholder="Province Id" />
+    </mat-form-field>
+  </div>
+</div>
+
+<mat-form-field appearance="outline" class="w-100">
+  <mat-label>Comma-separated city names</mat-label>
+  <textarea matInput class="bulk" [(ngModel)]="bulkNames" (input)="parsePreview()" placeholder="e.g. Clifton, Saddar, North Nazimabad"></textarea>
+</mat-form-field>
+
+<p>Preview ({{ previewNames.length }}): {{ previewNames.join(', ') }}</p>
+<div>
+  <button mat-stroked-button color="primary" (click)="doBulkCreate()">Create Cities</button>
+</div>
