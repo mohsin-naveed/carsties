@@ -1,13 +1,13 @@
 <form [formGroup]="form" (ngSubmit)="submit()" class="sell-form" [attr.aria-busy]="saving">
-  <!-- Step 1 label -->
-  <h3 class="step-head" (click)="canNavigate(0) && goTo(0)" [class.step-head--done]="isStepCompleted(0)">
-    <span class="step-head__num">1.</span> Car Information
-    <mat-icon class="step-head__check" *ngIf="isStepCompleted(0)">check_circle</mat-icon>
-  </h3>
-
-  <!-- Section 1: Car Information -->
+  <!-- Single outer card wrapping all steps -->
   <mat-card class="section-card">
     <mat-card-content>
+      <!-- Step 1 label inside card -->
+      <h3 class="step-head">
+        <span class="step-head__num">1.</span> Car Information
+        <mat-icon class="step-head__check" *ngIf="isStepCompleted(0)">check_circle</mat-icon>
+      </h3>
+      <!-- No divider under the first step -->
       <div class="grid grid--car">
         <!-- City moved above Year; typeahead styled like dropdown -->
         <mat-form-field appearance="outline">
@@ -45,6 +45,7 @@
           <button mat-icon-button matSuffix matTooltip="Year first registered" aria-label="Help about year">
             <mat-icon>calendar_today</mat-icon>
           </button>
+          <mat-icon matSuffix class="valid-check" *ngIf="form.get('year')?.valid">check_circle</mat-icon>
           <mat-error *ngIf="form.get('year')?.hasError('required') && form.get('year')?.touched">Please choose the registration year</mat-error>
         </mat-form-field>
 
@@ -53,6 +54,7 @@
           <mat-select formControlName="makeId">
             <mat-option *ngFor="let m of (makes$ | async) ?? makes" [value]="m.id">{{m.name}}</mat-option>
           </mat-select>
+          <mat-icon matSuffix class="valid-check" *ngIf="form.get('makeId')?.valid">check_circle</mat-icon>
           <mat-error *ngIf="form.get('makeId')?.hasError('required') && form.get('makeId')?.touched">Select the car make</mat-error>
         </mat-form-field>
 
@@ -61,6 +63,7 @@
           <mat-select formControlName="modelId">
             <mat-option *ngFor="let m of (models$ | async) ?? models" [value]="m.id">{{m.name}}</mat-option>
           </mat-select>
+          <mat-icon matSuffix class="valid-check" *ngIf="form.get('modelId')?.valid">check_circle</mat-icon>
           <mat-error *ngIf="form.get('modelId')?.hasError('required') && form.get('modelId')?.touched">Select the model</mat-error>
         </mat-form-field>
 
@@ -83,6 +86,7 @@
           <button mat-icon-button matSuffix matTooltip="Enter the current odometer reading">
             <mat-icon>speed</mat-icon>
           </button>
+          <mat-icon matSuffix class="valid-check" *ngIf="form.get('mileage')?.valid">check_circle</mat-icon>
           <mat-error *ngIf="form.get('mileage')?.hasError('required') && form.get('mileage')?.touched">Please enter the mileage</mat-error>
           <mat-error *ngIf="form.get('mileage')?.hasError('min') && form.get('mileage')?.touched">Mileage must be greater than zero</mat-error>
         </mat-form-field>
@@ -93,6 +97,7 @@
           <button mat-icon-button matSuffix matTooltip="Set a competitive price">
             <mat-icon>attach_money</mat-icon>
           </button>
+          <mat-icon matSuffix class="valid-check" *ngIf="form.get('price')?.valid">check_circle</mat-icon>
           <mat-error *ngIf="form.get('price')?.hasError('required') && form.get('price')?.touched">Please enter the car price</mat-error>
           <mat-error *ngIf="form.get('price')?.hasError('min') && form.get('price')?.touched">Price must be greater than zero</mat-error>
         </mat-form-field>
@@ -117,14 +122,15 @@
     <div class="actions" *ngIf="currentStep === 0">
       <button mat-raised-button color="primary" type="button" (click)="goNext()" [disabled]="!isStepValid(0)">Continue</button>
     </div>
-  </mat-card>
+    <!-- keep card open for subsequent steps -->
 
-  <h3 class="step-head" (click)="canNavigate(1) && goTo(1)" [class.step-head--locked]="!canNavigate(1)" [class.step-head--done]="isStepCompleted(1)">
+  <div class="step-divider"></div>
+  <h3 class="step-head">
     <span class="step-head__num">2.</span> Additional Information
     <mat-icon class="step-head__check" *ngIf="isStepCompleted(1)">check_circle</mat-icon>
   </h3>
   <!-- Step 2: Additional Information directly under its label -->
-  <mat-card class="section-card" *ngIf="currentStep >= 1">
+  <div *ngIf="currentStep >= 1">
     <mat-card-content>
       <div class="grid grid--car">
         <ng-container *ngIf="showAdditionalInfo">
@@ -149,6 +155,7 @@
             <mat-select formControlName="bodyTypeId" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)">
               <mat-option *ngFor="let b of (bodyTypes$ | async) ?? bodyTypes" [value]="b.id">{{b.name}}</mat-option>
             </mat-select>
+              <mat-icon matSuffix class="valid-check" *ngIf="form.get('bodyTypeId')?.valid">check_circle</mat-icon>
             <mat-error *ngIf="form.get('bodyTypeId')?.hasError('required') && form.get('bodyTypeId')?.touched">Please choose a body type</mat-error>
           </mat-form-field>
 
@@ -183,15 +190,16 @@
     <div class="actions" *ngIf="currentStep === 1">
       <button mat-raised-button color="primary" type="button" (click)="goNext()" [disabled]="!isStepValid(1)">Continue</button>
     </div>
-  </mat-card>
+  </div>
 
-  <h3 class="step-head" (click)="canNavigate(2) && goTo(2)" [class.step-head--locked]="!canNavigate(2)" [class.step-head--done]="isStepCompleted(2)">
+  <div class="step-divider"></div>
+  <h3 class="step-head">
     <span class="step-head__num">3.</span> Upload Images
     <mat-icon class="step-head__check" *ngIf="isStepCompleted(2)">check_circle</mat-icon>
   </h3>
 
   <!-- Step 3: Upload Images directly under its label when reached -->
-  <mat-card class="section-card" *ngIf="currentStep >= 2">
+  <div *ngIf="currentStep >= 2">
     <mat-card-content>
       <div class="upload">
         <div class="upload__drop" [class.upload__drop--dragging]="dragging"
@@ -203,7 +211,7 @@
         </div>
         <input #fileInput type="file" class="visually-hidden" multiple accept="image/*" (change)="onFilesSelected($event)" />
 
-        <div class="upload__meta">Selected: {{ selectedFiles.length }} file(s)</div>
+        <div class="upload__meta">Selected: {{ selectedFiles.length }} file(s) <mat-icon class="valid-check" *ngIf="selectedFiles.length > 0">check_circle</mat-icon></div>
 
         <div class="upload__grid">
           <div class="upload__item" *ngFor="let p of previews; let i = index">
@@ -216,15 +224,16 @@
     <div class="actions" *ngIf="currentStep === 2">
       <button mat-raised-button color="primary" type="button" (click)="goNext()" [disabled]="!isStepValid(2)">Continue</button>
     </div>
-  </mat-card>
+  </div>
 
-  <h3 class="step-head" (click)="canNavigate(3) && goTo(3)" [class.step-head--locked]="!canNavigate(3)" [class.step-head--done]="isStepCompleted(3)">
+  <div class="step-divider"></div>
+  <h3 class="step-head">
     <span class="step-head__num">4.</span> Contact Information
     <mat-icon class="step-head__check" *ngIf="isStepCompleted(3)">check_circle</mat-icon>
   </h3>
 
   <!-- Step 4: Contact Information directly under its label when reached -->
-  <mat-card class="section-card" *ngIf="currentStep >= 3">
+  <div *ngIf="currentStep >= 3">
     <mat-card-content>
       <div class="grid grid--contact">
         <mat-form-field appearance="outline">
@@ -235,15 +244,17 @@
         <mat-form-field appearance="outline">
           <mat-label>Phone</mat-label>
           <input matInput type="tel" formControlName="contactPhone" aria-label="Phone" placeholder="e.g. 07123 456789" />
+          <mat-icon matSuffix class="valid-check" *ngIf="(form.get('contactPhone')?.value || '').toString().trim().length > 0">check_circle</mat-icon>
           <mat-hint>Keep your phone on for quick responses</mat-hint>
         </mat-form-field>
         <mat-form-field class="grid-col-span-2" appearance="outline">
           <mat-label>Email</mat-label>
           <input matInput type="email" formControlName="contactEmail" aria-label="Email" placeholder="you@example.com" />
+          <mat-icon matSuffix class="valid-check" *ngIf="!!form.get('contactEmail')?.value && form.get('contactEmail')?.valid">check_circle</mat-icon>
         </mat-form-field>
       </div>
     </mat-card-content>
-  </mat-card>
+  </div>
 
   <!-- Submit button on last step only -->
   <div class="actions" *ngIf="currentStep === 3">
@@ -252,5 +263,6 @@
       <span *ngIf="!saving">Submit</span>
     </button>
   </div>
+  </mat-card>
 </form>
 
