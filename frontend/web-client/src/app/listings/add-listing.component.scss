@@ -44,7 +44,8 @@
 .upload__item img { width:100%; height:100%; aspect-ratio: 4 / 3; object-fit:cover; display:block; }
 .upload__badge { position:absolute; left:8px; top:8px; background:#111827; color:#fff; font-size:11px; padding:2px 6px; border-radius:999px; }
 
-.actions { display:flex; justify-content:center; }
+.actions { display:flex; justify-content:flex-end; }
+.actions button { margin-right: 8px; }
 
 .preview-card { margin-top: 8px; }
 .preview-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:8px; }
@@ -65,3 +66,10 @@ input[type=number] { appearance: textfield; -moz-appearance: textfield; }
 	margin-right: 8px;
 	vertical-align: middle;
 }
+
+/* Vertical step headers like the provided example */
+.step-head { width: 640px; max-width: 100%; margin: 0; padding: 16px 0; border-top: 1px solid #e5e7eb; display:flex; align-items:center; gap:8px; color:#0f172a; cursor:pointer; }
+.step-head__num { font-weight:800; color:#475569; width: 28px; display:inline-block; }
+.step-head__check { color:#22c55e; font-size: 20px; margin-left: auto; }
+.step-head--locked { color:#94a3b8; cursor:default; pointer-events: none; }
+.step-head--done { color:#065f46; }

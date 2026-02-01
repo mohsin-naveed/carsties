@@ -38,6 +38,9 @@ export class AddListingComponent {
 
   saving = false;
   years: number[] = [];
+  // Simple stepper: 0..3
+  currentStep = 0; // 0: Car Information, 1: Additional Info, 2: Upload Photos, 3: Contact Info
+  readonly stepTitles = ['Car Information', 'Additional Information', 'Upload Photos', 'Contact Information'];
 
   form = this.fb.group({
     description: [''],
@@ -246,6 +249,53 @@ export class AddListingComponent {
     ).subscribe();
   }
 
+  // Step validation rules
+  isStepValid(index: number): boolean {
+    switch (index) {
+      case 0:
+        return !!this.form.get('year')?.valid
+          && !!this.form.get('makeId')?.valid
+          && !!this.form.get('modelId')?.valid
+          && !!this.form.get('mileage')?.valid
+          && !!this.form.get('price')?.valid;
+      case 1:
+        return !!this.form.get('bodyTypeId')?.valid; // transmission/fuel optional
+      case 2:
+        return this.selectedFiles.length > 0; // require at least one photo to proceed
+      case 3:
+        // Require at least one contact detail (phone or email)
+        const phone = (this.form.get('contactPhone')?.value || '').toString().trim();
+        const email = (this.form.get('contactEmail')?.value || '').toString().trim();
+        return phone.length > 0 || email.length > 0;
+      default:
+        return false;
+    }
+  }
+
+  // Visual status helpers
+  isStepCompleted(index: number): boolean {
+    if (index < this.currentStep) return this.isStepValid(index);
+    return false;
+  }
+
+  goNext() {
+    if (!this.isStepValid(this.currentStep)) return;
+    if (this.currentStep < 3) this.currentStep++;
+  }
+
+  goTo(index: number) {
+    // Allow navigating back and to unlocked steps only
+    if (index < 0 || index > 3) return;
+    if (!this.canNavigate(index)) return;
+    this.currentStep = index;
+  }
+
+  canNavigate(index: number): boolean {
+    if (index <= this.currentStep) return true; // back or current
+    // forward navigation only if previous step completed
+    return this.isStepValid(index - 1);
+  }
+
   // Simplified UI condition getters to avoid complex template expressions
   get showVariantSelector(): boolean {
     const hasModel = !!this.form.value.modelId;
@@ -271,7 +321,11 @@ export class AddListingComponent {
   }
 
   submit() {
-    if (this.form.invalid || this.saving) return;
+    // Final step submission gated by step validity
+    if (this.saving) return;
+    if (!this.isStepValid(3)) return;
+    // Also ensure overall form validity (Angular validators)
+    if (this.form.invalid) return;
     // Enforce variant selection rule: must select or explicitly skip
     if (!this.form.value.variantId && !this.skipVariant) {
       this.notify.error('Please select a Variant or choose Skip.');

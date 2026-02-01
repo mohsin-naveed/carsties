@@ -1,11 +1,12 @@
 <form [formGroup]="form" (ngSubmit)="submit()" class="sell-form" [attr.aria-busy]="saving">
+  <!-- Step 1 label -->
+  <h3 class="step-head" (click)="canNavigate(0) && goTo(0)" [class.step-head--done]="isStepCompleted(0)">
+    <span class="step-head__num">1.</span> Car Information
+    <mat-icon class="step-head__check" *ngIf="isStepCompleted(0)">check_circle</mat-icon>
+  </h3>
+
   <!-- Section 1: Car Information -->
   <mat-card class="section-card">
-    <mat-card-header>
-      <mat-icon mat-card-avatar color="primary">directions_car</mat-icon>
-      <mat-card-title>Car Information</mat-card-title>
-      <mat-card-subtitle>Tell buyers the key details</mat-card-subtitle>
-    </mat-card-header>
     <mat-card-content>
       <div class="grid grid--car">
         <!-- City moved above Year; typeahead styled like dropdown -->
@@ -111,71 +112,86 @@
           <textarea matInput rows="3" formControlName="description" aria-label="Description" matTooltip="Add highlights like condition, service history, extras"></textarea>
         </mat-form-field>
 
-        <ng-container *ngIf="showAdditionalInfo">
-        <h4 class="subheading">Additional Information!</h4>
-        <div class="helper" *ngIf="skipVariant && !form.value.variantId">You chose to skip variant — fill in the details below.</div>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Transmission</mat-label>
-          <mat-select formControlName="transmissionId" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)">
-            <mat-option *ngFor="let t of (transmissions$ | async) ?? transmissions" [value]="t.id">{{t.name}}</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Fuel Type</mat-label>
-          <mat-select formControlName="fuelTypeId" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)">
-            <mat-option *ngFor="let f of (fuelTypes$ | async) ?? fuelTypes" [value]="f.id">{{f.name}}</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Body Type</mat-label>
-          <mat-select formControlName="bodyTypeId" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)">
-            <mat-option *ngFor="let b of (bodyTypes$ | async) ?? bodyTypes" [value]="b.id">{{b.name}}</mat-option>
-          </mat-select>
-          <mat-error *ngIf="form.get('bodyTypeId')?.hasError('required') && form.get('bodyTypeId')?.touched">Please choose a body type</mat-error>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Engine Size (CC)</mat-label>
-          <input matInput type="number" formControlName="engineSizeCC" aria-label="Engine Size CC" />
-          <button mat-icon-button matSuffix matTooltip="Engine displacement in cubic centimeters">
-            <mat-icon>build</mat-icon>
-          </button>
-        </mat-form-field>
-      </ng-container>
-
-      <div class="features" *ngIf="showAdditionalInfo">
-        <div class="features__title">Features</div>
-        <div class="features__grid">
-          <!-- Selected features first -->
-          <ng-container *ngFor="let f of features">
-            <ng-container *ngIf="selectedFeatureIds.has(f.id)">
-              <mat-checkbox color="primary" [checked]="true" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)" (change)="toggleFeature(f.id, $event.checked)">{{f.name}}</mat-checkbox>
-            </ng-container>
-          </ng-container>
-          <!-- Remaining features -->
-          <ng-container *ngFor="let f of features">
-            <ng-container *ngIf="!selectedFeatureIds.has(f.id)">
-              <mat-checkbox color="primary" [checked]="false" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)" (change)="toggleFeature(f.id, $event.checked)">{{f.name}}</mat-checkbox>
-            </ng-container>
-          </ng-container>
-        </div>
-      </div>
       </div>
     </mat-card-content>
+    <div class="actions" *ngIf="currentStep === 0">
+      <button mat-raised-button color="primary" type="button" (click)="goNext()" [disabled]="!isStepValid(0)">Continue</button>
+    </div>
   </mat-card>
 
-  <mat-divider></mat-divider>
+  <h3 class="step-head" (click)="canNavigate(1) && goTo(1)" [class.step-head--locked]="!canNavigate(1)" [class.step-head--done]="isStepCompleted(1)">
+    <span class="step-head__num">2.</span> Additional Information
+    <mat-icon class="step-head__check" *ngIf="isStepCompleted(1)">check_circle</mat-icon>
+  </h3>
+  <!-- Step 2: Additional Information directly under its label -->
+  <mat-card class="section-card" *ngIf="currentStep >= 1">
+    <mat-card-content>
+      <div class="grid grid--car">
+        <ng-container *ngIf="showAdditionalInfo">
+          <div class="helper" *ngIf="skipVariant && !form.value.variantId">You chose to skip variant — fill in the details below.</div>
 
-  <!-- Section 2: Upload Media -->
-  <mat-card class="section-card">
-    <mat-card-header>
-      <mat-icon mat-card-avatar color="primary">photo_library</mat-icon>
-      <mat-card-title>Upload Media</mat-card-title>
-      <mat-card-subtitle>High‑quality photos sell faster</mat-card-subtitle>
-    </mat-card-header>
+          <mat-form-field appearance="outline">
+            <mat-label>Transmission</mat-label>
+            <mat-select formControlName="transmissionId" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)">
+              <mat-option *ngFor="let t of (transmissions$ | async) ?? transmissions" [value]="t.id">{{t.name}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Fuel Type</mat-label>
+            <mat-select formControlName="fuelTypeId" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)">
+              <mat-option *ngFor="let f of (fuelTypes$ | async) ?? fuelTypes" [value]="f.id">{{f.name}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Body Type</mat-label>
+            <mat-select formControlName="bodyTypeId" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)">
+              <mat-option *ngFor="let b of (bodyTypes$ | async) ?? bodyTypes" [value]="b.id">{{b.name}}</mat-option>
+            </mat-select>
+            <mat-error *ngIf="form.get('bodyTypeId')?.hasError('required') && form.get('bodyTypeId')?.touched">Please choose a body type</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Engine Size (CC)</mat-label>
+            <input matInput type="number" formControlName="engineSizeCC" aria-label="Engine Size CC" />
+            <button mat-icon-button matSuffix matTooltip="Engine displacement in cubic centimeters">
+              <mat-icon>build</mat-icon>
+            </button>
+          </mat-form-field>
+        </ng-container>
+
+        <div class="features" *ngIf="showAdditionalInfo">
+          <div class="features__title">Features</div>
+          <div class="features__grid">
+            <!-- Selected features first -->
+            <ng-container *ngFor="let f of features">
+              <ng-container *ngIf="selectedFeatureIds.has(f.id)">
+                <mat-checkbox color="primary" [checked]="true" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)" (change)="toggleFeature(f.id, $event.checked)">{{f.name}}</mat-checkbox>
+              </ng-container>
+            </ng-container>
+            <!-- Remaining features -->
+            <ng-container *ngFor="let f of features">
+              <ng-container *ngIf="!selectedFeatureIds.has(f.id)">
+                <mat-checkbox color="primary" [checked]="false" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)" (change)="toggleFeature(f.id, $event.checked)">{{f.name}}</mat-checkbox>
+              </ng-container>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+    <div class="actions" *ngIf="currentStep === 1">
+      <button mat-raised-button color="primary" type="button" (click)="goNext()" [disabled]="!isStepValid(1)">Continue</button>
+    </div>
+  </mat-card>
+
+  <h3 class="step-head" (click)="canNavigate(2) && goTo(2)" [class.step-head--locked]="!canNavigate(2)" [class.step-head--done]="isStepCompleted(2)">
+    <span class="step-head__num">3.</span> Upload Images
+    <mat-icon class="step-head__check" *ngIf="isStepCompleted(2)">check_circle</mat-icon>
+  </h3>
+
+  <!-- Step 3: Upload Images directly under its label when reached -->
+  <mat-card class="section-card" *ngIf="currentStep >= 2">
     <mat-card-content>
       <div class="upload">
         <div class="upload__drop" [class.upload__drop--dragging]="dragging"
@@ -197,17 +213,18 @@
         </div>
       </div>
     </mat-card-content>
+    <div class="actions" *ngIf="currentStep === 2">
+      <button mat-raised-button color="primary" type="button" (click)="goNext()" [disabled]="!isStepValid(2)">Continue</button>
+    </div>
   </mat-card>
 
-  <mat-divider></mat-divider>
+  <h3 class="step-head" (click)="canNavigate(3) && goTo(3)" [class.step-head--locked]="!canNavigate(3)" [class.step-head--done]="isStepCompleted(3)">
+    <span class="step-head__num">4.</span> Contact Information
+    <mat-icon class="step-head__check" *ngIf="isStepCompleted(3)">check_circle</mat-icon>
+  </h3>
 
-  <!-- Section 3: Contact Information (UI-only) -->
-  <mat-card class="section-card">
-    <mat-card-header>
-      <mat-icon mat-card-avatar color="primary">person</mat-icon>
-      <mat-card-title>Contact Information</mat-card-title>
-      <mat-card-subtitle>Your details are only shared with interested buyers</mat-card-subtitle>
-    </mat-card-header>
+  <!-- Step 4: Contact Information directly under its label when reached -->
+  <mat-card class="section-card" *ngIf="currentStep >= 3">
     <mat-card-content>
       <div class="grid grid--contact">
         <mat-form-field appearance="outline">
@@ -228,14 +245,11 @@
     </mat-card-content>
   </mat-card>
 
-  <mat-divider></mat-divider>
-
-  
-
-  <div class="actions">
-    <button mat-raised-button color="primary" type="submit" [disabled]="saving || form.invalid">
+  <!-- Submit button on last step only -->
+  <div class="actions" *ngIf="currentStep === 3">
+    <button mat-raised-button color="primary" type="submit" [disabled]="saving || !isStepValid(3) || form.invalid">
       <mat-progress-spinner *ngIf="saving" mode="indeterminate" diameter="18" strokeWidth="3"></mat-progress-spinner>
-      <span *ngIf="!saving">Add Listing</span>
+      <span *ngIf="!saving">Submit</span>
     </button>
   </div>
 </form>
