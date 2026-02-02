@@ -5,6 +5,9 @@
 
 .section-card { padding-bottom: 8px; width: 640px; max-width: 100%; }
 
+/* Page title styling */
+.page-title { width: 640px; max-width: 100%; margin: 0 0 4px; font-size: 28px; font-weight: 700; line-height: 1.2; color:#0f172a; }
+
 .grid { display:grid; gap:12px; justify-items: stretch; }
 .grid * { box-sizing: border-box; }
 .grid--car { grid-template-columns: 1fr; }
@@ -26,6 +29,11 @@
 .section-card .mat-mdc-form-field { font-size: 14px; }
 .section-card .mat-mdc-input-element, .section-card .mat-mdc-select-value { font-size: 14px; }
 .section-card .mat-mdc-form-field-infix { padding-top: 6px; padding-bottom: 6px; }
+.valid-field .mat-mdc-form-field-infix { padding-top: 8px; padding-bottom: 8px; }
+.valid-field .mdc-notched-outline__leading,
+.valid-field .mdc-notched-outline__trailing,
+.valid-field .mdc-notched-outline__notch { border-color: #22c55e !important; }
+.valid-field .mdc-floating-label { color: #16a34a !important; }
 .section-card .mat-mdc-form-field-subscript-wrapper { min-height: 18px; }
 .section-card .mat-mdc-form-field-icon-suffix { padding-right: 12px; display:flex; align-items:center; }
 .section-card .mat-mdc-form-field-icon-suffix .valid-check { margin-left: 8px; margin-right: 4px; }

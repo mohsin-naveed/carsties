@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
+import { MatSelectModule, MatSelect } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatOptionModule } from '@angular/material/core';
 import { MatAutocompleteModule, MatAutocompleteTrigger } from '@angular/material/autocomplete';
@@ -17,7 +17,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ListingsApiService, MakeDto, ModelDto, GenerationDto, DerivativeDto, VariantDto, OptionDto, CreateListingDto, VariantFeatureSnapshot, FeatureDto, ListingFeatureInputDto } from './listings-api.service';
 import { LocationApiService, CityDto, AreaDto } from '../location/location-api.service';
 import { BehaviorSubject, combineLatest, forkJoin } from 'rxjs';
-import { map, shareReplay, distinctUntilChanged, switchMap, startWith, finalize } from 'rxjs/operators';
+import { map, shareReplay, distinctUntilChanged, switchMap, startWith, finalize, take } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NotificationService } from '../core/notification.service';
 import { DestroyRef } from '@angular/core';
@@ -109,6 +109,11 @@ export class AddListingComponent {
   @ViewChild('mileageInput') mileageInput!: ElementRef<HTMLInputElement>;
   @ViewChild('areaInput') areaInput?: ElementRef<HTMLInputElement>;
   @ViewChild('areaTrigger') areaTrigger?: MatAutocompleteTrigger;
+  @ViewChild('modelSelect') modelSelect?: MatSelect;
+  @ViewChild('variantSelect') variantSelect?: MatSelect;
+  @ViewChild('bodyColorSelect') bodyColorSelect?: MatSelect;
+  @ViewChild('yearSelect') yearSelect?: MatSelect;
+  @ViewChild('makeSelect') makeSelect?: MatSelect;
 
   bodyColors: { name: string; hex: string }[] = [
     { name: 'White', hex: '#FFFFFF' },
@@ -176,6 +181,8 @@ export class AddListingComponent {
       if (!makeId) { this.models$.next([]); this.generations$.next([]); this.derivatives$.next([]); this.refreshVariants(); return; }
       this.api.getModels(makeId!).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(models => {
         this.models = models; this.models$.next(models);
+        // Auto-focus and open Model dropdown when Make is selected
+        setTimeout(() => { this.modelSelect?.focus(); this.modelSelect?.open(); }, 0);
         if (models.length === 0) { this.refreshVariants(); return; }
         const genReqs = models.map(m => this.api.getGenerations(m.id));
         const derReqs = models.map(m => this.api.getDerivatives(m.id));
@@ -189,12 +196,22 @@ export class AddListingComponent {
     this.form.get('modelId')!.valueChanges.pipe(distinctUntilChanged(), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.variants = []; this.form.patchValue({ variantId: null }, { emitEvent: false });
       this.refreshVariants();
+      // After variants refresh, open Variant if available, else Body Color
+      this.variants$.pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(vars => {
+        const count = (vars?.length ?? this.variants.length);
+        setTimeout(() => {
+          if (count > 0) { this.variantSelect?.focus(); this.variantSelect?.open(); }
+          else { this.bodyColorSelect?.focus(); this.bodyColorSelect?.open(); }
+        }, 0);
+      });
     });
 
     // When Year changes: recompute variants
     this.form.get('year')!.valueChanges.pipe(distinctUntilChanged(), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.variants = []; this.form.patchValue({ variantId: null }, { emitEvent: false });
       this.refreshVariants();
+      // After year selection, open Make dropdown
+      setTimeout(() => { this.makeSelect?.focus(); this.makeSelect?.open(); }, 0);
     });
 
     // On Variant selection: derive generation/derivative and load features
@@ -491,6 +508,8 @@ export class AddListingComponent {
   onAreaSelectedById(id: number) {
     const area = this.areas.find(a => a.id === id);
     this.form.patchValue({ areaId: id, areaSearch: area?.name ?? '' }, { emitEvent: false });
+    // After area selection, open Model Year dropdown
+    setTimeout(() => { this.yearSelect?.focus(); this.yearSelect?.open(); }, 0);
   }
 
   private afterCreated() {
@@ -527,6 +546,10 @@ export class AddListingComponent {
     this.selectedFiles.unshift(file);
     this.previews.unshift(prev);
     this.coverIndex = 0;
+  }
+  onBodyColorSelected() {
+    // Move focus to the next logical control (Mileage)
+    setTimeout(() => this.mileageInput?.nativeElement?.focus(), 0);
   }
   removeImage(i: number) {
     if (i < 0 || i >= this.selectedFiles.length) return;
