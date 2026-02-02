@@ -6,7 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatOptionModule } from '@angular/material/core';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatAutocompleteModule, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
@@ -47,7 +47,7 @@ export class AddListingComponent {
     year: [null as number | null, [Validators.required, Validators.min(1900)]],
     mileage: [null as number | null, [Validators.required, Validators.min(1)]],
     price: [null as number | null, [Validators.required, Validators.min(1)]],
-    bodyColor: [null as string | null],
+    bodyColor: [null as string | null, Validators.required],
     makeId: [null as number | null, Validators.required],
     modelId: [null as number | null, Validators.required],
     // Hidden fields, set programmatically based on selected variant
@@ -55,20 +55,20 @@ export class AddListingComponent {
     derivativeId: [null as number | null],
     // Variant is now optional per requirements
     variantId: [null as number | null],
-    transmissionId: [null as number | null],
-    fuelTypeId: [null as number | null],
+    transmissionId: [null as number | null, Validators.required],
+    fuelTypeId: [null as number | null, Validators.required],
     bodyTypeId: [null as number | null, Validators.required],
     // Location typeahead controls
     citySearch: [''],
-    cityId: [null as number | null],
+    cityId: [null as number | null, Validators.required],
     areaSearch: [''],
     areaId: [null as number | null],
     // Contact info
-    contactName: ['', [Validators.maxLength(100)]],
-    contactPhone: ['', [Validators.maxLength(30)]],
+    contactName: ['', [Validators.required, Validators.maxLength(100)]],
+    contactPhone: ['', [Validators.required, Validators.maxLength(30)]],
     contactEmail: ['', [Validators.email, Validators.maxLength(200)]],
     // Engine CC (optional, shown under Body Type)
-    engineSizeCC: [null as number | null, [Validators.min(0)]]
+    engineSizeCC: [null as number | null, [Validators.required, Validators.min(1)]]
   });
 
   // State subjects (mirroring web-admin style)
@@ -107,6 +107,8 @@ export class AddListingComponent {
   skipVariant = false;
   hasCitySelected = false;
   @ViewChild('mileageInput') mileageInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('areaInput') areaInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('areaTrigger') areaTrigger?: MatAutocompleteTrigger;
 
   bodyColors: { name: string; hex: string }[] = [
     { name: 'White', hex: '#FFFFFF' },
@@ -257,16 +259,20 @@ export class AddListingComponent {
           && !!this.form.get('makeId')?.valid
           && !!this.form.get('modelId')?.valid
           && !!this.form.get('mileage')?.valid
-          && !!this.form.get('price')?.valid;
+          && !!this.form.get('price')?.valid
+          && !!this.form.get('cityId')?.value; // city is mandatory
       case 1:
-        return !!this.form.get('bodyTypeId')?.valid; // transmission/fuel optional
+        return !!this.form.get('bodyTypeId')?.valid
+          && !!this.form.get('transmissionId')?.value
+          && !!this.form.get('fuelTypeId')?.value
+          && !!this.form.get('engineSizeCC')?.value; // now mandatory
       case 2:
         return this.selectedFiles.length > 0; // require at least one photo to proceed
       case 3:
-        // Require at least one contact detail (phone or email)
+        // Require Name and Phone explicitly
+        const name = (this.form.get('contactName')?.value || '').toString().trim();
         const phone = (this.form.get('contactPhone')?.value || '').toString().trim();
-        const email = (this.form.get('contactEmail')?.value || '').toString().trim();
-        return phone.length > 0 || email.length > 0;
+        return name.length > 0 && phone.length > 0;
       default:
         return false;
     }
@@ -466,6 +472,8 @@ export class AddListingComponent {
     // Build previews
     this.previews.forEach(url => URL.revokeObjectURL(url));
     this.previews = this.selectedFiles.map(f => URL.createObjectURL(f));
+    // Default first image as cover
+    this.coverIndex = 0;
   }
 
   onCitySelectedById(id: number) {
@@ -473,6 +481,11 @@ export class AddListingComponent {
     // Set both id and visible text, reset area, and emit for area reload
     this.form.patchValue({ cityId: id, citySearch: city?.name ?? '', areaId: null, areaSearch: '' }, { emitEvent: true });
     this.hasCitySelected = !!id;
+    // Focus Area input and open its dropdown after city selection
+    setTimeout(() => {
+      this.areaInput?.nativeElement?.focus();
+      this.areaTrigger?.openPanel();
+    }, 0);
   }
 
   onAreaSelectedById(id: number) {
@@ -490,6 +503,7 @@ export class AddListingComponent {
     this.selectedFiles = [];
     this.previews.forEach(url => URL.revokeObjectURL(url));
     this.previews = [];
+    this.coverIndex = 0;
   }
 
   // Drag & drop helpers (UI only)
@@ -500,5 +514,38 @@ export class AddListingComponent {
     const files = event.dataTransfer?.files; if (!files || files.length === 0) return;
     const inputEvent = { target: { files } } as any as Event;
     this.onFilesSelected(inputEvent);
+  }
+
+  // Image management: delete and set cover
+  coverIndex = 0;
+  setCover(i: number) {
+    if (i < 0 || i >= this.selectedFiles.length) return;
+    if (i === 0) { this.coverIndex = 0; return; }
+    // Move chosen image to index 0 to keep API ordering (first is cover)
+    const file = this.selectedFiles.splice(i, 1)[0];
+    const prev = this.previews.splice(i, 1)[0];
+    this.selectedFiles.unshift(file);
+    this.previews.unshift(prev);
+    this.coverIndex = 0;
+  }
+  removeImage(i: number) {
+    if (i < 0 || i >= this.selectedFiles.length) return;
+    const [f] = this.selectedFiles.splice(i, 1);
+    const [url] = this.previews.splice(i, 1);
+    try { if (url) URL.revokeObjectURL(url); } catch {}
+    if (this.coverIndex === i) this.coverIndex = 0;
+    if (this.coverIndex > i) this.coverIndex--;
+  }
+
+  // Open dropdowns and refresh regardless of current typed text
+  openCityDropdown(trigger: MatAutocompleteTrigger) {
+    this.form.get('citySearch')!.setValue('');
+    // valueChanges subscription will fetch with empty search
+    setTimeout(() => trigger.openPanel(), 0);
+  }
+
+  openAreaDropdown(trigger: MatAutocompleteTrigger) {
+    this.form.get('areaSearch')!.setValue('');
+    setTimeout(() => trigger.openPanel(), 0);
   }
 }

@@ -10,62 +10,72 @@
       <!-- No divider under the first step -->
       <div class="grid grid--car">
         <!-- City moved above Year; typeahead styled like dropdown -->
+        <div class="field-check">
         <mat-form-field appearance="outline">
           <mat-label>City</mat-label>
           <input type="text" matInput [matAutocomplete]="cityAuto" #cityTrigger="matAutocompleteTrigger" formControlName="citySearch" placeholder="Search or select city" />
-          <button *ngIf="!cityLoading" mat-icon-button matSuffix type="button" aria-label="Open city options" (click)="cityTrigger.openPanel()">
+          <button *ngIf="!cityLoading" mat-icon-button matSuffix type="button" aria-label="Open city options" (click)="openCityDropdown(cityTrigger)">
             <mat-icon>arrow_drop_down</mat-icon>
           </button>
           <mat-progress-spinner *ngIf="cityLoading" matSuffix diameter="16" strokeWidth="3" mode="indeterminate"></mat-progress-spinner>
           <mat-autocomplete #cityAuto="matAutocomplete" (optionSelected)="onCitySelectedById($event.option.value)">
-            <mat-option *ngFor="let c of (cities$ | async) ?? cities" [value]="c.id">{{c.name}}<span class="muted"> — {{c.provinceName}}</span></mat-option>
+            <mat-option *ngFor="let c of (cities$ | async) ?? cities" [value]="c.id">{{c.name}}</mat-option>
           </mat-autocomplete>
           <mat-error *ngIf="cityError">{{cityError}}</mat-error>
+          <mat-error *ngIf="form.get('cityId')?.hasError('required') && (form.get('citySearch')?.touched || form.get('cityId')?.touched)">Please select a city</mat-error>
         </mat-form-field>
+        <mat-icon class="valid-check-outside" *ngIf="!!form.get('cityId')?.value">check_circle</mat-icon>
+        </div>
 
         <!-- Area shown directly under City; typeahead styled like dropdown -->
-        <mat-form-field *ngIf="hasCitySelected" appearance="outline">
+        <div *ngIf="hasCitySelected" class="field-check">
+        <mat-form-field appearance="outline">
           <mat-label>Area</mat-label>
-          <input type="text" matInput [matAutocomplete]="areaAuto" #areaTrigger="matAutocompleteTrigger" formControlName="areaSearch" placeholder="Search or select area" />
-          <button *ngIf="!areaLoading" mat-icon-button matSuffix type="button" aria-label="Open area options" (click)="areaTrigger.openPanel()">
+          <input #areaInput type="text" matInput [matAutocomplete]="areaAuto" #areaTrigger="matAutocompleteTrigger" formControlName="areaSearch" placeholder="Search or select area" />
+          <button *ngIf="!areaLoading" mat-icon-button matSuffix type="button" aria-label="Open area options" (click)="openAreaDropdown(areaTrigger)">
             <mat-icon>arrow_drop_down</mat-icon>
           </button>
           <mat-progress-spinner *ngIf="areaLoading" matSuffix diameter="16" strokeWidth="3" mode="indeterminate"></mat-progress-spinner>
           <mat-autocomplete #areaAuto="matAutocomplete" (optionSelected)="onAreaSelectedById($event.option.value)">
-            <mat-option *ngFor="let a of (areas$ | async) ?? areas" [value]="a.id">{{a.name}}<span class="muted"> — {{a.cityName}}</span></mat-option>
+            <mat-option *ngFor="let a of (areas$ | async) ?? areas" [value]="a.id">{{a.name}}</mat-option>
           </mat-autocomplete>
           <mat-error *ngIf="areaError">{{areaError}}</mat-error>
         </mat-form-field>
+        <mat-icon class="valid-check-outside" *ngIf="!!form.get('areaId')?.value">check_circle</mat-icon>
+        </div>
 
+        <div class="field-check">
         <mat-form-field appearance="outline">
-          <mat-label>Year</mat-label>
+          <mat-label>Model Year</mat-label>
           <mat-select formControlName="year">
             <mat-option *ngFor="let y of years" [value]="y">{{y}}</mat-option>
           </mat-select>
-          <button mat-icon-button matSuffix matTooltip="Year first registered" aria-label="Help about year">
-            <mat-icon>calendar_today</mat-icon>
-          </button>
-          <mat-icon matSuffix class="valid-check" *ngIf="form.get('year')?.valid">check_circle</mat-icon>
           <mat-error *ngIf="form.get('year')?.hasError('required') && form.get('year')?.touched">Please choose the registration year</mat-error>
         </mat-form-field>
+        <mat-icon class="valid-check-outside" *ngIf="form.get('year')?.valid">check_circle</mat-icon>
+        </div>
 
+        <div class="field-check">
         <mat-form-field appearance="outline">
           <mat-label>Make</mat-label>
           <mat-select formControlName="makeId">
             <mat-option *ngFor="let m of (makes$ | async) ?? makes" [value]="m.id">{{m.name}}</mat-option>
           </mat-select>
-          <mat-icon matSuffix class="valid-check" *ngIf="form.get('makeId')?.valid">check_circle</mat-icon>
           <mat-error *ngIf="form.get('makeId')?.hasError('required') && form.get('makeId')?.touched">Select the car make</mat-error>
         </mat-form-field>
+        <mat-icon class="valid-check-outside" *ngIf="form.get('makeId')?.valid">check_circle</mat-icon>
+        </div>
 
+        <div class="field-check">
         <mat-form-field appearance="outline">
           <mat-label>Model</mat-label>
           <mat-select formControlName="modelId">
             <mat-option *ngFor="let m of (models$ | async) ?? models" [value]="m.id">{{m.name}}</mat-option>
           </mat-select>
-          <mat-icon matSuffix class="valid-check" *ngIf="form.get('modelId')?.valid">check_circle</mat-icon>
           <mat-error *ngIf="form.get('modelId')?.hasError('required') && form.get('modelId')?.touched">Select the model</mat-error>
         </mat-form-field>
+        <mat-icon class="valid-check-outside" *ngIf="form.get('modelId')?.valid">check_circle</mat-icon>
+        </div>
 
         
 
@@ -80,28 +90,27 @@
           </mat-hint>
         </mat-form-field>
 
+        <div class="field-check">
         <mat-form-field appearance="outline">
           <mat-label>Mileage</mat-label>
           <input matInput type="number" formControlName="mileage" aria-label="Mileage" #mileageInput />
-          <button mat-icon-button matSuffix matTooltip="Enter the current odometer reading">
-            <mat-icon>speed</mat-icon>
-          </button>
-          <mat-icon matSuffix class="valid-check" *ngIf="form.get('mileage')?.valid">check_circle</mat-icon>
           <mat-error *ngIf="form.get('mileage')?.hasError('required') && form.get('mileage')?.touched">Please enter the mileage</mat-error>
           <mat-error *ngIf="form.get('mileage')?.hasError('min') && form.get('mileage')?.touched">Mileage must be greater than zero</mat-error>
         </mat-form-field>
+        <mat-icon class="valid-check-outside" *ngIf="form.get('mileage')?.valid">check_circle</mat-icon>
+        </div>
 
+        <div class="field-check">
         <mat-form-field appearance="outline">
           <mat-label>Price</mat-label>
           <input matInput type="number" formControlName="price" aria-label="Price" />
-          <button mat-icon-button matSuffix matTooltip="Set a competitive price">
-            <mat-icon>attach_money</mat-icon>
-          </button>
-          <mat-icon matSuffix class="valid-check" *ngIf="form.get('price')?.valid">check_circle</mat-icon>
           <mat-error *ngIf="form.get('price')?.hasError('required') && form.get('price')?.touched">Please enter the car price</mat-error>
           <mat-error *ngIf="form.get('price')?.hasError('min') && form.get('price')?.touched">Price must be greater than zero</mat-error>
         </mat-form-field>
+        <mat-icon class="valid-check-outside" *ngIf="form.get('price')?.valid">check_circle</mat-icon>
+        </div>
 
+        <div class="field-check">
         <mat-form-field appearance="outline">
           <mat-label>Body Color</mat-label>
           <mat-select formControlName="bodyColor">
@@ -110,7 +119,10 @@
               {{c.name}}
             </mat-option>
           </mat-select>
+          <mat-error *ngIf="form.get('bodyColor')?.hasError('required') && form.get('bodyColor')?.touched">Please choose a body color</mat-error>
         </mat-form-field>
+        <mat-icon class="valid-check-outside" *ngIf="form.get('bodyColor')?.valid">check_circle</mat-icon>
+        </div>
 
         <mat-form-field class="grid-col-span-2" appearance="outline">
           <mat-label>Description</mat-label>
@@ -125,7 +137,7 @@
     <!-- keep card open for subsequent steps -->
 
   <div class="step-divider"></div>
-  <h3 class="step-head">
+  <h3 class="step-head" [ngClass]="{ 'step-head--locked': !canNavigate(1) }">
     <span class="step-head__num">2.</span> Additional Information
     <mat-icon class="step-head__check" *ngIf="isStepCompleted(1)">check_circle</mat-icon>
   </h3>
@@ -136,36 +148,48 @@
         <ng-container *ngIf="showAdditionalInfo">
           <div class="helper" *ngIf="skipVariant && !form.value.variantId">You chose to skip variant — fill in the details below.</div>
 
+          <div class="field-check">
           <mat-form-field appearance="outline">
             <mat-label>Transmission</mat-label>
             <mat-select formControlName="transmissionId" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)">
               <mat-option *ngFor="let t of (transmissions$ | async) ?? transmissions" [value]="t.id">{{t.name}}</mat-option>
             </mat-select>
+            <mat-error *ngIf="form.get('transmissionId')?.hasError('required') && form.get('transmissionId')?.touched">Please choose transmission</mat-error>
           </mat-form-field>
+          <mat-icon class="valid-check-outside" *ngIf="form.get('transmissionId')?.valid">check_circle</mat-icon>
+          </div>
 
+          <div class="field-check">
           <mat-form-field appearance="outline">
             <mat-label>Fuel Type</mat-label>
             <mat-select formControlName="fuelTypeId" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)">
               <mat-option *ngFor="let f of (fuelTypes$ | async) ?? fuelTypes" [value]="f.id">{{f.name}}</mat-option>
             </mat-select>
+            <mat-error *ngIf="form.get('fuelTypeId')?.hasError('required') && form.get('fuelTypeId')?.touched">Please choose fuel type</mat-error>
           </mat-form-field>
+          <mat-icon class="valid-check-outside" *ngIf="form.get('fuelTypeId')?.valid">check_circle</mat-icon>
+          </div>
 
+          <div class="field-check">
           <mat-form-field appearance="outline">
             <mat-label>Body Type</mat-label>
             <mat-select formControlName="bodyTypeId" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)">
               <mat-option *ngFor="let b of (bodyTypes$ | async) ?? bodyTypes" [value]="b.id">{{b.name}}</mat-option>
             </mat-select>
-              <mat-icon matSuffix class="valid-check" *ngIf="form.get('bodyTypeId')?.valid">check_circle</mat-icon>
             <mat-error *ngIf="form.get('bodyTypeId')?.hasError('required') && form.get('bodyTypeId')?.touched">Please choose a body type</mat-error>
           </mat-form-field>
+          <mat-icon class="valid-check-outside" *ngIf="form.get('bodyTypeId')?.valid">check_circle</mat-icon>
+          </div>
 
+          <div class="field-check">
           <mat-form-field appearance="outline">
             <mat-label>Engine Size (CC)</mat-label>
             <input matInput type="number" formControlName="engineSizeCC" aria-label="Engine Size CC" />
-            <button mat-icon-button matSuffix matTooltip="Engine displacement in cubic centimeters">
-              <mat-icon>build</mat-icon>
-            </button>
+            <mat-error *ngIf="form.get('engineSizeCC')?.hasError('required') && form.get('engineSizeCC')?.touched">Please enter engine size</mat-error>
+            <mat-error *ngIf="form.get('engineSizeCC')?.hasError('min') && form.get('engineSizeCC')?.touched">Engine size must be greater than zero</mat-error>
           </mat-form-field>
+          <mat-icon class="valid-check-outside" *ngIf="form.get('engineSizeCC')?.valid">check_circle</mat-icon>
+          </div>
         </ng-container>
 
         <div class="features" *ngIf="showAdditionalInfo">
@@ -193,7 +217,7 @@
   </div>
 
   <div class="step-divider"></div>
-  <h3 class="step-head">
+  <h3 class="step-head" [ngClass]="{ 'step-head--locked': !canNavigate(2) }">
     <span class="step-head__num">3.</span> Upload Images
     <mat-icon class="step-head__check" *ngIf="isStepCompleted(2)">check_circle</mat-icon>
   </h3>
@@ -217,6 +241,14 @@
           <div class="upload__item" *ngFor="let p of previews; let i = index">
             <img [src]="p" alt="preview image" />
             <div class="upload__badge" *ngIf="i === 0">Cover</div>
+            <div class="upload__actions">
+              <button type="button" mat-icon-button aria-label="Set as cover" (click)="setCover(i)" *ngIf="i !== 0" matTooltip="Set as cover">
+                <mat-icon>star</mat-icon>
+              </button>
+              <button type="button" mat-icon-button aria-label="Remove image" (click)="removeImage(i)" matTooltip="Remove">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -227,7 +259,7 @@
   </div>
 
   <div class="step-divider"></div>
-  <h3 class="step-head">
+  <h3 class="step-head" [ngClass]="{ 'step-head--locked': !canNavigate(3) }">
     <span class="step-head__num">4.</span> Contact Information
     <mat-icon class="step-head__check" *ngIf="isStepCompleted(3)">check_circle</mat-icon>
   </h3>
@@ -236,22 +268,32 @@
   <div *ngIf="currentStep >= 3">
     <mat-card-content>
       <div class="grid grid--contact">
+        <div class="field-check">
         <mat-form-field appearance="outline">
           <mat-label>Name</mat-label>
           <input matInput formControlName="contactName" aria-label="Name" placeholder="Your full name" />
           <mat-hint>Shown to buyers when they message you</mat-hint>
+          <mat-error *ngIf="form.get('contactName')?.hasError('required') && form.get('contactName')?.touched">Your name is required</mat-error>
         </mat-form-field>
+        <mat-icon class="valid-check-outside" *ngIf="form.get('contactName')?.valid">check_circle</mat-icon>
+        </div>
+        <div class="field-check">
         <mat-form-field appearance="outline">
           <mat-label>Phone</mat-label>
           <input matInput type="tel" formControlName="contactPhone" aria-label="Phone" placeholder="e.g. 07123 456789" />
-          <mat-icon matSuffix class="valid-check" *ngIf="(form.get('contactPhone')?.value || '').toString().trim().length > 0">check_circle</mat-icon>
           <mat-hint>Keep your phone on for quick responses</mat-hint>
+          <mat-error *ngIf="form.get('contactPhone')?.hasError('required') && form.get('contactPhone')?.touched">Phone number is required</mat-error>
         </mat-form-field>
+        <mat-icon class="valid-check-outside" *ngIf="form.get('contactPhone')?.valid">check_circle</mat-icon>
+        </div>
+        <div class="field-check grid-col-span-2">
         <mat-form-field class="grid-col-span-2" appearance="outline">
           <mat-label>Email</mat-label>
           <input matInput type="email" formControlName="contactEmail" aria-label="Email" placeholder="you@example.com" />
-          <mat-icon matSuffix class="valid-check" *ngIf="!!form.get('contactEmail')?.value && form.get('contactEmail')?.valid">check_circle</mat-icon>
+          <mat-error *ngIf="form.get('contactEmail')?.hasError('email') && form.get('contactEmail')?.touched">Please enter a valid email</mat-error>
         </mat-form-field>
+        <mat-icon class="valid-check-outside" *ngIf="!!form.get('contactEmail')?.value && form.get('contactEmail')?.valid">check_circle</mat-icon>
+        </div>
       </div>
     </mat-card-content>
   </div>
