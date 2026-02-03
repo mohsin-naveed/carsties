@@ -230,8 +230,10 @@ export class AddListingComponent {
         // Preselect variant features
         vf.forEach(v => this.selectedFeatureIds.add(v.featureId));
       });
-      // Ensure Body Color is set when a Variant is chosen (no focus change)
+      // Ensure Body Color is set when a Variant is chosen; if not set, open Body Color
+      const hasBodyColor = !!this.form.get('bodyColor')?.value;
       this.ensureDefaultBodyColor();
+      if (!hasBodyColor) setTimeout(() => { this.bodyColorSelect?.focus(); this.bodyColorSelect?.open(); }, 0);
       // Populate additional information from derivative when available
       const byName = (arr: { id:number; name?:string }[], name?: string | null) => {
         if (!name) return null; const target = (name || '').toLowerCase();
@@ -346,14 +348,14 @@ export class AddListingComponent {
     this.skipVariant = true;
     // Clear any selected variant and hide its tick
     this.form.patchValue({ variantId: null }, { emitEvent: true });
-    // Ensure Body Color is set when skipping variant (no focus change)
+    // If body color not selected, select and open; otherwise keep focus on Variant dropdown
+    const hasBodyColor = !!this.form.get('bodyColor')?.value;
     this.ensureDefaultBodyColor();
+    if (!hasBodyColor) setTimeout(() => { this.bodyColorSelect?.focus(); this.bodyColorSelect?.open(); }, 0);
     // Clear Additional Information controls
     this.form.patchValue({ transmissionId: null, fuelTypeId: null, bodyTypeId: null, engineSizeCC: null }, { emitEvent: false });
     this.selectedFeatureIds.clear();
     this.variantFeatures = []; this.variantFeatures$.next([]);
-    // Move focus to the next control (Mileage)
-    setTimeout(() => this.mileageInput?.nativeElement?.focus(), 0);
   }
 
   submit() {

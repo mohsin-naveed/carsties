@@ -25,7 +25,7 @@
           <mat-error *ngIf="cityError">{{cityError}}</mat-error>
           <mat-error *ngIf="form.get('cityId')?.hasError('required') && (form.get('citySearch')?.touched || form.get('cityId')?.touched)">Please select a city</mat-error>
         </mat-form-field>
-        <mat-icon class="valid-check-outside" [style.visibility]="!!form.get('cityId')?.value ? 'visible':'hidden'">check_circle</mat-icon>
+        
         </div>
 
         <!-- Area shown directly under City; typeahead styled like dropdown -->
@@ -42,7 +42,7 @@
           </mat-autocomplete>
           <mat-error *ngIf="areaError">{{areaError}}</mat-error>
         </mat-form-field>
-        <mat-icon class="valid-check-outside" *ngIf="!!form.get('areaId')?.value">check_circle</mat-icon>
+        
         </div>
 
         <div class="field-check">
@@ -53,7 +53,7 @@
           </mat-select>
           <mat-error *ngIf="form.get('year')?.hasError('required') && form.get('year')?.touched">Please choose the registration year</mat-error>
         </mat-form-field>
-        <mat-icon class="valid-check-outside" [style.visibility]="form.get('year')?.valid ? 'visible':'hidden'">check_circle</mat-icon>
+        
         </div>
 
         <div class="field-check">
@@ -64,7 +64,7 @@
           </mat-select>
           <mat-error *ngIf="form.get('makeId')?.hasError('required') && form.get('makeId')?.touched">Select the car make</mat-error>
         </mat-form-field>
-        <mat-icon class="valid-check-outside" [style.visibility]="form.get('makeId')?.valid ? 'visible':'hidden'">check_circle</mat-icon>
+        
         </div>
 
         <div class="field-check">
@@ -75,7 +75,7 @@
           </mat-select>
           <mat-error *ngIf="form.get('modelId')?.hasError('required') && form.get('modelId')?.touched">Select the model</mat-error>
         </mat-form-field>
-        <mat-icon class="valid-check-outside" [style.visibility]="form.get('modelId')?.valid ? 'visible':'hidden'">check_circle</mat-icon>
+        
         </div>
 
         
@@ -92,7 +92,7 @@
               <button type="button" class="link-button" (click)="onSkip()">Skip</button>
             </mat-hint>
           </mat-form-field>
-          <mat-icon class="valid-check-outside" [style.visibility]="!!form.get('variantId')?.value ? 'visible':'hidden'">check_circle</mat-icon>
+          
         </div>
 
         <!-- Body Color under Variant when variants are visible -->
@@ -107,7 +107,7 @@
             </mat-select>
             <mat-error *ngIf="form.get('bodyColor')?.hasError('required') && form.get('bodyColor')?.touched">Please choose a body color</mat-error>
           </mat-form-field>
-          <mat-icon class="valid-check-outside" [style.visibility]="form.get('bodyColor')?.valid ? 'visible':'hidden'">check_circle</mat-icon>
+          
         </div>
 
         <!-- Body Color under Model when no variants available (moved above Mileage) -->
@@ -122,7 +122,7 @@
             </mat-select>
             <mat-error *ngIf="form.get('bodyColor')?.hasError('required') && form.get('bodyColor')?.touched">Please choose a body color</mat-error>
           </mat-form-field>
-          <mat-icon class="valid-check-outside" [style.visibility]="form.get('bodyColor')?.valid ? 'visible':'hidden'">check_circle</mat-icon>
+          
         </div>
 
         <div class="field-check">
@@ -132,7 +132,7 @@
           <mat-error *ngIf="form.get('mileage')?.hasError('required') && form.get('mileage')?.touched">Please enter the mileage</mat-error>
           <mat-error *ngIf="form.get('mileage')?.hasError('min') && form.get('mileage')?.touched">Mileage must be greater than zero</mat-error>
         </mat-form-field>
-        <mat-icon class="valid-check-outside" [style.visibility]="form.get('mileage')?.valid ? 'visible':'hidden'">check_circle</mat-icon>
+        
         </div>
 
         <div class="field-check">
@@ -142,7 +142,7 @@
           <mat-error *ngIf="form.get('price')?.hasError('required') && form.get('price')?.touched">Please enter the car price</mat-error>
           <mat-error *ngIf="form.get('price')?.hasError('min') && form.get('price')?.touched">Price must be greater than zero</mat-error>
         </mat-form-field>
-        <mat-icon class="valid-check-outside" [style.visibility]="form.get('price')?.valid ? 'visible':'hidden'">check_circle</mat-icon>
+        
         </div>
 
         <!-- Description (optional) wrapped to match mandatory control width -->
@@ -151,7 +151,7 @@
             <mat-label>Description</mat-label>
             <textarea matInput rows="3" formControlName="description" aria-label="Description" matTooltip="Add highlights like condition, service history, extras"></textarea>
           </mat-form-field>
-          <mat-icon class="valid-check-outside" [style.visibility]="(form.get('description')?.value || '').toString().trim().length > 0 ? 'visible':'hidden'">check_circle</mat-icon>
+          
         </div>
 
       </div>
@@ -180,7 +180,7 @@
             </mat-select>
             <mat-error *ngIf="form.get('transmissionId')?.hasError('required') && form.get('transmissionId')?.touched">Please choose transmission</mat-error>
           </mat-form-field>
-          <mat-icon class="valid-check-outside" [style.visibility]="form.get('transmissionId')?.valid ? 'visible':'hidden'">check_circle</mat-icon>
+          
           </div>
 
           <div class="field-check">
@@ -191,7 +191,7 @@
             </mat-select>
             <mat-error *ngIf="form.get('fuelTypeId')?.hasError('required') && form.get('fuelTypeId')?.touched">Please choose fuel type</mat-error>
           </mat-form-field>
-          <mat-icon class="valid-check-outside" [style.visibility]="form.get('fuelTypeId')?.valid ? 'visible':'hidden'">check_circle</mat-icon>
+          
           </div>
 
           <div class="field-check">
@@ -202,7 +202,7 @@
             </mat-select>
             <mat-error *ngIf="form.get('bodyTypeId')?.hasError('required') && form.get('bodyTypeId')?.touched">Please choose a body type</mat-error>
           </mat-form-field>
-          <mat-icon class="valid-check-outside" [style.visibility]="form.get('bodyTypeId')?.valid ? 'visible':'hidden'">check_circle</mat-icon>
+          
           </div>
 
           <div class="field-check">
@@ -212,7 +212,7 @@
             <mat-error *ngIf="form.get('engineSizeCC')?.hasError('required') && form.get('engineSizeCC')?.touched">Please enter engine size</mat-error>
             <mat-error *ngIf="form.get('engineSizeCC')?.hasError('min') && form.get('engineSizeCC')?.touched">Engine size must be greater than zero</mat-error>
           </mat-form-field>
-          <mat-icon class="valid-check-outside" [style.visibility]="form.get('engineSizeCC')?.valid ? 'visible':'hidden'">check_circle</mat-icon>
+          
           </div>
         </ng-container>
 
@@ -254,7 +254,7 @@
         </div>
         <input #fileInput type="file" class="visually-hidden" multiple accept="image/*" (change)="onFilesSelected($event)" />
 
-        <div class="upload__meta">Selected: {{ selectedFiles.length }} file(s) <mat-icon class="valid-check" *ngIf="selectedFiles.length > 0">check_circle</mat-icon></div>
+        <div class="upload__meta">Selected: {{ selectedFiles.length }} file(s)</div>
 
         <div class="upload__grid">
           <div class="upload__item" *ngFor="let p of previews; let i = index">
@@ -294,7 +294,7 @@
           <mat-hint>Shown to buyers when they message you</mat-hint>
           <mat-error *ngIf="form.get('contactName')?.hasError('required') && form.get('contactName')?.touched">Your name is required</mat-error>
         </mat-form-field>
-        <mat-icon class="valid-check-outside" [style.visibility]="form.get('contactName')?.valid ? 'visible':'hidden'">check_circle</mat-icon>
+        
         </div>
         <div class="field-check">
         <mat-form-field appearance="outline" [ngClass]="{'valid-field': form.get('contactPhone')?.valid}">
@@ -303,7 +303,7 @@
           <mat-hint>Keep your phone on for quick responses</mat-hint>
           <mat-error *ngIf="form.get('contactPhone')?.hasError('required') && form.get('contactPhone')?.touched">Phone number is required</mat-error>
         </mat-form-field>
-        <mat-icon class="valid-check-outside" [style.visibility]="form.get('contactPhone')?.valid ? 'visible':'hidden'">check_circle</mat-icon>
+        
         </div>
         <div class="field-check">
         <mat-form-field appearance="outline">
@@ -311,7 +311,7 @@
           <input matInput type="email" formControlName="contactEmail" aria-label="Email" placeholder="you@example.com" />
           <mat-error *ngIf="form.get('contactEmail')?.hasError('email') && form.get('contactEmail')?.touched">Please enter a valid email</mat-error>
         </mat-form-field>
-        <mat-icon class="valid-check-outside" *ngIf="!!form.get('contactEmail')?.value && form.get('contactEmail')?.valid">check_circle</mat-icon>
+        
         </div>
       </div>
     </mat-card-content>

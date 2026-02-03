@@ -21,9 +21,9 @@
 .grid .grid-col-span-2 { grid-column: 1 / -1; }
 
 /* Field wrapper to hold external validation tick */
-.field-check { position: relative; display:flex; align-items:center; gap:6px; width:100%; padding-right: 28px; }
+.field-check { position: relative; display:flex; align-items:center; gap:6px; width:100%; padding-right: 0; }
 .field-check mat-form-field { flex: 1 1 auto; min-width: 0; width: 100%; }
-.valid-check-outside { color:#22c55e; font-size:20px; position:absolute; right:10px; top:50%; transform: translateY(-50%); pointer-events:none; }
+.valid-check-outside { display:none; }
 
 /* Force single-column across all screens */
 .section-card .mat-mdc-form-field { font-size: 14px; }
@@ -103,4 +103,4 @@ input[type=number] { appearance: textfield; -moz-appearance: textfield; }
 .step-head--locked .step-head__num { color: inherit; }
 
 /* Valid state tick */
-.valid-check { color:#22c55e; margin-left: 8px; }
+.valid-check { display:none; }
