@@ -92,8 +92,7 @@
               <button type="button" class="link-button" (click)="onSkip()">Skip</button>
             </mat-hint>
           </mat-form-field>
-          <!-- placeholder to reserve tick space for layout consistency -->
-          <mat-icon class="valid-check-outside" aria-hidden="true" style="visibility:hidden;">check_circle</mat-icon>
+          <mat-icon class="valid-check-outside" [style.visibility]="!!form.get('variantId')?.value ? 'visible':'hidden'">check_circle</mat-icon>
         </div>
 
         <!-- Body Color under Variant when variants are visible -->
@@ -152,8 +151,7 @@
             <mat-label>Description</mat-label>
             <textarea matInput rows="3" formControlName="description" aria-label="Description" matTooltip="Add highlights like condition, service history, extras"></textarea>
           </mat-form-field>
-          <!-- placeholder to reserve tick space for layout consistency -->
-          <mat-icon class="valid-check-outside" aria-hidden="true" style="visibility:hidden;">check_circle</mat-icon>
+          <mat-icon class="valid-check-outside" [style.visibility]="(form.get('description')?.value || '').toString().trim().length > 0 ? 'visible':'hidden'">check_circle</mat-icon>
         </div>
 
       </div>
@@ -251,7 +249,7 @@
              (click)="fileInput.click()" (keydown.enter)="fileInput.click()" tabindex="0" role="button"
              aria-label="Upload images" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
           <mat-icon>cloud_upload</mat-icon>
-          <div>Drag & drop images here or <span class="u-link">browse</span></div>
+          <div>Drag & drop images here or <button type="button" class="u-link-btn" (click)="fileInput.click(); $event.stopPropagation();">browse</button></div>
           <div class="upload__hint" matTooltip="JPG, PNG, WEBP up to 5MB. Aim for 6–10 photos.">JPG, PNG, WEBP • Max 5MB each</div>
         </div>
         <input #fileInput type="file" class="visually-hidden" multiple accept="image/*" (change)="onFilesSelected($event)" />

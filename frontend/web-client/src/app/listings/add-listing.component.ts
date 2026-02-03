@@ -1,4 +1,4 @@
-import { Component, inject, ViewChild, ElementRef } from '@angular/core';
+import { Component, inject, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -106,6 +106,7 @@ export class AddListingComponent {
   dragging = false;
   skipVariant = false;
   showMoreFeatures = false;
+  featureLimit = 7;
   hasCitySelected = false;
   @ViewChild('mileageInput') mileageInput!: ElementRef<HTMLInputElement>;
   @ViewChild('areaInput') areaInput?: ElementRef<HTMLInputElement>;
@@ -139,6 +140,7 @@ export class AddListingComponent {
   ];
 
   constructor() {
+    this.updateFeatureLimit();
     // Build years dropdown (descending from current year to 1900)
     const current = new Date().getFullYear();
     for (let y = current; y >= 1900; y--) this.years.push(y);
@@ -228,9 +230,8 @@ export class AddListingComponent {
         // Preselect variant features
         vf.forEach(v => this.selectedFeatureIds.add(v.featureId));
       });
-      // Auto-select and open Body Color when a Variant is chosen
+      // Ensure Body Color is set when a Variant is chosen (no focus change)
       this.ensureDefaultBodyColor();
-      setTimeout(() => { this.bodyColorSelect?.focus(); this.bodyColorSelect?.open(); }, 0);
       // Populate additional information from derivative when available
       const byName = (arr: { id:number; name?:string }[], name?: string | null) => {
         if (!name) return null; const target = (name || '').toLowerCase();
@@ -343,9 +344,10 @@ export class AddListingComponent {
 
   onSkip() {
     this.skipVariant = true;
-    // Auto-select and open Body Color when skipping variant
+    // Clear any selected variant and hide its tick
+    this.form.patchValue({ variantId: null }, { emitEvent: true });
+    // Ensure Body Color is set when skipping variant (no focus change)
     this.ensureDefaultBodyColor();
-    setTimeout(() => { this.bodyColorSelect?.focus(); this.bodyColorSelect?.open(); }, 0);
     // Clear Additional Information controls
     this.form.patchValue({ transmissionId: null, fuelTypeId: null, bodyTypeId: null, engineSizeCC: null }, { emitEvent: false });
     this.selectedFeatureIds.clear();
@@ -588,7 +590,7 @@ export class AddListingComponent {
     if (preferred) this.form.patchValue({ bodyColor: preferred.name }, { emitEvent: false });
   }
 
-  /** Features visibility: show first 20 by default, with selected first */
+  /** Features visibility: responsive limits (7/14/21), with selected first */
   get visibleFeatures(): FeatureDto[] {
     const all = [...this.features];
     all.sort((a, b) => {
@@ -597,8 +599,34 @@ export class AddListingComponent {
       return bSel - aSel;
     });
     if (this.showMoreFeatures) return all;
-    return all.slice(0, 20);
+    return all.slice(0, this.featureLimit);
   }
 
   toggleShowMoreFeatures() { this.showMoreFeatures = !this.showMoreFeatures; }
+
+  // Responsive feature limits: 7 small (<768), 14 medium (>=768 and <1280), 21 large (>=1280)
+  @HostListener('window:resize') onResize() { this.updateFeatureLimit(); }
+  private updateFeatureLimit() {
+    const w = typeof window !== 'undefined' ? window.innerWidth : 1920;
+    if (w >= 1280) this.featureLimit = 21;
+    else if (w >= 768) this.featureLimit = 14;
+    else this.featureLimit = 7;
+  }
+
+  // Focus handlers to populate options even if input has a value
+  onCityFocus(trigger: MatAutocompleteTrigger) {
+    this.cityLoading = true; this.cityError = null;
+    this.loc.searchCities('').subscribe({
+      next: items => { this.cities = items; this.cities$.next(items); this.cityLoading = false; trigger.openPanel(); },
+      error: () => { this.cityLoading = false; this.cityError = 'Failed to load cities'; trigger.openPanel(); }
+    });
+  }
+  onAreaFocus(trigger: MatAutocompleteTrigger) {
+    this.areaLoading = true; this.areaError = null;
+    const cityId = this.form.value.cityId ?? undefined;
+    this.loc.searchAreas('', cityId).subscribe({
+      next: items => { this.areas = items; this.areas$.next(items); this.areaLoading = false; trigger.openPanel(); },
+      error: () => { this.areaLoading = false; this.areaError = 'Failed to load areas'; trigger.openPanel(); }
+    });
+  }
 }
