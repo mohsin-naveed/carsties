@@ -3,10 +3,10 @@
 
 .sell-form { display:grid; gap:24px; justify-items: center; }
 
-.section-card { padding-bottom: 8px; width: 640px; max-width: 100%; }
+.section-card { padding-bottom: 8px; width: 768px; max-width: 100%; }
 
 /* Page title styling */
-.page-title { width: 640px; max-width: 100%; margin: 0 0 4px; font-size: 28px; font-weight: 700; line-height: 1.2; color:#0f172a; }
+.page-title { width: 768px; max-width: 100%; margin: 0 0 4px; font-size: 28px; font-weight: 700; line-height: 1.2; color:#0f172a; }
 
 .grid { display:grid; gap:12px; justify-items: stretch; }
 .grid * { box-sizing: border-box; }
@@ -94,6 +94,8 @@ input[type=number] { appearance: textfield; -moz-appearance: textfield; }
 .step-head__check { color:#22c55e; font-size: 20px; margin-left: auto; }
 .step-head--locked { color:#94a3b8; cursor:default; pointer-events: none; }
 .step-head--done { color:#065f46; }
+/* Keep step numbers consistent with locked label color */
+.step-head--locked .step-head__num { color: inherit; }
 
 /* Valid state tick */
 .valid-check { color:#22c55e; margin-left: 8px; }

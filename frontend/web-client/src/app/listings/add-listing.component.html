@@ -1,8 +1,8 @@
 <form [formGroup]="form" (ngSubmit)="submit()" class="sell-form" [attr.aria-busy]="saving">
+  <!-- Page title moved outside the mat-card per requirements -->
+  <h2 class="page-title" aria-label="Sell your car">Sell your car</h2>
   <!-- Single outer card wrapping all steps -->
   <mat-card class="section-card">
-      <!-- Page title above mat-card-content -->
-      <h2 class="page-title" aria-label="Sell your car">Sell your car</h2>
     <mat-card-content>
       <!-- Step 1 label inside card -->
       <h3 class="step-head">

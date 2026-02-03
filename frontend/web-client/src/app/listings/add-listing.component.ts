@@ -227,6 +227,10 @@ export class AddListingComponent {
         // Preselect variant features
         vf.forEach(v => this.selectedFeatureIds.add(v.featureId));
       });
+      // Auto-select a default Body Color when a Variant is chosen
+      this.ensureDefaultBodyColor();
+      // Focus next logical control
+      this.onBodyColorSelected();
       // Populate additional information from derivative when available
       const byName = (arr: { id:number; name?:string }[], name?: string | null) => {
         if (!name) return null; const target = (name || '').toLowerCase();
@@ -339,6 +343,8 @@ export class AddListingComponent {
 
   onSkip() {
     this.skipVariant = true;
+    // Auto-select a default Body Color when skipping variant
+    this.ensureDefaultBodyColor();
     // Move focus to the next control (Mileage)
     setTimeout(() => this.mileageInput?.nativeElement?.focus(), 0);
   }
@@ -570,5 +576,14 @@ export class AddListingComponent {
   openAreaDropdown(trigger: MatAutocompleteTrigger) {
     this.form.get('areaSearch')!.setValue('');
     setTimeout(() => trigger.openPanel(), 0);
+  }
+
+  /** Ensure a default Body Color is selected if none is chosen yet */
+  private ensureDefaultBodyColor() {
+    const current = (this.form.get('bodyColor')?.value || '').toString();
+    if (current && current.trim().length > 0) return;
+    const preferred = this.bodyColors.find(c => c.name.toLowerCase() === 'silver')
+      ?? this.bodyColors[0];
+    if (preferred) this.form.patchValue({ bodyColor: preferred.name }, { emitEvent: false });
   }
 }
