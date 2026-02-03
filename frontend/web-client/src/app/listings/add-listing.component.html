@@ -7,7 +7,6 @@
       <!-- Step 1 label inside card -->
       <h3 class="step-head">
         <span class="step-head__num">1.</span> Car Information
-        <mat-icon class="step-head__check" *ngIf="isStepCompleted(0)">check_circle</mat-icon>
       </h3>
       <!-- No divider under the first step -->
       <div class="grid grid--car">
@@ -167,7 +166,6 @@
   <div class="step-divider"></div>
   <h3 class="step-head" [ngClass]="{ 'step-head--locked': !canNavigate(1) }">
     <span class="step-head__num">2.</span> Additional Information
-    <mat-icon class="step-head__check" *ngIf="isStepCompleted(1)">check_circle</mat-icon>
   </h3>
   <!-- Step 2: Additional Information directly under its label -->
   <div *ngIf="currentStep >= 1">
@@ -223,18 +221,14 @@
         <div class="features" *ngIf="showAdditionalInfo">
           <div class="features__title">Features</div>
           <div class="features__grid">
-            <!-- Selected features first -->
-            <ng-container *ngFor="let f of features">
-              <ng-container *ngIf="selectedFeatureIds.has(f.id)">
-                <mat-checkbox color="primary" [checked]="true" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)" (change)="toggleFeature(f.id, $event.checked)">{{f.name}}</mat-checkbox>
-              </ng-container>
-            </ng-container>
-            <!-- Remaining features -->
-            <ng-container *ngFor="let f of features">
-              <ng-container *ngIf="!selectedFeatureIds.has(f.id)">
-                <mat-checkbox color="primary" [checked]="false" [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)" (change)="toggleFeature(f.id, $event.checked)">{{f.name}}</mat-checkbox>
-              </ng-container>
-            </ng-container>
+            <mat-checkbox *ngFor="let f of visibleFeatures" color="primary"
+              [checked]="selectedFeatureIds.has(f.id)"
+              [disabled]="!(skipVariant || form.value.modelId || form.value.variantId)"
+              (change)="toggleFeature(f.id, $event.checked)">{{f.name}}</mat-checkbox>
+          </div>
+          <div class="features__actions">
+            <button type="button" class="link-button" (click)="toggleShowMoreFeatures()">{{ showMoreFeatures ? 'Show less' : 'Show more' }}</button>
+            <span class="muted">Showing {{ showMoreFeatures ? (features?.length || 0) : (visibleFeatures?.length || 0) }} of {{ features?.length || 0 }}</span>
           </div>
         </div>
       </div>
@@ -247,7 +241,6 @@
   <div class="step-divider"></div>
   <h3 class="step-head" [ngClass]="{ 'step-head--locked': !canNavigate(2) }">
     <span class="step-head__num">3.</span> Upload Images
-    <mat-icon class="step-head__check" *ngIf="isStepCompleted(2)">check_circle</mat-icon>
   </h3>
 
   <!-- Step 3: Upload Images directly under its label when reached -->
@@ -290,7 +283,6 @@
   <div class="step-divider"></div>
   <h3 class="step-head" [ngClass]="{ 'step-head--locked': !canNavigate(3) }">
     <span class="step-head__num">4.</span> Contact Information
-    <mat-icon class="step-head__check" *ngIf="isStepCompleted(3)">check_circle</mat-icon>
   </h3>
 
   <!-- Step 4: Contact Information directly under its label when reached -->
@@ -315,8 +307,8 @@
         </mat-form-field>
         <mat-icon class="valid-check-outside" [style.visibility]="form.get('contactPhone')?.valid ? 'visible':'hidden'">check_circle</mat-icon>
         </div>
-        <div class="field-check grid-col-span-2">
-        <mat-form-field class="grid-col-span-2" appearance="outline">
+        <div class="field-check">
+        <mat-form-field appearance="outline">
           <mat-label>Email</mat-label>
           <input matInput type="email" formControlName="contactEmail" aria-label="Email" placeholder="you@example.com" />
           <mat-error *ngIf="form.get('contactEmail')?.hasError('email') && form.get('contactEmail')?.touched">Please enter a valid email</mat-error>

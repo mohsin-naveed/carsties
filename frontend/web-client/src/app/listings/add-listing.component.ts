@@ -105,6 +105,7 @@ export class AddListingComponent {
   previews: string[] = [];
   dragging = false;
   skipVariant = false;
+  showMoreFeatures = false;
   hasCitySelected = false;
   @ViewChild('mileageInput') mileageInput!: ElementRef<HTMLInputElement>;
   @ViewChild('areaInput') areaInput?: ElementRef<HTMLInputElement>;
@@ -227,10 +228,9 @@ export class AddListingComponent {
         // Preselect variant features
         vf.forEach(v => this.selectedFeatureIds.add(v.featureId));
       });
-      // Auto-select a default Body Color when a Variant is chosen
+      // Auto-select and open Body Color when a Variant is chosen
       this.ensureDefaultBodyColor();
-      // Focus next logical control
-      this.onBodyColorSelected();
+      setTimeout(() => { this.bodyColorSelect?.focus(); this.bodyColorSelect?.open(); }, 0);
       // Populate additional information from derivative when available
       const byName = (arr: { id:number; name?:string }[], name?: string | null) => {
         if (!name) return null; const target = (name || '').toLowerCase();
@@ -343,8 +343,13 @@ export class AddListingComponent {
 
   onSkip() {
     this.skipVariant = true;
-    // Auto-select a default Body Color when skipping variant
+    // Auto-select and open Body Color when skipping variant
     this.ensureDefaultBodyColor();
+    setTimeout(() => { this.bodyColorSelect?.focus(); this.bodyColorSelect?.open(); }, 0);
+    // Clear Additional Information controls
+    this.form.patchValue({ transmissionId: null, fuelTypeId: null, bodyTypeId: null, engineSizeCC: null }, { emitEvent: false });
+    this.selectedFeatureIds.clear();
+    this.variantFeatures = []; this.variantFeatures$.next([]);
     // Move focus to the next control (Mileage)
     setTimeout(() => this.mileageInput?.nativeElement?.focus(), 0);
   }
@@ -480,21 +485,17 @@ export class AddListingComponent {
     const input = ev.target as HTMLInputElement;
     const files = input.files;
     const list = files ? Array.from(files) : [];
-    // Validate: max 10 files, type and size (<=5MB)
+    // Validate: max 10 files total, type and size (<=5MB). Append new files.
     const maxCount = 10;
     const maxSize = 5 * 1024 * 1024;
     const allowed = new Set(['image/jpeg','image/png','image/webp','image/gif']);
-    const filtered: File[] = [];
     for (const f of list) {
-      if (filtered.length >= maxCount) break;
+      if (this.selectedFiles.length >= maxCount) break;
       if (!allowed.has(f.type)) continue;
       if (f.size > maxSize) continue;
-      filtered.push(f);
+      this.selectedFiles.push(f);
+      this.previews.push(URL.createObjectURL(f));
     }
-    this.selectedFiles = filtered;
-    // Build previews
-    this.previews.forEach(url => URL.revokeObjectURL(url));
-    this.previews = this.selectedFiles.map(f => URL.createObjectURL(f));
     // Default first image as cover
     this.coverIndex = 0;
   }
@@ -586,4 +587,18 @@ export class AddListingComponent {
       ?? this.bodyColors[0];
     if (preferred) this.form.patchValue({ bodyColor: preferred.name }, { emitEvent: false });
   }
+
+  /** Features visibility: show first 20 by default, with selected first */
+  get visibleFeatures(): FeatureDto[] {
+    const all = [...this.features];
+    all.sort((a, b) => {
+      const aSel = this.selectedFeatureIds.has(a.id) ? 1 : 0;
+      const bSel = this.selectedFeatureIds.has(b.id) ? 1 : 0;
+      return bSel - aSel;
+    });
+    if (this.showMoreFeatures) return all;
+    return all.slice(0, 20);
+  }
+
+  toggleShowMoreFeatures() { this.showMoreFeatures = !this.showMoreFeatures; }
 }
