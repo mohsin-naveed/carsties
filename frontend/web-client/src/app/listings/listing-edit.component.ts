@@ -27,139 +27,202 @@ import { LocationApiService, CityDto, AreaDto } from '../location/location-api.s
   selector: 'app-listing-edit',
   standalone: true,
   imports: [CommonModule, RouterModule, ReactiveFormsModule, ObserversModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatCardModule, MatProgressSpinnerModule, MatSelectModule, MatOptionModule, MatIconModule, MatCheckboxModule, MatTooltipModule, MatDividerModule, MatAutocompleteModule],
+  styleUrls: ['./add-listing.component.scss'],
   template: `
   <form [formGroup]="form" (ngSubmit)="save()" class="sell-form" [attr.aria-busy]="saving">
-    <!-- Car Information -->
+    <h2 class="page-title" aria-label="Edit listing">Edit listing</h2>
     <mat-card class="section-card">
-      <mat-card-header>
-        <mat-icon mat-card-avatar color="primary">edit</mat-icon>
-        <mat-card-title>Edit Listing</mat-card-title>
-        <mat-card-subtitle>Update your car details</mat-card-subtitle>
-      </mat-card-header>
       <mat-card-content>
+        <h3 class="step-head">
+          <span class="step-head__num">1.</span> Car Information
+        </h3>
         <div class="grid grid--car">
-          <mat-form-field appearance="outline">
-            <mat-label>Title</mat-label>
-            <input matInput formControlName="title" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Year</mat-label>
-            <input matInput type="number" formControlName="year" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Make</mat-label>
-            <mat-select formControlName="makeId">
-              <mat-option *ngFor="let m of makes" [value]="m.id">{{m.name}}</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <!-- City above Model -->
-          <mat-form-field appearance="outline">
-            <mat-label>City</mat-label>
-            <input type="text" matInput [matAutocomplete]="cityAuto" formControlName="citySearch" placeholder="Start typing city name" />
-            <mat-autocomplete #cityAuto="matAutocomplete" (optionSelected)="onCitySelected($event.option.value)">
-              <mat-option *ngFor="let c of cities" [value]="c.id">{{c.name}}<span class="muted"> — {{c.provinceName}}</span></mat-option>
-            </mat-autocomplete>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Model</mat-label>
-            <mat-select formControlName="modelId">
-              <mat-option *ngFor="let m of models" [value]="m.id">{{m.name}}</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field *ngIf="form.value.cityId" appearance="outline">
-            <mat-label>Area</mat-label>
-            <input type="text" matInput [matAutocomplete]="areaAuto" formControlName="areaSearch" placeholder="Type area (optional)" />
-            <mat-autocomplete #areaAuto="matAutocomplete" (optionSelected)="onAreaSelected($event.option.value)">
-              <mat-option *ngFor="let a of areas" [value]="a.id">{{a.name}}<span class="muted"> — {{a.cityName}}</span></mat-option>
-            </mat-autocomplete>
-          </mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Variant</mat-label>
-            <mat-select formControlName="variantId">
-              <mat-option *ngFor="let v of variants" [value]="v.id">{{v.name}}</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Mileage</mat-label>
-            <input matInput type="number" formControlName="mileage" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Price</mat-label>
-            <input matInput type="number" formControlName="price" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Body Type</mat-label>
-            <mat-select formControlName="bodyTypeId">
-              <mat-option *ngFor="let b of bodyTypes" [value]="b.id">{{b.name}}</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Transmission</mat-label>
-            <mat-select formControlName="transmissionId">
-              <mat-option *ngFor="let t of transmissions" [value]="t.id">{{t.name}}</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Fuel Type</mat-label>
-            <mat-select formControlName="fuelTypeId">
-              <mat-option *ngFor="let f of fuelTypes" [value]="f.id">{{f.name}}</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Engine Size (CC)</mat-label>
-            <input matInput type="number" formControlName="engineSizeCC" />
-          </mat-form-field>
-          <mat-form-field class="grid-col-span-2" appearance="outline">
-            <mat-label>Description</mat-label>
-            <textarea matInput rows="3" formControlName="description"></textarea>
-          </mat-form-field>
+          <div class="field-check">
+            <mat-form-field appearance="outline">
+              <mat-label>Title</mat-label>
+              <input matInput formControlName="title" />
+            </mat-form-field>
+          </div>
+          <div class="field-check">
+            <mat-form-field appearance="outline">
+              <mat-label>Model Year</mat-label>
+              <input matInput type="number" formControlName="year" />
+            </mat-form-field>
+          </div>
+          <div class="field-check">
+            <mat-form-field appearance="outline">
+              <mat-label>Make</mat-label>
+              <mat-select formControlName="makeId">
+                <mat-option *ngFor="let m of makes" [value]="m.id">{{m.name}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="field-check">
+            <mat-form-field appearance="outline">
+              <mat-label>City</mat-label>
+              <input type="text" matInput [matAutocomplete]="cityAuto" formControlName="citySearch" placeholder="Start typing city name" />
+              <mat-autocomplete #cityAuto="matAutocomplete" (optionSelected)="onCitySelected($event.option.value)">
+                <mat-option *ngFor="let c of cities" [value]="c.id">{{c.name}}<span class="muted"> — {{c.provinceName}}</span></mat-option>
+              </mat-autocomplete>
+            </mat-form-field>
+          </div>
+          <div class="field-check">
+            <mat-form-field appearance="outline">
+              <mat-label>Model</mat-label>
+              <mat-select formControlName="modelId">
+                <mat-option *ngFor="let m of models" [value]="m.id">{{m.name}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="field-check" *ngIf="form.value.cityId">
+            <mat-form-field appearance="outline">
+              <mat-label>Area</mat-label>
+              <input type="text" matInput [matAutocomplete]="areaAuto" formControlName="areaSearch" placeholder="Type area (optional)" />
+              <mat-autocomplete #areaAuto="matAutocomplete" (optionSelected)="onAreaSelected($event.option.value)">
+                <mat-option *ngFor="let a of areas" [value]="a.id">{{a.name}}<span class="muted"> — {{a.cityName}}</span></mat-option>
+              </mat-autocomplete>
+            </mat-form-field>
+          </div>
+          <div class="field-check">
+            <mat-form-field appearance="outline">
+              <mat-label>Variant</mat-label>
+              <mat-select formControlName="variantId">
+                <mat-option *ngFor="let v of variants" [value]="v.id">{{v.name}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="field-check">
+            <mat-form-field appearance="outline">
+              <mat-label>Mileage</mat-label>
+              <input matInput type="number" formControlName="mileage" />
+            </mat-form-field>
+          </div>
+          <div class="field-check">
+            <mat-form-field appearance="outline">
+              <mat-label>Price</mat-label>
+              <input matInput type="number" formControlName="price" />
+            </mat-form-field>
+          </div>
+          <div class="field-check grid-col-span-2">
+            <mat-form-field appearance="outline">
+              <mat-label>Description</mat-label>
+              <textarea matInput rows="3" formControlName="description"></textarea>
+            </mat-form-field>
+          </div>
         </div>
       </mat-card-content>
-    </mat-card>
 
-    <mat-divider></mat-divider>
+      <div class="step-divider"></div>
+      <h3 class="step-head">
+        <span class="step-head__num">2.</span> Additional Information
+      </h3>
+      <mat-card-content>
+        <div class="grid grid--car">
+          <div class="field-check">
+            <mat-form-field appearance="outline">
+              <mat-label>Body Type</mat-label>
+              <mat-select formControlName="bodyTypeId">
+                <mat-option *ngFor="let b of bodyTypes" [value]="b.id">{{b.name}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="field-check">
+            <mat-form-field appearance="outline">
+              <mat-label>Transmission</mat-label>
+              <mat-select formControlName="transmissionId">
+                <mat-option *ngFor="let t of transmissions" [value]="t.id">{{t.name}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="field-check">
+            <mat-form-field appearance="outline">
+              <mat-label>Fuel Type</mat-label>
+              <mat-select formControlName="fuelTypeId">
+                <mat-option *ngFor="let f of fuelTypes" [value]="f.id">{{f.name}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="field-check">
+            <mat-form-field appearance="outline">
+              <mat-label>Engine Size (CC)</mat-label>
+              <input matInput type="number" formControlName="engineSizeCC" />
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="features">
+          <div class="features__title">Features</div>
+          <div class="features__grid">
+            <mat-checkbox *ngFor="let f of features" color="primary"
+              [checked]="selectedFeatureIds.has(f.id)"
+              (change)="toggleFeature(f.id, $event.checked)">{{f.name}}</mat-checkbox>
+          </div>
+        </div>
+      </mat-card-content>
 
-    <!-- Images -->
-    <mat-card class="section-card">
-    <h3>Images</h3>
-    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-      <div *ngFor="let img of listing?.images" style="position:relative;">
-        <img [src]="img.thumbUrl || img.url" alt="image" style="width:140px; height:105px; object-fit:cover; border-radius:4px; border:1px solid #ddd;" />
-        <button mat-icon-button color="warn" title="Delete" (click)="deleteImage(img.id)" style="position:absolute; top:4px; right:4px; background:#fff;">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </div>
-    </div>
-    <div style="margin-top:12px;">
-      <input type="file" multiple accept="image/*" (change)="onFilesSelected($event)" />
-      <button mat-stroked-button color="primary" (click)="uploadSelected()" [disabled]="!selectedFiles.length">Upload selected ({{selectedFiles.length}})</button>
-      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
-        <img *ngFor="let p of previews" [src]="p" style="width:120px; height:90px; object-fit:cover; border-radius:4px; border:1px solid #ddd;" alt="preview" />
-      </div>
-    </div>
-    </mat-card>
+      <div class="step-divider"></div>
+      <h3 class="step-head">
+        <span class="step-head__num">3.</span> Upload Images
+      </h3>
+      <mat-card-content>
+        <div class="upload">
+          <div class="upload__grid">
+            <div class="upload__item" *ngFor="let img of listing?.images">
+              <img [src]="img.thumbUrl || img.url" alt="image" />
+              <div class="upload__actions">
+                <button mat-icon-button color="warn" aria-label="Delete image" (click)="deleteImage(img.id)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="upload__meta">Selected: {{ selectedFiles.length }} file(s)</div>
+          <div class="upload__drop" (click)="fileInput.click()" tabindex="0" role="button">
+            <mat-icon>cloud_upload</mat-icon>
+            <div>Click to choose files to upload</div>
+          </div>
+          <input #fileInput type="file" class="visually-hidden" multiple accept="image/*" (change)="onFilesSelected($event)" />
+          <div class="upload__grid">
+            <div class="upload__item" *ngFor="let p of previews">
+              <img [src]="p" alt="preview" />
+            </div>
+          </div>
+          <button mat-stroked-button color="primary" type="button" (click)="uploadSelected()" [disabled]="!selectedFiles.length">Upload selected ({{selectedFiles.length}})</button>
+        </div>
+      </mat-card-content>
 
-    <mat-divider></mat-divider>
-
-    <!-- Features -->
-    <mat-card class="section-card">
-    <h3>Additional Information</h3>
-    <div><strong>Features</strong></div>
-    <div style="display:flex; flex-wrap:wrap; gap:12px;">
-      <ng-container *ngFor="let f of features">
-        <mat-checkbox color="primary"
-                      [checked]="selectedFeatureIds.has(f.id)"
-                      (change)="toggleFeature(f.id, $event.checked)">
-          {{f.name}}
-        </mat-checkbox>
-      </ng-container>
-    </div>
+      <div class="step-divider"></div>
+      <h3 class="step-head">
+        <span class="step-head__num">4.</span> Contact Information
+      </h3>
+      <mat-card-content>
+        <div class="grid grid--contact">
+          <div class="field-check">
+            <mat-form-field appearance="outline">
+              <mat-label>Name</mat-label>
+              <input matInput formControlName="contactName" placeholder="Your full name" />
+            </mat-form-field>
+          </div>
+          <div class="field-check">
+            <mat-form-field appearance="outline">
+              <mat-label>Phone</mat-label>
+              <input matInput type="tel" formControlName="contactPhone" placeholder="e.g. 07123 456789" />
+            </mat-form-field>
+          </div>
+          <div class="field-check">
+            <mat-form-field appearance="outline">
+              <mat-label>Email</mat-label>
+              <input matInput type="email" formControlName="contactEmail" placeholder="you@example.com" />
+            </mat-form-field>
+          </div>
+        </div>
+      </mat-card-content>
     </mat-card>
 
     <div class="actions">
       <button mat-stroked-button type="button" (click)="cancel()">Cancel</button>
       <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || !form.dirty || saving">
         <mat-progress-spinner *ngIf="saving" mode="indeterminate" diameter="18" strokeWidth="3"></mat-progress-spinner>
-        <span *ngIf="!saving">Save</span>
+        <span *ngIf="!saving">Update</span>
       </button>
     </div>
   </form>
@@ -215,7 +278,10 @@ export class ListingEditComponent {
     variantId: [null as number | null, Validators.required],
     engineSizeCC: [null as number | null],
     citySearch: [''], cityId: [null as number | null],
-    areaSearch: [''], areaId: [null as number | null]
+    areaSearch: [''], areaId: [null as number | null],
+    contactName: ['', [Validators.maxLength(100)]],
+    contactPhone: ['', [Validators.maxLength(30)]],
+    contactEmail: ['', [Validators.email, Validators.maxLength(200)]]
   });
 
   ngOnInit() {
@@ -247,7 +313,10 @@ export class ListingEditComponent {
           variantId: null,
           engineSizeCC: l.engineSizeCC ?? null,
           citySearch: l.cityName ?? '',
-          areaSearch: l.areaName ?? ''
+          areaSearch: l.areaName ?? '',
+          contactName: l.contactName ?? '',
+          contactPhone: l.contactPhone ?? '',
+          contactEmail: l.contactEmail ?? ''
         });
         // Preselect listing features by codes returned from API
         const codes = (l.features ? l.features.map(f => f.featureCode) : (l.featureCodes ?? [])) ?? [];
@@ -326,7 +395,10 @@ export class ListingEditComponent {
       seats: derivative?.seats,
       doors: derivative?.doors,
       engineSizeCC: this.form.value.engineSizeCC ?? derivative?.engineCC ?? undefined,
-      features: featureInputs
+      features: featureInputs,
+      contactName: this.form.value.contactName ?? undefined,
+      contactPhone: this.form.value.contactPhone ?? undefined,
+      contactEmail: this.form.value.contactEmail ?? undefined
     };
     this.api.updateListing(this.id, dto).subscribe({
       next: (updated: ListingDto) => {
@@ -343,6 +415,9 @@ export class ListingEditComponent {
           transmissionId: this.transmissions.find(t => t.code === updated.transmissionTypeCode)?.id ?? null,
           fuelTypeId: this.fuelTypes.find(f => f.code === updated.fuelTypeCode)?.id ?? null,
           bodyTypeId: this.bodyTypes.find(b => b.code === updated.bodyTypeCode)?.id ?? null,
+          contactName: updated.contactName ?? '',
+          contactPhone: updated.contactPhone ?? '',
+          contactEmail: updated.contactEmail ?? '',
         }, { emitEvent: false });
         // Update selected features
         this.selectedFeatureIds.clear();
@@ -410,6 +485,9 @@ export class ListingEditComponent {
         transmissionId: this.transmissions.find(t => t.code === l.transmissionTypeCode)?.id ?? null,
         fuelTypeId: this.fuelTypes.find(f => f.code === l.fuelTypeCode)?.id ?? null,
         bodyTypeId: this.bodyTypes.find(b => b.code === l.bodyTypeCode)?.id ?? null,
+        contactName: l.contactName ?? '',
+        contactPhone: l.contactPhone ?? '',
+        contactEmail: l.contactEmail ?? '',
       }, { emitEvent: false });
     });
   }

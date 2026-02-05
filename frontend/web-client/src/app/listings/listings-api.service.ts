@@ -198,9 +198,9 @@ export class ListingsApiService {
   uploadListingImages(listingId: number, files: File[]) {
     const fd = new FormData();
     for (const f of files) fd.append('files', f);
-    return this.http.post(`${this.baseUrl}/listings/${listingId}/images`, fd);
+    return this.http.post<ListingImageDto[]>(`${this.baseUrl}/listings/${listingId}/images`, fd);
   }
-  getListingImages(listingId: number) { return this.http.get(`${this.baseUrl}/listings/${listingId}/images`); }
+  getListingImages(listingId: number) { return this.http.get<ListingImageDto[]>(`${this.baseUrl}/listings/${listingId}/images`); }
   deleteListingImage(listingId: number, imageId: number) { return this.http.delete(`${this.baseUrl}/listings/${listingId}/images/${imageId}`); }
   deleteListing(id: number) { return this.http.delete(`${this.baseUrl}/listings/${id}`); }
 }
