@@ -1,20 +1,19 @@
 using ListingService.Data;
 using ListingService.Entities;
+using ListingService.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
 
 namespace ListingService.Controllers;
 
 [ApiController]
-public class ImagesController(ListingDbContext context, IWebHostEnvironment env) : ControllerBase
+public class ImagesController(ListingDbContext context, IImageStorageService imageStorage) : ControllerBase
 {
     [HttpPost("api/listings/{id:int}/images")]
     [RequestSizeLimit(20_000_000)] // ~20MB
-    public async Task<ActionResult> Upload(int id)
+    public async Task<ActionResult> Upload(int id, CancellationToken cancellationToken)
     {
-        var listing = await context.Listings.FindAsync(id);
+        var listing = await context.Listings.FindAsync(new object[] { id }, cancellationToken);
         if (listing is null) return NotFound("Listing not found");
         if (!Request.HasFormContentType) return BadRequest("Expected multipart/form-data");
         var files = Request.Form.Files;
@@ -22,10 +21,6 @@ public class ImagesController(ListingDbContext context, IWebHostEnvironment env)
         if (files.Count > 10) return BadRequest("Too many files (max 10)");
 
         var saved = new List<ListingImage>();
-        var imgRoot = Path.Combine(env.ContentRootPath, "wwwroot", "images", id.ToString());
-        var thumbRoot = Path.Combine(imgRoot, "thumbs");
-        Directory.CreateDirectory(imgRoot);
-        Directory.CreateDirectory(thumbRoot);
 
         foreach (var f in files)
         {
@@ -35,40 +30,7 @@ public class ImagesController(ListingDbContext context, IWebHostEnvironment env)
             {
                 return BadRequest($"Unsupported content type: {f.ContentType}");
             }
-            var ext = Path.GetExtension(f.FileName);
-            var fileName = $"{Guid.NewGuid()}{ext}";
-            var fullPath = Path.Combine(imgRoot, fileName);
-            await using (var stream = new FileStream(fullPath, FileMode.Create, FileAccess.Write))
-            {
-                await f.CopyToAsync(stream);
-            }
-
-            // Generate thumbnail (max width 400px)
-            string? thumbUrl = null;
-            try
-            {
-                using var image = await Image.LoadAsync(fullPath);
-                var w = image.Width;
-                var h = image.Height;
-                var maxW = 400;
-                if (w > maxW)
-                {
-                    var ratio = (double)maxW / w;
-                    var newW = maxW;
-                    var newH = (int)Math.Round(h * ratio);
-                    image.Mutate(x => x.Resize(newW, newH));
-                }
-                var thumbName = $"thumb-{fileName}";
-                var thumbPath = Path.Combine(thumbRoot, thumbName);
-                await image.SaveAsync(thumbPath);
-                thumbUrl = $"/images/{id}/thumbs/{thumbName}";
-            }
-            catch
-            {
-                // ignore thumbnail generation failures
-            }
-
-            var url = $"/images/{id}/{fileName}";
+            var (url, thumbUrl, fileName) = await imageStorage.SaveListingImageAsync(id, f, cancellationToken);
             var entity = new ListingImage { ListingId = id, FileName = fileName, Url = url, ThumbUrl = thumbUrl, CreatedAt = DateTime.UtcNow };
             context.ListingImages.Add(entity);
             saved.Add(entity);
@@ -78,24 +40,23 @@ public class ImagesController(ListingDbContext context, IWebHostEnvironment env)
     }
 
     [HttpGet("api/listings/{id:int}/images")]
-    public async Task<ActionResult<IEnumerable<object>>> GetImages(int id)
+    public async Task<ActionResult<IEnumerable<object>>> GetImages(int id, CancellationToken cancellationToken)
     {
-        var exists = await context.Listings.AnyAsync(l => l.Id == id);
+        var exists = await context.Listings.AnyAsync(l => l.Id == id, cancellationToken);
         if (!exists) return NotFound("Listing not found");
         var list = await context.ListingImages.Where(i => i.ListingId == id)
                                               .OrderByDescending(i => i.Id)
                                               .Select(i => new { i.Id, i.FileName, i.Url })
-                                              .ToListAsync();
+                                              .ToListAsync(cancellationToken);
         return Ok(list);
     }
 
     [HttpDelete("api/listings/{listingId:int}/images/{imageId:int}")]
-    public async Task<ActionResult> DeleteImage(int listingId, int imageId)
+    public async Task<ActionResult> DeleteImage(int listingId, int imageId, CancellationToken cancellationToken)
     {
-        var image = await context.ListingImages.FirstOrDefaultAsync(i => i.Id == imageId && i.ListingId == listingId);
+        var image = await context.ListingImages.FirstOrDefaultAsync(i => i.Id == imageId && i.ListingId == listingId, cancellationToken);
         if (image is null) return NotFound();
-        var fullPath = Path.Combine(env.ContentRootPath, "wwwroot", image.Url.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-        try { if (System.IO.File.Exists(fullPath)) System.IO.File.Delete(fullPath); } catch { /* ignore */ }
+        await imageStorage.DeleteListingImageAsync(listingId, image.FileName, image.ThumbUrl, cancellationToken);
         context.ListingImages.Remove(image);
         await context.SaveChangesAsync();
         return NoContent();

@@ -38,6 +38,9 @@ builder.Services.AddHttpClient<CatalogClient>()
         .HandleTransientHttpError()
         .CircuitBreakerAsync(5, TimeSpan.FromSeconds(10)));
 
+// Image storage (Azure Blob)
+builder.Services.AddSingleton<IImageStorageService, AzureBlobImageStorageService>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
