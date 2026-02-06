@@ -14,9 +14,9 @@
   </nav>
   <span class="spacer"></span>
   <div class="nav__auth">
-    <button mat-stroked-button color="accent">Login</button>
-    <button mat-raised-button color="accent" [matMenuTriggerFor]="registerMenu">Register</button>
-    <a mat-raised-button color="warn" [routerLink]="['/sell']" class="cta-list">List your car</a>
+    <button mat-stroked-button>Login</button>
+    <button mat-raised-button color="primary" [matMenuTriggerFor]="registerMenu">Register</button>
+    <a mat-button [routerLink]="['/sell']" class="link-sell">Sell your car</a>
     <mat-menu #registerMenu="matMenu">
       <button mat-menu-item>Register as Individual</button>
       <button mat-menu-item>Register as Dealer</button>
@@ -32,7 +32,7 @@
   <mat-divider></mat-divider>
   <button mat-menu-item>Login</button>
   <button mat-menu-item [matMenuTriggerFor]="registerMenu">Register</button>
-  <button mat-menu-item [routerLink]="['/sell']"><mat-icon>add_circle</mat-icon> <span>List your car</span></button>
+  <!-- Removed CTA button; keep primary Sell route in main links -->
 </mat-menu>
 
 <main class="page-container">

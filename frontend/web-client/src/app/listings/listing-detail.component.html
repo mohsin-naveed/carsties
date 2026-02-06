@@ -10,7 +10,7 @@
       <mat-card-header>
         <mat-card-title>{{ car.title }}</mat-card-title>
         <mat-card-subtitle>
-          {{ car.makeName || car.makeId }} · {{ car.modelName || car.modelId }} · {{ car.year }}
+          {{ car.makeName || car.makeCode }} · {{ car.modelName || car.modelCode }} · {{ car.year }}
         </mat-card-subtitle>
       </mat-card-header>
 
@@ -22,20 +22,32 @@
       </div>
 
       <mat-card-content>
+        <!-- Order aligned with Add Listing: City/Area at top, then key car info -->
         <div class="specs">
-          <div><strong>Variant:</strong> {{ car.variantName || car.variantId }}</div>
-          <div><strong>Body:</strong> {{ car.bodyTypeName || car.bodyTypeId }}</div>
-          <div><strong>Transmission:</strong> {{ car.transmissionName || car.transmissionId || '-' }}</div>
-          <div><strong>Fuel:</strong> {{ car.fuelTypeName || car.fuelTypeId || '-' }}</div>
+          <div *ngIf="car.cityName"><strong>City:</strong> {{ car.cityName }}</div>
+          <div *ngIf="car.areaName"><strong>Area:</strong> {{ car.areaName }}</div>
+          <div><strong>Year:</strong> {{ car.year }}</div>
+          <div><strong>Make:</strong> {{ car.makeName || car.makeCode }}</div>
+          <div><strong>Model:</strong> {{ car.modelName || car.modelCode }}</div>
+          <div><strong>Body Color:</strong> {{ car.bodyColor || car.color || '-' }}</div>
           <div><strong>Mileage:</strong> {{ car.mileage | number:'1.0-0' }} km</div>
-          <div><strong>Color:</strong> {{ car.color || '-' }}</div>
+          <div><strong>Price:</strong> R {{ car.price | number:'1.0-0' }}</div>
         </div>
-        <div class="price">R {{ car.price | number:'1.0-0' }}</div>
+
         <p *ngIf="car.description">{{ car.description }}</p>
 
-        <div *ngIf="car.featureIds?.length" class="features">
+        <!-- Additional Information section -->
+        <div class="specs">
+          <div><strong>Body Type:</strong> {{ car.bodyTypeName || car.bodyTypeCode || '-' }}</div>
+          <div><strong>Transmission:</strong> {{ car.transmissionTypeName || car.transmissionTypeCode || '-' }}</div>
+          <div><strong>Fuel Type:</strong> {{ car.fuelTypeName || car.fuelTypeCode || '-' }}</div>
+          <div *ngIf="car.engineSizeCC"><strong>Engine Size (CC):</strong> {{ car.engineSizeCC }}</div>
+        </div>
+
+        <!-- Features from Listing DB tables (names) -->
+        <div *ngIf="car.features?.length" class="features">
           <h4>Features</h4>
-          <span *ngFor="let fid of car.featureIds" class="chip">#{{ fid }}</span>
+          <span *ngFor="let f of car.features" class="chip">{{ f.featureName }}</span>
         </div>
       </mat-card-content>
     </mat-card>

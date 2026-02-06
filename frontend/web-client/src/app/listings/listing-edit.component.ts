@@ -8,8 +8,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { ListingsApiService, ListingDto, UpdateListingDto, OptionDto, MakeDto, ModelDto, GenerationDto, DerivativeDto, VariantDto, FeatureDto, VariantFeatureSnapshot, ListingFeatureInputDto } from './listings-api.service';
 import { NotificationService } from '../core/notification.service';
-import { BehaviorSubject, forkJoin } from 'rxjs';
-import { map, distinctUntilChanged, shareReplay } from 'rxjs/operators';
+import { BehaviorSubject, forkJoin, combineLatest } from 'rxjs';
+import { map, distinctUntilChanged, shareReplay, startWith } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DestroyRef } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -37,18 +37,43 @@ import { LocationApiService, CityDto, AreaDto } from '../location/location-api.s
           <span class="step-head__num">1.</span> Car Information
         </h3>
         <div class="grid grid--car">
+          <!-- City at top with typeahead and dropdown trigger -->
           <div class="field-check">
-            <mat-form-field appearance="outline">
-              <mat-label>Title</mat-label>
-              <input matInput formControlName="title" />
+            <mat-form-field appearance="outline" [ngClass]="{'valid-field': !!form.get('cityId')?.value}">
+              <mat-label>City</mat-label>
+              <input type="text" matInput [matAutocomplete]="cityAuto" #cityTrigger="matAutocompleteTrigger" formControlName="citySearch" placeholder="Search or select city" />
+              <button *ngIf="!cityLoading" mat-icon-button matSuffix type="button" aria-label="Open city options" (click)="openCityDropdown(cityTrigger)">
+                <mat-icon>arrow_drop_down</mat-icon>
+              </button>
+              <mat-progress-spinner *ngIf="cityLoading" matSuffix diameter="16" strokeWidth="3" mode="indeterminate"></mat-progress-spinner>
+              <mat-autocomplete #cityAuto="matAutocomplete" (optionSelected)="onCitySelected($event.option.value)">
+                <mat-option *ngFor="let c of cities" [value]="c.id">{{c.name}}</mat-option>
+              </mat-autocomplete>
             </mat-form-field>
           </div>
+
+          <!-- Area directly under City -->
+          <div class="field-check" *ngIf="form.value.cityId">
+            <mat-form-field appearance="outline">
+              <mat-label>Area</mat-label>
+              <input type="text" matInput [matAutocomplete]="areaAuto" #areaTrigger="matAutocompleteTrigger" formControlName="areaSearch" placeholder="Search or select area" />
+              <button *ngIf="!areaLoading" mat-icon-button matSuffix type="button" aria-label="Open area options" (click)="openAreaDropdown(areaTrigger)">
+                <mat-icon>arrow_drop_down</mat-icon>
+              </button>
+              <mat-progress-spinner *ngIf="areaLoading" matSuffix diameter="16" strokeWidth="3" mode="indeterminate"></mat-progress-spinner>
+              <mat-autocomplete #areaAuto="matAutocomplete" (optionSelected)="onAreaSelected($event.option.value)">
+                <mat-option *ngFor="let a of areas" [value]="a.id">{{a.name}}</mat-option>
+              </mat-autocomplete>
+            </mat-form-field>
+          </div>
+
           <div class="field-check">
             <mat-form-field appearance="outline">
               <mat-label>Model Year</mat-label>
               <input matInput type="number" formControlName="year" />
             </mat-form-field>
           </div>
+
           <div class="field-check">
             <mat-form-field appearance="outline">
               <mat-label>Make</mat-label>
@@ -57,15 +82,7 @@ import { LocationApiService, CityDto, AreaDto } from '../location/location-api.s
               </mat-select>
             </mat-form-field>
           </div>
-          <div class="field-check">
-            <mat-form-field appearance="outline">
-              <mat-label>City</mat-label>
-              <input type="text" matInput [matAutocomplete]="cityAuto" formControlName="citySearch" placeholder="Start typing city name" />
-              <mat-autocomplete #cityAuto="matAutocomplete" (optionSelected)="onCitySelected($event.option.value)">
-                <mat-option *ngFor="let c of cities" [value]="c.id">{{c.name}}<span class="muted"> — {{c.provinceName}}</span></mat-option>
-              </mat-autocomplete>
-            </mat-form-field>
-          </div>
+
           <div class="field-check">
             <mat-form-field appearance="outline">
               <mat-label>Model</mat-label>
@@ -74,23 +91,22 @@ import { LocationApiService, CityDto, AreaDto } from '../location/location-api.s
               </mat-select>
             </mat-form-field>
           </div>
-          <div class="field-check" *ngIf="form.value.cityId">
-            <mat-form-field appearance="outline">
-              <mat-label>Area</mat-label>
-              <input type="text" matInput [matAutocomplete]="areaAuto" formControlName="areaSearch" placeholder="Type area (optional)" />
-              <mat-autocomplete #areaAuto="matAutocomplete" (optionSelected)="onAreaSelected($event.option.value)">
-                <mat-option *ngFor="let a of areas" [value]="a.id">{{a.name}}<span class="muted"> — {{a.cityName}}</span></mat-option>
-              </mat-autocomplete>
-            </mat-form-field>
-          </div>
+
+          <!-- Body Color aligned with Add Listing -->
           <div class="field-check">
-            <mat-form-field appearance="outline">
-              <mat-label>Variant</mat-label>
-              <mat-select formControlName="variantId">
-                <mat-option *ngFor="let v of variants" [value]="v.id">{{v.name}}</mat-option>
+            <mat-form-field appearance="outline" [ngClass]="{'valid-field': form.get('bodyColor')?.valid}">
+              <mat-label>Body Color</mat-label>
+              <mat-select formControlName="bodyColor" (selectionChange)="onBodyColorSelected()">
+                <mat-option *ngFor="let c of bodyColors" [value]="c.name">
+                  <span class="color-dot" [style.backgroundColor]="c.hex"></span>
+                  {{c.name}}
+                </mat-option>
               </mat-select>
             </mat-form-field>
           </div>
+
+          <!-- Variant dropdown removed per requirements -->
+
           <div class="field-check">
             <mat-form-field appearance="outline">
               <mat-label>Mileage</mat-label>
@@ -261,6 +277,29 @@ export class ListingEditComponent {
   previews: string[] = [];
   years: number[] = [];
   cities: CityDto[] = []; areas: AreaDto[] = [];
+  cityLoading = false; cityError: string | null = null;
+  areaLoading = false; areaError: string | null = null;
+  bodyColors: { name: string; hex: string }[] = [
+    { name: 'White', hex: '#FFFFFF' },
+    { name: 'Black', hex: '#000000' },
+    { name: 'Silver', hex: '#C0C0C0' },
+    { name: 'Gray', hex: '#808080' },
+    { name: 'Blue', hex: '#1E40AF' },
+    { name: 'Red', hex: '#DC2626' },
+    { name: 'Green', hex: '#16A34A' },
+    { name: 'Brown', hex: '#8B4513' },
+    { name: 'Beige', hex: '#F5F5DC' },
+    { name: 'Gold', hex: '#D4AF37' },
+    { name: 'Yellow', hex: '#F59E0B' },
+    { name: 'Orange', hex: '#F97316' },
+    { name: 'Purple', hex: '#7C3AED' },
+    { name: 'Maroon', hex: '#800000' },
+    { name: 'Navy', hex: '#001F3F' },
+    { name: 'Teal', hex: '#008080' },
+    { name: 'Burgundy', hex: '#800020' },
+    { name: 'Bronze', hex: '#CD7F32' },
+    { name: 'Champagne', hex: '#F7E7CE' }
+  ];
 
   form = this.fb.group({
     title: ['', Validators.required],
@@ -275,7 +314,8 @@ export class ListingEditComponent {
     modelId: [null as number | null, Validators.required],
     generationId: [null as number | null],
     derivativeId: [null as number | null],
-    variantId: [null as number | null, Validators.required],
+    variantId: [null as number | null],
+    bodyColor: [null as string | null],
     engineSizeCC: [null as number | null],
     citySearch: [''], cityId: [null as number | null],
     areaSearch: [''], areaId: [null as number | null],
@@ -289,6 +329,27 @@ export class ListingEditComponent {
     const current = new Date().getFullYear();
     for (let y = current; y >= 1900; y--) this.years.push(y);
     this.id = Number(this.route.snapshot.paramMap.get('id'));
+    // City typeahead
+    this.form.get('citySearch')!.valueChanges.pipe(startWith(''), takeUntilDestroyed(this.destroyRef)).subscribe(search => {
+      const s = (search || '').toString();
+      this.cityLoading = true; this.cityError = null;
+      this.loc.searchCities(s).subscribe({
+        next: items => { this.cities = items; this.cityLoading = false; },
+        error: () => { this.cityLoading = false; this.cityError = 'Failed to load cities'; }
+      });
+    });
+    // Area typeahead depends on selected city
+    combineLatest([
+      this.form.get('areaSearch')!.valueChanges.pipe(startWith('')),
+      this.form.get('cityId')!.valueChanges.pipe(startWith(this.form.value.cityId))
+    ]).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(([search, cityId]) => {
+      const s = (search || '').toString();
+      this.areaLoading = true; this.areaError = null;
+      this.loc.searchAreas(s, cityId ?? undefined).subscribe({
+        next: items => { this.areas = items; this.areaLoading = false; },
+        error: () => { this.areaLoading = false; this.areaError = 'Failed to load areas'; }
+      });
+    });
     this.api.getOptions().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(o => { this.transmissions = o.transmissions; this.fuelTypes = o.fuelTypes; this.bodyTypes = o.bodyTypes; });
     this.api.getMakes().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(m => { this.makes = m; this.makes$.next(m); });
     this.api.getFeatures().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(f => { this.features = f; this.features$.next(f); });
@@ -312,6 +373,7 @@ export class ListingEditComponent {
           derivativeId: null,
           variantId: null,
           engineSizeCC: l.engineSizeCC ?? null,
+          bodyColor: l.bodyColor ?? l.color ?? null,
           citySearch: l.cityName ?? '',
           areaSearch: l.areaName ?? '',
           contactName: l.contactName ?? '',
@@ -364,6 +426,16 @@ export class ListingEditComponent {
     this.form.patchValue({ areaId: id, areaSearch: area?.name ?? '' }, { emitEvent: false });
   }
 
+  openCityDropdown(trigger: any) {
+    this.form.get('citySearch')!.setValue('');
+    setTimeout(() => trigger.openPanel(), 0);
+  }
+  openAreaDropdown(trigger: any) {
+    this.form.get('areaSearch')!.setValue('');
+    setTimeout(() => trigger.openPanel(), 0);
+  }
+  onBodyColorSelected() { /* no-op, reserved for focus chaining */ }
+
   save() {
     if (this.form.invalid) return;
     this.saving = true;
@@ -392,6 +464,7 @@ export class ListingEditComponent {
       generationCode: (this.form.value.generationId ? this.generations.find(g => g.id === this.form.value.generationId!)?.code : undefined),
       derivativeCode: (this.form.value.derivativeId ? this.derivatives.find(d => d.id === this.form.value.derivativeId!)?.code : undefined),
       variantCode: (this.form.value.variantId ? this.variants.find(v => v.id === this.form.value.variantId!)?.code : undefined),
+      bodyColor: this.form.value.bodyColor ?? undefined,
       seats: derivative?.seats,
       doors: derivative?.doors,
       engineSizeCC: this.form.value.engineSizeCC ?? derivative?.engineCC ?? undefined,
@@ -485,6 +558,7 @@ export class ListingEditComponent {
         transmissionId: this.transmissions.find(t => t.code === l.transmissionTypeCode)?.id ?? null,
         fuelTypeId: this.fuelTypes.find(f => f.code === l.fuelTypeCode)?.id ?? null,
         bodyTypeId: this.bodyTypes.find(b => b.code === l.bodyTypeCode)?.id ?? null,
+        bodyColor: l.bodyColor ?? l.color ?? null,
         contactName: l.contactName ?? '',
         contactPhone: l.contactPhone ?? '',
         contactEmail: l.contactEmail ?? '',
