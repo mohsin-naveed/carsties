@@ -198,8 +198,14 @@ import { LocationApiService, CityDto, AreaDto } from '../location/location-api.s
           </div>
           <input #fileInput type="file" class="visually-hidden" multiple accept="image/*" (change)="onFilesSelected($event)" />
           <div class="upload__grid">
-            <div class="upload__item" *ngFor="let p of previews">
+            <div class="upload__item" *ngFor="let p of previews; let i = index">
               <img [src]="p" alt="preview" />
+              <div class="upload__badge" *ngIf="i === 0">Cover</div>
+              <div class="upload__actions">
+                <button type="button" mat-icon-button aria-label="Set as cover" (click)="setCover(i)" *ngIf="i !== 0" matTooltip="Set as cover">
+                  <mat-icon>star</mat-icon>
+                </button>
+              </div>
             </div>
           </div>
           <button mat-stroked-button color="primary" type="button" (click)="uploadSelected()" [disabled]="!selectedFiles.length">Upload selected ({{selectedFiles.length}})</button>
@@ -275,6 +281,7 @@ export class ListingEditComponent {
   selectedFeatureIds = new Set<number>();
   selectedFiles: File[] = [];
   previews: string[] = [];
+  coverIndex = 0;
   years: number[] = [];
   cities: CityDto[] = []; areas: AreaDto[] = [];
   cityLoading = false; cityError: string | null = null;
@@ -523,6 +530,8 @@ export class ListingEditComponent {
     this.selectedFiles = filtered;
     this.previews.forEach(url => URL.revokeObjectURL(url));
     this.previews = this.selectedFiles.map(f => URL.createObjectURL(f));
+    // Default first selected image as cover
+    this.coverIndex = this.selectedFiles.length > 0 ? 0 : 0;
   }
 
   uploadSelected() {
@@ -544,6 +553,7 @@ export class ListingEditComponent {
     this.selectedFiles = [];
     this.previews.forEach(url => URL.revokeObjectURL(url));
     this.previews = [];
+    this.coverIndex = 0;
   }
 
   private refreshListing() {
@@ -569,6 +579,18 @@ export class ListingEditComponent {
   toggleFeature(featureId: number, checked: boolean) {
     if (checked) this.selectedFeatureIds.add(featureId);
     else this.selectedFeatureIds.delete(featureId);
+  }
+
+  // Allow choosing which newly selected image will be used as cover by
+  // moving it to index 0, mirroring AddListingComponent behavior.
+  setCover(i: number) {
+    if (i < 0 || i >= this.selectedFiles.length) return;
+    if (i === 0) { this.coverIndex = 0; return; }
+    const file = this.selectedFiles.splice(i, 1)[0];
+    const prev = this.previews.splice(i, 1)[0];
+    this.selectedFiles.unshift(file);
+    this.previews.unshift(prev);
+    this.coverIndex = 0;
   }
 
   private refreshVariants() {

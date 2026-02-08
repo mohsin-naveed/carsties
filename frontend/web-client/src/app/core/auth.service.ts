@@ -23,6 +23,9 @@ export class AuthService {
   }
 
   logout(): void {
+    // Perform a local logoff so the SPA immediately reflects logged-out state,
+    // then attempt a remote logoff (redirect) for server-side sign-out.
+    this.oidcAuthService.logoffLocal();
     this.oidcAuthService.logoff();
   }
 

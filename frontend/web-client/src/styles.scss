@@ -23,13 +23,30 @@ $app-theme: mat.m2-define-light-theme((
 // Emit component theme styles
 @include mat.all-component-themes($app-theme);
 
+// CSS custom properties for light/dark theming
+:root {
+	--app-bg: #f5f7fa;
+	--app-text: #222222;
+	--app-card-bg: #ffffff;
+	--app-toolbar-bg: #1e3a8a;
+	--app-toolbar-text: #ffffff;
+}
+
+body.dark-theme {
+	--app-bg: #020617; // slate-950
+	--app-text: #e5e7eb; // gray-200
+	--app-card-bg: #020617;
+	--app-toolbar-bg: #020617;
+	--app-toolbar-text: #e5e7eb;
+}
+
 // Global layout helpers
 html, body { height: 100%; }
 body {
 	margin: 0;
 	font-family: Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
-	background: #f5f7fa;
-	color: #222;
+	background: var(--app-bg);
+	color: var(--app-text);
 	-webkit-font-smoothing: antialiased;
 	min-height: 100vh;
 	display: flex;
@@ -49,10 +66,14 @@ body {
 }
 
 // Elevation utility shortcut
-.elevated { @include mat.elevation(2); background:#fff; border-radius:8px; }
+.elevated { @include mat.elevation(2); background: var(--app-card-bg); border-radius:8px; }
 
 // Toolbar refinement
-.app-toolbar { box-shadow: 0 2px 4px rgba(0,0,0,.08); }
+.app-toolbar {
+	box-shadow: 0 2px 4px rgba(0,0,0,.08);
+	background-color: var(--app-toolbar-bg);
+	color: var(--app-toolbar-text);
+}
 
 // Utility classes
 .flex { display:flex; }

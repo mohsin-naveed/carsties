@@ -10,6 +10,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { FooterComponent } from './shared/footer.component';
 import { AuthService } from './core/auth.service';
+import { ThemeService } from './core/theme.service';
 
 @Component({
   selector: 'app-root',
@@ -20,11 +21,13 @@ import { AuthService } from './core/auth.service';
 })
 export class AppComponent implements OnInit {
   isAuthenticated$!: Observable<boolean>;
+  isDarkMode$!: Observable<boolean>;
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, private themeService: ThemeService) {}
 
   ngOnInit(): void {
     this.isAuthenticated$ = this.authService.isAuthenticated$;
+    this.isDarkMode$ = this.themeService.isDarkMode$;
     this.authService.handleCallback();
   }
 
@@ -38,5 +41,9 @@ export class AppComponent implements OnInit {
 
   register(type: 'Individual' | 'Dealer'): void {
     this.authService.register(type);
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 }
