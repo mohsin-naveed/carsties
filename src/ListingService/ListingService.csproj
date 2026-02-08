@@ -4,6 +4,8 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Disable static web assets so this service no longer relies on wwwroot -->
+    <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
     <!-- Disable vulnerability audit warnings (NU1900) during restore/build -->
     <RestoreAuditMode>None</RestoreAuditMode>
     <NoWarn>$(NoWarn);NU1900</NoWarn>
@@ -33,6 +35,11 @@
     <Compile Remove="Services\CatalogLookupService.cs" />
     <Compile Remove="Services\ICatalogLookup.cs" />
     <Compile Remove="Services\CatalogLookup.cs" />
+  </ItemGroup>
+
+  <!-- Ensure no wwwroot content is treated as static web assets -->
+  <ItemGroup>
+    <Content Remove="wwwroot\**" />
   </ItemGroup>
 
 </Project>
