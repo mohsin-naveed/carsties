@@ -3,10 +3,11 @@ using ListingService.Data;
 using ListingService.DTOs;
 using ListingService.Entities;
 using ListingService.Services;
-// using ListingService.Services; // removed unused catalog lookup
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Security.Claims;
 
 namespace ListingService.Controllers;
 
@@ -577,6 +578,52 @@ public class ListingsController(ListingDbContext context, IMapper mapper, Catalo
         return resp;
     }
 
+    [HttpGet("mine")]
+    [Authorize]
+    public async Task<ActionResult<List<ListingDto>>> GetMyListings()
+    {
+        var ownerId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(ownerId)) return Forbid();
+
+        var listings = await context.Listings
+            .Include(l => l.Images)
+            .Where(l => l.OwnerId == ownerId)
+            .OrderByDescending(l => l.CreatedAt)
+            .ToListAsync();
+
+        var dtos = listings.Select(mapper.Map<ListingDto>).ToList();
+
+        var ids = dtos.Select(d => d.Id).ToArray();
+        var featuresByListing = await context.ListingFeatures
+            .AsNoTracking()
+            .Where(f => ids.Contains(f.ListingId))
+            .GroupBy(f => f.ListingId)
+            .Select(g => new {
+                ListingId = g.Key,
+                Features = g.Select(x => new ListingFeatureDto {
+                    FeatureCode = x.FeatureCode,
+                    FeatureName = x.FeatureName,
+                    FeatureDescription = x.FeatureDescription,
+                    FeatureCategoryName = x.FeatureCategoryName,
+                    FeatureCategoryCode = x.FeatureCategoryCode
+                }).ToList(),
+                Codes = g.Select(x => x.FeatureCode).ToArray()
+            })
+            .ToListAsync();
+
+        var dict = featuresByListing.ToDictionary(x => x.ListingId, x => x);
+        foreach (var d in dtos)
+        {
+            if (dict.TryGetValue(d.Id, out var entry))
+            {
+                d.Features = entry.Features;
+                d.FeatureCodes = entry.Codes;
+            }
+        }
+
+        return dtos;
+    }
+
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ListingDto>> Get(int id)
     {
@@ -599,12 +646,18 @@ public class ListingsController(ListingDbContext context, IMapper mapper, Catalo
     }
 
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<ListingDto>> Create(CreateListingDto dto)
     {
         var listing = mapper.Map<Listing>(dto);
         // Ensure Seats and Doors are persisted from payload
         listing.Seats = dto.Seats;
         listing.Doors = dto.Doors;
+
+        // Set owner from authenticated user
+        var ownerId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(ownerId)) return Forbid();
+        listing.OwnerId = ownerId;
 
         // Populate engine size and battery from payload if provided; else from Catalog Derivative
         if (dto.EngineSizeCC.HasValue) listing.EngineSizeCC = dto.EngineSizeCC.Value;
@@ -672,10 +725,16 @@ public class ListingsController(ListingDbContext context, IMapper mapper, Catalo
     }
 
     [HttpPut("{id:int}")]
+    [Authorize]
     public async Task<ActionResult<ListingDto>> Update(int id, UpdateListingDto dto)
     {
         var listing = await context.Listings.FindAsync(id);
         if (listing is null) return NotFound();
+        var ownerId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(ownerId) || !string.Equals(listing.OwnerId, ownerId, StringComparison.Ordinal))
+        {
+            return Forbid();
+        }
         mapper.Map(dto, listing);
         // Populate engine/battery from Catalog Derivative if available
         if (!string.IsNullOrWhiteSpace(listing.DerivativeCode))
@@ -767,10 +826,16 @@ public class ListingsController(ListingDbContext context, IMapper mapper, Catalo
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize]
     public async Task<ActionResult> Delete(int id)
     {
         var listing = await context.Listings.FindAsync(id);
         if (listing is null) return NotFound();
+        var ownerId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(ownerId) || !string.Equals(listing.OwnerId, ownerId, StringComparison.Ordinal))
+        {
+            return Forbid();
+        }
         context.Listings.Remove(listing);
         var ok = await context.SaveChangesAsync() > 0;
         return ok ? Ok() : BadRequest("Failed to delete listing");

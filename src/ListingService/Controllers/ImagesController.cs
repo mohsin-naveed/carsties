@@ -1,8 +1,10 @@
 using ListingService.Data;
 using ListingService.Entities;
 using ListingService.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace ListingService.Controllers;
 
@@ -11,10 +13,16 @@ public class ImagesController(ListingDbContext context, IImageStorageService ima
 {
     [HttpPost("api/listings/{id:int}/images")]
     [RequestSizeLimit(20_000_000)] // ~20MB
+    [Authorize]
     public async Task<ActionResult> Upload(int id, CancellationToken cancellationToken)
     {
         var listing = await context.Listings.FindAsync(new object[] { id }, cancellationToken);
         if (listing is null) return NotFound("Listing not found");
+        var ownerId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(ownerId) || !string.Equals(listing.OwnerId, ownerId, StringComparison.Ordinal))
+        {
+            return Forbid();
+        }
         if (!Request.HasFormContentType) return BadRequest("Expected multipart/form-data");
         var files = Request.Form.Files;
         if (files.Count == 0) return BadRequest("No files provided");
@@ -52,10 +60,18 @@ public class ImagesController(ListingDbContext context, IImageStorageService ima
     }
 
     [HttpDelete("api/listings/{listingId:int}/images/{imageId:int}")]
+    [Authorize]
     public async Task<ActionResult> DeleteImage(int listingId, int imageId, CancellationToken cancellationToken)
     {
         var image = await context.ListingImages.FirstOrDefaultAsync(i => i.Id == imageId && i.ListingId == listingId, cancellationToken);
         if (image is null) return NotFound();
+        var listing = await context.Listings.FirstOrDefaultAsync(l => l.Id == listingId, cancellationToken);
+        if (listing is null) return NotFound();
+        var ownerId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(ownerId) || !string.Equals(listing.OwnerId, ownerId, StringComparison.Ordinal))
+        {
+            return Forbid();
+        }
         await imageStorage.DeleteListingImageAsync(listingId, image.FileName, image.ThumbUrl, cancellationToken);
         context.ListingImages.Remove(image);
         await context.SaveChangesAsync();

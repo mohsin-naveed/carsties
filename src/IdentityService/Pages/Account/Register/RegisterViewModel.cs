@@ -17,6 +17,9 @@ public class RegisterViewModel
     [Required]
     public string? FullName { get; set; }
 
+    [Required]
+    public string? AccountType { get; set; }
+
     public string? ReturnUrl { get; set; }
     public string? Button { get; set; }
 }

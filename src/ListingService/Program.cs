@@ -1,6 +1,8 @@
 using ListingService.Data;
 using ListingService.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using Polly;
 using Polly.Extensions.Http;
@@ -41,6 +43,20 @@ builder.Services.AddHttpClient<CatalogClient>()
 // Image storage (Azure Blob)
 builder.Services.AddSingleton<IImageStorageService, AzureBlobImageStorageService>();
 
+// Authentication & Authorization (JWT Bearer)
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = builder.Configuration["Identity:Authority"] ?? "http://localhost:5001";
+        options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateAudience = false
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -54,7 +70,7 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

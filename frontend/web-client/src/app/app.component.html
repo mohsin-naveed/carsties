@@ -13,13 +13,19 @@
     <button mat-button [routerLink]="['/']" fragment="reviews">Reviews</button>
   </nav>
   <span class="spacer"></span>
-  <div class="nav__auth">
-    <button mat-stroked-button (click)="login()">Login</button>
-    <button mat-raised-button color="primary" [matMenuTriggerFor]="registerMenu">Register</button>
+  <div class="nav__auth" *ngIf="isAuthenticated$ | async as isAuth">
+    <ng-container *ngIf="!isAuth; else loggedInDesktop">
+      <button mat-stroked-button (click)="login()">Login</button>
+      <button mat-raised-button color="primary" [matMenuTriggerFor]="registerMenu">Register</button>
+    </ng-container>
+    <ng-template #loggedInDesktop>
+      <button mat-button [routerLink]="['/my-listings']">My Listings</button>
+      <button mat-stroked-button (click)="logout()">Logout</button>
+    </ng-template>
     <a mat-button [routerLink]="['/sell']" class="link-sell">Sell your car</a>
     <mat-menu #registerMenu="matMenu">
-      <button mat-menu-item>Register as Individual</button>
-      <button mat-menu-item>Register as Dealer</button>
+      <button mat-menu-item (click)="register('Individual')">Register as Individual</button>
+      <button mat-menu-item (click)="register('Dealer')">Register as Dealer</button>
     </mat-menu>
   </div>
 </mat-toolbar>
@@ -30,8 +36,9 @@
   <button mat-menu-item [routerLink]="['/dealers']"><mat-icon>store</mat-icon> <span>Dealers</span></button>
   <button mat-menu-item [routerLink]="['/']" fragment="reviews"><mat-icon>star</mat-icon> <span>Reviews</span></button>
   <mat-divider></mat-divider>
-  <button mat-menu-item (click)="login()">Login</button>
-  <button mat-menu-item [matMenuTriggerFor]="registerMenu">Register</button>
+  <button mat-menu-item *ngIf="!(isAuthenticated$ | async)" (click)="login()">Login</button>
+  <button mat-menu-item *ngIf="!(isAuthenticated$ | async)" [matMenuTriggerFor]="registerMenu">Register</button>
+  <button mat-menu-item *ngIf="isAuthenticated$ | async" (click)="logout()">Logout</button>
   <!-- Removed CTA button; keep primary Sell route in main links -->
 </mat-menu>
 

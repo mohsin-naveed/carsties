@@ -1,3 +1,4 @@
+using Duende.IdentityModel;
 using Duende.IdentityServer.Models;
 
 namespace IdentityService;
@@ -13,6 +14,14 @@ public static class Config
     public static IEnumerable<ApiScope> ApiScopes =>
         [
             new ApiScope("auctionApp", "Auction App Full Access")
+            {
+                UserClaims =
+                [
+                    JwtClaimTypes.Name,
+                    JwtClaimTypes.Role,
+                    "account_type"
+                ]
+            }
         ];
 
     public static IEnumerable<Client> Clients(IConfiguration config) =>

@@ -26,6 +26,7 @@ public class ListingDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(x => x.BodyColor).HasMaxLength(50);
             entity.Property(x => x.Price).HasColumnType("numeric(18,2)");
             entity.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
+            entity.Property(x => x.OwnerId).IsRequired().HasMaxLength(200);
 
             // BatteryKWh now maps to a column of the same name (see migration)
 

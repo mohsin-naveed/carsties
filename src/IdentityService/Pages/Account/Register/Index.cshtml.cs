@@ -16,11 +16,12 @@ namespace IdentityService.Pages.Register
         [BindProperty] public RegisterViewModel Input { get; set; } = default!;
         [BindProperty] public bool RegisterSuccess { get; set; }
 
-        public IActionResult OnGet(string returnUrl)
+        public IActionResult OnGet(string returnUrl, string? accountType = null)
         {
             Input = new RegisterViewModel
             {
-                ReturnUrl = returnUrl
+                ReturnUrl = returnUrl,
+                AccountType = accountType
             };
             return Page();
         }
@@ -35,7 +36,8 @@ namespace IdentityService.Pages.Register
                 {
                     UserName = Input.Username,
                     Email = Input.Email,
-                    EmailConfirmed = true
+                    EmailConfirmed = true,
+                    AccountType = Input.AccountType ?? "Individual"
                 };
 
                 var result = await userManager.CreateAsync(user, Input.Password!);
@@ -44,6 +46,8 @@ namespace IdentityService.Pages.Register
                 {
                     await userManager.AddClaimsAsync(user, [
                         new Claim(JwtClaimTypes.Name, Input.FullName!),
+                        new Claim(JwtClaimTypes.Role, user.AccountType),
+                        new Claim("account_type", user.AccountType)
                     ]);
 
                     RegisterSuccess = true;

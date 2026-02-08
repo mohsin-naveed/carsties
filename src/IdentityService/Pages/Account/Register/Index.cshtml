@@ -30,6 +30,15 @@
                         </div>
 
                         <div class="form-group">
+                            <label asp-for="Input.AccountType"></label>
+                            <select class="form-control" asp-for="Input.AccountType">
+                                <option value="">Select account type</option>
+                                <option value="Individual">Individual</option>
+                                <option value="Dealer">Dealer</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
                             <label asp-for="Input.Password"></label>
                             <input type="password" class="form-control" placeholder="Password" asp-for="Input.Password"
                                 autocomplete="off">

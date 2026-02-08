@@ -9,6 +9,8 @@ public class Listing {
     public decimal Price { get; set; }
     public string? Color { get; set; }
     public string? BodyColor { get; set; }
+    // Owner (Identity user subject id)
+    public string OwnerId { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 
