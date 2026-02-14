@@ -11,17 +11,22 @@ namespace IdentityService.Pages.Register
 {
     [SecurityHeaders]
     [AllowAnonymous]
-    public class Index(UserManager<ApplicationUser> userManager) : PageModel
+    public class Index : PageModel
     {
+        private readonly UserManager<ApplicationUser> _userManager;
+
+        public Index(UserManager<ApplicationUser> userManager)
+        {
+            _userManager = userManager;
+        }
         [BindProperty] public RegisterViewModel Input { get; set; } = default!;
         [BindProperty] public bool RegisterSuccess { get; set; }
 
-        public IActionResult OnGet(string returnUrl, string? accountType = null)
+        public IActionResult OnGet(string returnUrl)
         {
             Input = new RegisterViewModel
             {
-                ReturnUrl = returnUrl,
-                AccountType = accountType
+                ReturnUrl = returnUrl
             };
             return Page();
         }
@@ -34,20 +39,19 @@ namespace IdentityService.Pages.Register
             {
                 var user = new ApplicationUser
                 {
-                    UserName = Input.Username,
+                    UserName = Input.Email,
                     Email = Input.Email,
-                    EmailConfirmed = true,
-                    AccountType = Input.AccountType ?? "Individual"
+                    EmailConfirmed = true
                 };
 
-                var result = await userManager.CreateAsync(user, Input.Password!);
+                var result = await _userManager.CreateAsync(user, Input.Password!);
 
                 if (result.Succeeded)
                 {
-                    await userManager.AddClaimsAsync(user, [
-                        new Claim(JwtClaimTypes.Name, Input.FullName!),
-                        new Claim(JwtClaimTypes.Role, user.AccountType),
-                        new Claim("account_type", user.AccountType)
+                    await _userManager.AddClaimsAsync(user, [
+                        new Claim(JwtClaimTypes.Name, Input.Email ?? string.Empty),
+                        // IdentityService should only issue role claims (used for admin authZ)
+                        new Claim(JwtClaimTypes.Role, "User")
                     ]);
 
                     RegisterSuccess = true;

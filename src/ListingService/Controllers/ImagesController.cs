@@ -18,8 +18,8 @@ public class ImagesController(ListingDbContext context, IImageStorageService ima
     {
         var listing = await context.Listings.FindAsync(new object[] { id }, cancellationToken);
         if (listing is null) return NotFound("Listing not found");
-        var ownerId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(ownerId) || !string.Equals(listing.OwnerId, ownerId, StringComparison.Ordinal))
+        var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId) || !string.Equals(listing.UserId, userId, StringComparison.Ordinal))
         {
             return Forbid();
         }
@@ -67,8 +67,8 @@ public class ImagesController(ListingDbContext context, IImageStorageService ima
         if (image is null) return NotFound();
         var listing = await context.Listings.FirstOrDefaultAsync(l => l.Id == listingId, cancellationToken);
         if (listing is null) return NotFound();
-        var ownerId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(ownerId) || !string.Equals(listing.OwnerId, ownerId, StringComparison.Ordinal))
+        var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId) || !string.Equals(listing.UserId, userId, StringComparison.Ordinal))
         {
             return Forbid();
         }

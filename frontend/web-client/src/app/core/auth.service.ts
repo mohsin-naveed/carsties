@@ -7,6 +7,7 @@ import { environment } from '../../environments/environment.development';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   isAuthenticated$!: Observable<boolean>;
+  private readonly desiredTypeKey = 'carsties.desiredUserType';
 
   constructor(private oidcAuthService: OidcSecurityService) {
     this.isAuthenticated$ = this.oidcAuthService.isAuthenticated$.pipe(
@@ -23,10 +24,8 @@ export class AuthService {
   }
 
   logout(): void {
-    // Perform a local logoff so the SPA immediately reflects logged-out state,
-    // then attempt a remote logoff (redirect) for server-side sign-out.
-    this.oidcAuthService.logoffLocal();
-    this.oidcAuthService.logoff();
+    // Trigger full server-side sign-out and token revocation.
+    this.oidcAuthService.logoffAndRevokeTokens().subscribe();
   }
 
   getAccessToken(): Observable<string> {
@@ -34,7 +33,19 @@ export class AuthService {
   }
 
   register(accountType: 'Individual' | 'Dealer'): void {
-    const registerUrl = `${environment.identityAuthority}/Account/Register?accountType=${accountType}`;
+    // IdentityService registration is email+password only. We keep the selected type locally
+    // and complete the profile after the first login.
+    localStorage.setItem(this.desiredTypeKey, accountType);
+    // Identity UI expects a returnUrl value (used to route back after registration/login)
+    const returnUrl = window.location.href;
+    const registerUrl = `${environment.identityAuthority}/Account/Register?returnUrl=${encodeURIComponent(returnUrl)}`;
     window.location.href = registerUrl;
+  }
+
+  consumeDesiredUserType(): 'Individual' | 'Dealer' | null {
+    const v = localStorage.getItem(this.desiredTypeKey);
+    localStorage.removeItem(this.desiredTypeKey);
+    if (v === 'Individual' || v === 'Dealer') return v;
+    return null;
   }
 }

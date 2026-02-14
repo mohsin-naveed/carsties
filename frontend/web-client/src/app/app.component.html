@@ -18,16 +18,14 @@
     <ng-template #darkIcon><mat-icon>light_mode</mat-icon></ng-template>
   </button>
   <div class="nav__auth">
-    <ng-container *ngIf="isAuthenticated$ | async as isAuth">
-      <ng-container *ngIf="!isAuth; else loggedInDesktop">
-        <button mat-stroked-button (click)="login()">Login</button>
-        <button mat-raised-button color="primary" [matMenuTriggerFor]="registerMenu">Register</button>
-      </ng-container>
-      <ng-template #loggedInDesktop>
-        <button mat-button [routerLink]="['/my-listings']">My Listings</button>
-        <button mat-stroked-button (click)="logout()">Logout</button>
-      </ng-template>
+    <ng-container *ngIf="isAuthenticated$ | async; else loggedOutDesktop">
+      <button mat-button [routerLink]="['/my-listings']">My Listings</button>
+      <button mat-stroked-button (click)="logout()">Logout</button>
     </ng-container>
+    <ng-template #loggedOutDesktop>
+      <button mat-stroked-button (click)="login()">Login</button>
+      <button mat-raised-button color="primary" [matMenuTriggerFor]="registerMenu">Register</button>
+    </ng-template>
     <a mat-button [routerLink]="['/sell']" class="link-sell">Sell your car</a>
     <mat-menu #registerMenu="matMenu">
       <button mat-menu-item (click)="register('Individual')">Register as Individual</button>
@@ -42,9 +40,13 @@
   <button mat-menu-item [routerLink]="['/dealers']"><mat-icon>store</mat-icon> <span>Dealers</span></button>
   <button mat-menu-item [routerLink]="['/']" fragment="reviews"><mat-icon>star</mat-icon> <span>Reviews</span></button>
   <mat-divider></mat-divider>
-  <button mat-menu-item *ngIf="!(isAuthenticated$ | async)" (click)="login()">Login</button>
-  <button mat-menu-item *ngIf="!(isAuthenticated$ | async)" [matMenuTriggerFor]="registerMenu">Register</button>
-  <button mat-menu-item *ngIf="isAuthenticated$ | async" (click)="logout()">Logout</button>
+  <ng-container *ngIf="isAuthenticated$ | async; else mobileLoggedOut">
+    <button mat-menu-item (click)="logout()">Logout</button>
+  </ng-container>
+  <ng-template #mobileLoggedOut>
+    <button mat-menu-item (click)="login()">Login</button>
+    <button mat-menu-item [matMenuTriggerFor]="registerMenu">Register</button>
+  </ng-template>
   <!-- Removed CTA button; keep primary Sell route in main links -->
 </mat-menu>
 

@@ -18,8 +18,16 @@ public static class Config
                 UserClaims =
                 [
                     JwtClaimTypes.Name,
-                    JwtClaimTypes.Role,
-                    "account_type"
+                    JwtClaimTypes.Role
+                ]
+            },
+            new ApiScope("webClient", "Web Client API Access")
+            {
+                // Keep claims consistent for the SPA access token
+                UserClaims =
+                [
+                    JwtClaimTypes.Name,
+                    JwtClaimTypes.Role
                 ]
             }
         ];
@@ -58,7 +66,7 @@ public static class Config
                 RedirectUris = { config["ClientApp"] ?? "http://localhost:4200" },
                 PostLogoutRedirectUris = { config["ClientApp"] ?? "http://localhost:4200" },
                 AllowedCorsOrigins = { config["ClientApp"] ?? "http://localhost:4200" },
-                AllowedScopes = { "openid", "profile", "auctionApp" },
+                AllowedScopes = { "openid", "profile", "webClient" },
                 AllowAccessTokensViaBrowser = true,
                 AccessTokenLifetime = 3600,
                 AlwaysIncludeUserClaimsInIdToken = true

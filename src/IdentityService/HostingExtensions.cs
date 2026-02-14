@@ -2,6 +2,8 @@ using Duende.IdentityServer;
 using IdentityService.Data;
 using IdentityService.Models;
 using IdentityService.Services;
+using Microsoft.AspNetCore.Authentication.Facebook;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -42,7 +44,32 @@ internal static class HostingExtensions
             options.Cookie.SameSite = SameSiteMode.Lax;
         });
 
-        builder.Services.AddAuthentication();
+        // External authentication (OIDC clients initiate ExternalLogin/Challenge)
+        // Configure via appsettings.Development.json for local dev and env vars for production.
+        var authBuilder = builder.Services.AddAuthentication();
+
+        var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+        var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+        {
+            authBuilder.AddGoogle("Google", options =>
+            {
+                options.ClientId = googleClientId;
+                options.ClientSecret = googleClientSecret;
+            });
+        }
+
+        var fbAppId = builder.Configuration["Authentication:Facebook:AppId"];
+        var fbAppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
+        if (!string.IsNullOrWhiteSpace(fbAppId) && !string.IsNullOrWhiteSpace(fbAppSecret))
+        {
+            authBuilder.AddFacebook("Facebook", options =>
+            {
+                options.AppId = fbAppId;
+                options.AppSecret = fbAppSecret;
+                options.Fields.Add("email");
+            });
+        }
 
         return builder.Build();
     }

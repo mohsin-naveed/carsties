@@ -582,12 +582,12 @@ public class ListingsController(ListingDbContext context, IMapper mapper, Catalo
     [Authorize]
     public async Task<ActionResult<List<ListingDto>>> GetMyListings()
     {
-        var ownerId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(ownerId)) return Forbid();
+        var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Forbid();
 
         var listings = await context.Listings
             .Include(l => l.Images)
-            .Where(l => l.OwnerId == ownerId)
+            .Where(l => l.UserId == userId)
             .OrderByDescending(l => l.CreatedAt)
             .ToListAsync();
 
@@ -654,10 +654,13 @@ public class ListingsController(ListingDbContext context, IMapper mapper, Catalo
         listing.Seats = dto.Seats;
         listing.Doors = dto.Doors;
 
-        // Set owner from authenticated user
-        var ownerId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(ownerId)) return Forbid();
-        listing.OwnerId = ownerId;
+    // Set identity snapshot from authenticated user
+    var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (string.IsNullOrWhiteSpace(userId)) return Forbid();
+    listing.UserId = userId;
+    // UserType is owned by UserService. We keep a snapshot field for convenience,
+    // but we no longer rely on Identity to mint an account_type claim.
+    listing.UserType = "Individual";
 
         // Populate engine size and battery from payload if provided; else from Catalog Derivative
         if (dto.EngineSizeCC.HasValue) listing.EngineSizeCC = dto.EngineSizeCC.Value;
@@ -730,8 +733,8 @@ public class ListingsController(ListingDbContext context, IMapper mapper, Catalo
     {
         var listing = await context.Listings.FindAsync(id);
         if (listing is null) return NotFound();
-        var ownerId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(ownerId) || !string.Equals(listing.OwnerId, ownerId, StringComparison.Ordinal))
+        var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId) || !string.Equals(listing.UserId, userId, StringComparison.Ordinal))
         {
             return Forbid();
         }
@@ -831,8 +834,8 @@ public class ListingsController(ListingDbContext context, IMapper mapper, Catalo
     {
         var listing = await context.Listings.FindAsync(id);
         if (listing is null) return NotFound();
-        var ownerId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(ownerId) || !string.Equals(listing.OwnerId, ownerId, StringComparison.Ordinal))
+        var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId) || !string.Equals(listing.UserId, userId, StringComparison.Ordinal))
         {
             return Forbid();
         }

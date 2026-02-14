@@ -181,6 +181,7 @@ import { LocationApiService, CityDto, AreaDto } from '../location/location-api.s
       </h3>
       <mat-card-content>
         <div class="upload">
+          <!-- Existing images on the listing -->
           <div class="upload__grid">
             <div class="upload__item" *ngFor="let img of listing?.images">
               <img [src]="img.thumbUrl || img.url" alt="image" />
@@ -191,19 +192,29 @@ import { LocationApiService, CityDto, AreaDto } from '../location/location-api.s
               </div>
             </div>
           </div>
-          <div class="upload__meta">Selected: {{ selectedFiles.length }} file(s)</div>
-          <div class="upload__drop" (click)="fileInput.click()" tabindex="0" role="button">
+
+          <!-- New uploads behave exactly like AddListingComponent -->
+          <div class="upload__drop" [class.upload__drop--dragging]="dragging"
+               (click)="fileInput.click()" (keydown.enter)="fileInput.click()" tabindex="0" role="button"
+               aria-label="Upload images" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
             <mat-icon>cloud_upload</mat-icon>
-            <div>Click to choose files to upload</div>
+            <div>Drag & drop images here or <button type="button" class="u-link-btn" (click)="fileInput.click(); $event.stopPropagation();">browse</button></div>
+            <div class="upload__hint" matTooltip="JPG, PNG, WEBP up to 5MB. Aim for 6–10 photos.">JPG, PNG, WEBP • Max 5MB each</div>
           </div>
           <input #fileInput type="file" class="visually-hidden" multiple accept="image/*" (change)="onFilesSelected($event)" />
+
+          <div class="upload__meta">Selected: {{ selectedFiles.length }} file(s)</div>
+
           <div class="upload__grid">
             <div class="upload__item" *ngFor="let p of previews; let i = index">
-              <img [src]="p" alt="preview" />
+              <img [src]="p" alt="preview image" />
               <div class="upload__badge" *ngIf="i === 0">Cover</div>
               <div class="upload__actions">
                 <button type="button" mat-icon-button aria-label="Set as cover" (click)="setCover(i)" *ngIf="i !== 0" matTooltip="Set as cover">
                   <mat-icon>star</mat-icon>
+                </button>
+                <button type="button" mat-icon-button aria-label="Remove image" (click)="removeImage(i)" matTooltip="Remove">
+                  <mat-icon>delete</mat-icon>
                 </button>
               </div>
             </div>
@@ -282,6 +293,7 @@ export class ListingEditComponent {
   selectedFiles: File[] = [];
   previews: string[] = [];
   coverIndex = 0;
+  dragging = false;
   years: number[] = [];
   cities: CityDto[] = []; areas: AreaDto[] = [];
   cityLoading = false; cityError: string | null = null;
@@ -591,6 +603,25 @@ export class ListingEditComponent {
     this.selectedFiles.unshift(file);
     this.previews.unshift(prev);
     this.coverIndex = 0;
+  }
+
+  removeImage(i: number) {
+    if (i < 0 || i >= this.selectedFiles.length) return;
+    const [file] = this.selectedFiles.splice(i, 1);
+    const [url] = this.previews.splice(i, 1);
+    try { if (url) URL.revokeObjectURL(url); } catch {}
+    if (this.coverIndex === i) this.coverIndex = 0;
+    if (this.coverIndex > i) this.coverIndex--;
+  }
+
+  // Drag & drop helpers, same behavior as AddListingComponent
+  onDragOver(event: DragEvent) { event.preventDefault(); this.dragging = true; }
+  onDragLeave(event: DragEvent) { event.preventDefault(); this.dragging = false; }
+  onDrop(event: DragEvent) {
+    event.preventDefault(); this.dragging = false;
+    const files = event.dataTransfer?.files; if (!files || files.length === 0) return;
+    const inputEvent = { target: { files } } as any as Event;
+    this.onFilesSelected(inputEvent);
   }
 
   private refreshVariants() {

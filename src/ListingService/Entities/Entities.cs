@@ -9,8 +9,10 @@ public class Listing {
     public decimal Price { get; set; }
     public string? Color { get; set; }
     public string? BodyColor { get; set; }
-    // Owner (Identity user subject id)
-    public string OwnerId { get; set; } = null!;
+    // Identity user subject id (JWT 'sub')
+    public string UserId { get; set; } = null!;
+    // Individual | Dealer | Admin (string snapshot at time of listing)
+    public string UserType { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 

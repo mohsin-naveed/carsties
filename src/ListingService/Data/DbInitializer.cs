@@ -61,6 +61,8 @@ public class DbInitializer
         {
             Title = "Demo Car 1",
             Description = "Seeded demo listing",
+            UserId = "seed-owner",
+            UserType = "Individual",
             Year = 2020,
             Mileage = 25000,
             Price = 15000m,

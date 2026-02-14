@@ -20,7 +20,18 @@ $app-theme: mat.m2-define-light-theme((
 	density: 0
 ));
 
-// Emit component theme styles
+// Dark theme definition using same palettes
+$app-dark-theme: mat.m2-define-dark-theme((
+	color: (
+		primary: $primary-palette,
+		accent: $accent-palette,
+		warn: $warn-palette
+	),
+	typography: mat.m2-define-typography-config(),
+	density: 0
+));
+
+// Emit base (light) component theme styles
 @include mat.all-component-themes($app-theme);
 
 // CSS custom properties for light/dark theming
@@ -38,6 +49,8 @@ body.dark-theme {
 	--app-card-bg: #020617;
 	--app-toolbar-bg: #020617;
 	--app-toolbar-text: #e5e7eb;
+	// Apply Material dark colors when dark theme is active
+	@include mat.all-component-colors($app-dark-theme);
 }
 
 // Global layout helpers
@@ -73,6 +86,20 @@ body {
 	box-shadow: 0 2px 4px rgba(0,0,0,.08);
 	background-color: var(--app-toolbar-bg);
 	color: var(--app-toolbar-text);
+}
+
+// Navigation and card theming
+.app-toolbar .mat-mdc-button, .app-toolbar .mat-mdc-icon-button, .app-toolbar a {
+	color: var(--app-toolbar-text);
+}
+
+.mat-mdc-card {
+	background-color: var(--app-card-bg);
+	color: var(--app-text);
+}
+
+.page-content, .sell-form, .search-layout {
+	background-color: transparent;
 }
 
 // Utility classes
