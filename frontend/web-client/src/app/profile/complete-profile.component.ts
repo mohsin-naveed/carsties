@@ -112,10 +112,6 @@ export class CompleteProfileComponent {
         this.form.get('email')?.disable({ emitEvent: false });
 
         this.profileComplete = !!me.isProfileComplete;
-
-        if (me.isProfileComplete) {
-          this.router.navigateByUrl(returnUrl);
-        }
       },
       error: () => {
         // no profile yet (404) - that's fine; user will create it

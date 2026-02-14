@@ -66,9 +66,20 @@ public static class Config
                 AllowedGrantTypes = GrantTypes.Code,
                 RequirePkce = true,
                 RequireClientSecret = false,
-                RedirectUris = { config["ClientApp"] ?? "http://localhost:4200" },
-                PostLogoutRedirectUris = { config["ClientApp"] ?? "http://localhost:4200" },
-                AllowedCorsOrigins = { config["ClientApp"] ?? "http://localhost:4200" },
+                RedirectUris =
+                {
+                    config["ClientApp"] ?? "http://localhost:4200",
+                    (config["ClientApp"] ?? "http://localhost:4200").TrimEnd('/') + "/"
+                },
+                PostLogoutRedirectUris =
+                {
+                    config["ClientApp"] ?? "http://localhost:4200",
+                    (config["ClientApp"] ?? "http://localhost:4200").TrimEnd('/') + "/"
+                },
+                AllowedCorsOrigins =
+                {
+                    config["ClientApp"] ?? "http://localhost:4200"
+                },
                 AllowedScopes = { "openid", "profile", "email", "webClient" },
                 AllowAccessTokensViaBrowser = true,
                 AccessTokenLifetime = 3600,

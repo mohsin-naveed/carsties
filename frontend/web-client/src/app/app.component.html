@@ -19,14 +19,30 @@
   </button>
   <div class="nav__auth">
     <ng-container *ngIf="isAuthenticated$ | async; else loggedOutDesktop">
-      <button mat-button [routerLink]="['/my-listings']">My Listings</button>
-      <button mat-stroked-button (click)="logout()">Logout</button>
+      <button mat-icon-button [matMenuTriggerFor]="accountMenu" aria-label="Account menu">
+        <mat-icon>account_circle</mat-icon>
+      </button>
+      <mat-menu #accountMenu="matMenu">
+        <button mat-menu-item [routerLink]="['/complete-profile']">
+          <mat-icon>person</mat-icon>
+          <span>Profile</span>
+        </button>
+        <button mat-menu-item [routerLink]="['/my-listings']">
+          <mat-icon>list</mat-icon>
+          <span>My Listings</span>
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Logout</span>
+        </button>
+      </mat-menu>
     </ng-container>
     <ng-template #loggedOutDesktop>
       <button mat-stroked-button (click)="login()">Login</button>
       <button mat-raised-button color="primary" [matMenuTriggerFor]="registerMenu">Register</button>
     </ng-template>
-    <a mat-button [routerLink]="['/sell']" class="link-sell">Sell your car</a>
+    <a mat-raised-button color="warn" [routerLink]="['/sell']" class="link-sell">Sell your car</a>
     <mat-menu #registerMenu="matMenu">
       <button mat-menu-item (click)="register('Individual')">Register as Individual</button>
       <button mat-menu-item (click)="register('Dealer')">Register as Dealer</button>
@@ -36,12 +52,14 @@
 
 <mat-menu #mobileMenu="matMenu">
   <button mat-menu-item [routerLink]="['/search']"><mat-icon>search</mat-icon> <span>Buy</span></button>
-  <button mat-menu-item [routerLink]="['/sell']"><mat-icon>sell</mat-icon> <span>Sell</span></button>
+  <button mat-menu-item [routerLink]="['/sell']"><mat-icon>sell</mat-icon> <span>Sell your car</span></button>
   <button mat-menu-item [routerLink]="['/dealers']"><mat-icon>store</mat-icon> <span>Dealers</span></button>
   <button mat-menu-item [routerLink]="['/']" fragment="reviews"><mat-icon>star</mat-icon> <span>Reviews</span></button>
   <mat-divider></mat-divider>
   <ng-container *ngIf="isAuthenticated$ | async; else mobileLoggedOut">
-    <button mat-menu-item (click)="logout()">Logout</button>
+    <button mat-menu-item [routerLink]="['/complete-profile']"><mat-icon>person</mat-icon> <span>Profile</span></button>
+    <button mat-menu-item [routerLink]="['/my-listings']"><mat-icon>list</mat-icon> <span>My Listings</span></button>
+    <button mat-menu-item (click)="logout()"><mat-icon>logout</mat-icon> <span>Logout</span></button>
   </ng-container>
   <ng-template #mobileLoggedOut>
     <button mat-menu-item (click)="login()">Login</button>

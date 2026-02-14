@@ -52,8 +52,11 @@ export class AuthService {
   }
 
   logout(): void {
-    // Trigger full server-side sign-out and token revocation.
-    this.oidcAuthService.logoffAndRevokeTokens().subscribe();
+    // Trigger server-side sign-out; IdentityServer will redirect back to the SPA
+    // using the configured postLogoutRedirectUri.
+    this.oidcAuthService.logoffAndRevokeTokens().subscribe({
+      error: () => this.oidcAuthService.logoff().subscribe()
+    });
   }
 
   logoutLocal(): void {
