@@ -18,7 +18,8 @@ public class CustomProfiileService(UserManager<ApplicationUser> userManager) : I
 
         var claims = new List<Claim>
         {
-            new("username", user.UserName ?? string.Empty)
+            new("username", user.UserName ?? string.Empty),
+            new(JwtClaimTypes.Email, user.Email ?? string.Empty)
         };
 
         context.IssuedClaims.AddRange(claims);
@@ -26,6 +27,11 @@ public class CustomProfiileService(UserManager<ApplicationUser> userManager) : I
         if (nameClaim != null)
         {
             context.IssuedClaims.Add(nameClaim);
+        }
+
+        foreach (var roleClaim in existingClaims.Where(x => x.Type == JwtClaimTypes.Role))
+        {
+            context.IssuedClaims.Add(roleClaim);
         }
     }
 

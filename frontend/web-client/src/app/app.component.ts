@@ -11,8 +11,6 @@ import { MatDividerModule } from '@angular/material/divider';
 import { FooterComponent } from './shared/footer.component';
 import { AuthService } from './core/auth.service';
 import { ThemeService } from './core/theme.service';
-import { ProfileApiService } from './profile/profile-api.service';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
@@ -27,9 +25,7 @@ export class AppComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private themeService: ThemeService,
-    private profilesApi: ProfileApiService,
-    private router: Router
+    private themeService: ThemeService
   ) {}
 
   ngOnInit(): void {
@@ -38,30 +34,6 @@ export class AppComponent implements OnInit {
 
     // After OIDC callback, ensure profile exists and is complete.
     this.authService.handleCallback();
-    this.authService.isAuthenticated$.subscribe(isAuth => {
-      if (!isAuth) return;
-
-      // Avoid redirect loops if we're already on the completion page.
-      if (this.router.url.startsWith('/complete-profile')) return;
-
-      this.profilesApi.getMe().subscribe({
-        next: me => {
-          if (!me.isProfileComplete) {
-            const desired = this.authService.consumeDesiredUserType();
-            const query: any = { returnUrl: this.router.url };
-            if (desired) query.type = desired;
-            this.router.navigate(['/complete-profile'], { queryParams: query });
-          }
-        },
-        error: () => {
-          // No profile yet (404) -> go complete it
-          const desired = this.authService.consumeDesiredUserType();
-          const query: any = { returnUrl: this.router.url };
-          if (desired) query.type = desired;
-          this.router.navigate(['/complete-profile'], { queryParams: query });
-        }
-      });
-    });
   }
 
   login(): void {

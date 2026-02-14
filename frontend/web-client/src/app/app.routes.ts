@@ -8,14 +8,15 @@ import { HomeComponent } from './home/home.component';
 import { authGuard } from './core/auth.guard';
 import { MyListingsComponent } from './listings/my-listings.component';
 import { CompleteProfileComponent } from './profile/complete-profile.component';
+import { profileCompleteGuard } from './core/profile-complete.guard';
 
 export const routes: Routes = [
-  { path: '', component: HomeComponent },
+  { path: '', component: HomeComponent, canActivate: [profileCompleteGuard] },
   { path: 'complete-profile', component: CompleteProfileComponent, canActivate: [authGuard] },
-  { path: 'listings', component: ListingsListComponent },
-  { path: 'listings/:id', component: ListingDetailComponent },
-  { path: 'listings/:id/edit', component: ListingEditComponent, canActivate: [authGuard] },
-  { path: 'my-listings', component: MyListingsComponent, canActivate: [authGuard] },
-  { path: 'sell', component: AddListingComponent, canActivate: [authGuard] },
-  { path: 'search', component: SearchComponent }
+  { path: 'listings', component: ListingsListComponent, canActivate: [profileCompleteGuard] },
+  { path: 'listings/:id', component: ListingDetailComponent, canActivate: [profileCompleteGuard] },
+  { path: 'listings/:id/edit', component: ListingEditComponent, canActivate: [authGuard, profileCompleteGuard] },
+  { path: 'my-listings', component: MyListingsComponent, canActivate: [authGuard, profileCompleteGuard] },
+  { path: 'sell', component: AddListingComponent, canActivate: [authGuard, profileCompleteGuard] },
+  { path: 'search', component: SearchComponent, canActivate: [profileCompleteGuard] }
 ];

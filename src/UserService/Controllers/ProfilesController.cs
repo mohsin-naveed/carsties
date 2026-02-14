@@ -44,15 +44,18 @@ public class ProfilesController(UserDbContext db) : ControllerBase
                              ?? User.FindFirstValue("sub");
         if (string.IsNullOrWhiteSpace(identityUserId)) return Unauthorized();
 
+        var identityEmail = User.FindFirstValue(ClaimTypes.Email)
+                            ?? User.FindFirstValue("email");
+
         var requestedType = NormalizeUserType(request.UserType);
         if (requestedType is not ("Individual" or "Dealer" or "Admin"))
         {
             return BadRequest(new { error = "Invalid userType. Allowed: Individual, Dealer, Admin." });
         }
 
-    // Caller role (from token). IdentityService should only issue role claims.
-    var callerRole = User.FindFirstValue(ClaimTypes.Role)
-             ?? User.FindFirstValue("role");
+        // Caller role (from token). IdentityService should only issue role claims.
+        var callerRole = User.FindFirstValue(ClaimTypes.Role)
+                 ?? User.FindFirstValue("role");
         var isCallerAdmin = string.Equals(callerRole, "Admin", StringComparison.OrdinalIgnoreCase);
 
         // Prevent privilege escalation: only admins can set Admin.
@@ -92,7 +95,8 @@ public class ProfilesController(UserDbContext db) : ControllerBase
             }
         }
 
-        profile.Email = request.Email;
+        // Email is owned by IdentityService; prefer token claim to prevent spoofing.
+        profile.Email = !string.IsNullOrWhiteSpace(identityEmail) ? identityEmail : request.Email;
         profile.UserType = isCallerAdmin ? requestedType : profile.UserType;
         profile.DisplayName = request.DisplayName;
         profile.PhoneNumber = request.PhoneNumber;
@@ -116,12 +120,13 @@ public class ProfilesController(UserDbContext db) : ControllerBase
 
     private static bool ComputeProfileComplete(UserProfile profile)
     {
-        // Conservative baseline:
-        // - Everyone: email + display name + phone
-        // - Dealer: adds company name
+        // Rules (per web-client UX):
+        // - Individual: UserType + DisplayName
+        // - Dealer: UserType + DisplayName + CompanyName
+        // Email is required and comes from IdentityService.
         if (string.IsNullOrWhiteSpace(profile.Email)) return false;
+        if (string.IsNullOrWhiteSpace(profile.UserType)) return false;
         if (string.IsNullOrWhiteSpace(profile.DisplayName)) return false;
-        if (string.IsNullOrWhiteSpace(profile.PhoneNumber)) return false;
 
         if (string.Equals(profile.UserType, "Dealer", StringComparison.OrdinalIgnoreCase))
         {

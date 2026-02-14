@@ -9,6 +9,7 @@ public static class Config
         [
             new IdentityResources.OpenId(),
             new IdentityResources.Profile(),
+            new IdentityResources.Email(),
         ];
 
     public static IEnumerable<ApiScope> ApiScopes =>
@@ -18,7 +19,8 @@ public static class Config
                 UserClaims =
                 [
                     JwtClaimTypes.Name,
-                    JwtClaimTypes.Role
+                    JwtClaimTypes.Role,
+                    JwtClaimTypes.Email
                 ]
             },
             new ApiScope("webClient", "Web Client API Access")
@@ -27,7 +29,8 @@ public static class Config
                 UserClaims =
                 [
                     JwtClaimTypes.Name,
-                    JwtClaimTypes.Role
+                    JwtClaimTypes.Role,
+                    JwtClaimTypes.Email
                 ]
             }
         ];
@@ -38,7 +41,7 @@ public static class Config
             {
                 ClientId = "postman",
                 ClientName = "Postman",
-                AllowedScopes = { "openid", "profile", "auctionApp" },
+                AllowedScopes = { "openid", "profile", "email", "auctionApp" },
                 RedirectUris = { "https://www.getpostman.com/oauth2/callback" },
                 ClientSecrets = [new Secret("NotASecret".Sha256())],
                 AllowedGrantTypes = { GrantType.ResourceOwnerPassword }
@@ -52,7 +55,7 @@ public static class Config
                 RequirePkce = false,
                 RedirectUris = { config["ClientApp"] + "/api/auth/callback/id-server" },
                 AllowOfflineAccess = true,
-                AllowedScopes = { "openid", "profile", "auctionApp" },
+                AllowedScopes = { "openid", "profile", "email", "auctionApp" },
                 AccessTokenLifetime = 3600 * 24 * 30,
                 AlwaysIncludeUserClaimsInIdToken = true
             },
@@ -66,7 +69,7 @@ public static class Config
                 RedirectUris = { config["ClientApp"] ?? "http://localhost:4200" },
                 PostLogoutRedirectUris = { config["ClientApp"] ?? "http://localhost:4200" },
                 AllowedCorsOrigins = { config["ClientApp"] ?? "http://localhost:4200" },
-                AllowedScopes = { "openid", "profile", "webClient" },
+                AllowedScopes = { "openid", "profile", "email", "webClient" },
                 AllowAccessTokensViaBrowser = true,
                 AccessTokenLifetime = 3600,
                 AlwaysIncludeUserClaimsInIdToken = true

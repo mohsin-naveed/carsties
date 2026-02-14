@@ -8,5 +8,5 @@ export const environment = {
   identityClientId: 'web-client',
   identityRedirectUrl: 'http://localhost:4300',
   identityPostLogoutRedirectUri: 'http://localhost:4300',
-  identityScope: 'openid profile webClient'
+  identityScope: 'openid profile email webClient'
 };

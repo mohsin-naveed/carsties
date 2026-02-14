@@ -59,6 +59,10 @@
         <button mat-raised-button color="primary" type="submit" [disabled]="saving">
           Save profile
         </button>
+
+        <button mat-button type="button" [disabled]="saving" (click)="cancel()">
+          Cancel
+        </button>
       </div>
     </form>
   </mat-card-content>
