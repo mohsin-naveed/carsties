@@ -1,13 +1,15 @@
 import { Injectable } from '@angular/core';
 import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { Observable, defer } from 'rxjs';
-import { map, shareReplay } from 'rxjs/operators';
+import { map, shareReplay, startWith } from 'rxjs/operators';
 import { environment } from '../../environments/environment.development';
 import { Router } from '@angular/router';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   isAuthenticated$!: Observable<boolean>;
+  /** Emits false until the initial OIDC checkAuth has completed (success or failure). */
+  authReady$!: Observable<boolean>;
   private readonly desiredTypeKey = 'carsties.desiredUserType';
   private readonly postLoginRedirectKey = 'carsties.postLoginRedirect';
   private readonly authCheck$ = defer(() => this.oidcAuthService.checkAuth()).pipe(shareReplay(1));
@@ -15,6 +17,12 @@ export class AuthService {
   constructor(private oidcAuthService: OidcSecurityService, private router: Router) {
     this.isAuthenticated$ = this.oidcAuthService.isAuthenticated$.pipe(
       map(result => result.isAuthenticated)
+    );
+
+    this.authReady$ = this.authCheck$.pipe(
+      map(() => true),
+      startWith(false),
+      shareReplay(1)
     );
   }
 

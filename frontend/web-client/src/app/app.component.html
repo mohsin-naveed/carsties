@@ -13,36 +13,45 @@
     <button mat-button [routerLink]="['/']" fragment="reviews">Reviews</button>
   </nav>
   <span class="spacer"></span>
+  <a mat-raised-button color="warn" [routerLink]="['/sell']" class="link-sell">Sell your car</a>
   <button mat-icon-button class="theme-toggle" (click)="toggleTheme()" aria-label="Toggle dark mode">
     <mat-icon *ngIf="!(isDarkMode$ | async); else darkIcon">dark_mode</mat-icon>
     <ng-template #darkIcon><mat-icon>light_mode</mat-icon></ng-template>
   </button>
   <div class="nav__auth">
-    <ng-container *ngIf="isAuthenticated$ | async; else loggedOutDesktop">
-      <button mat-icon-button [matMenuTriggerFor]="accountMenu" aria-label="Account menu">
-        <mat-icon>account_circle</mat-icon>
-      </button>
-      <mat-menu #accountMenu="matMenu">
-        <button mat-menu-item [routerLink]="['/complete-profile']">
-          <mat-icon>person</mat-icon>
-          <span>Profile</span>
+    <ng-container *ngIf="authReady$ | async; else authLoading">
+      <ng-container *ngIf="isAuthenticated$ | async; else loggedOutDesktop">
+        <button mat-icon-button [matMenuTriggerFor]="accountMenu" aria-label="Account menu">
+          <mat-icon>account_circle</mat-icon>
         </button>
-        <button mat-menu-item [routerLink]="['/my-listings']">
-          <mat-icon>list</mat-icon>
-          <span>My Listings</span>
-        </button>
-        <mat-divider></mat-divider>
-        <button mat-menu-item (click)="logout()">
-          <mat-icon>logout</mat-icon>
-          <span>Logout</span>
-        </button>
-      </mat-menu>
+        <mat-menu #accountMenu="matMenu">
+          <button mat-menu-item [routerLink]="['/complete-profile']">
+            <mat-icon>person</mat-icon>
+            <span>Profile</span>
+          </button>
+          <button mat-menu-item [routerLink]="['/my-listings']">
+            <mat-icon>list</mat-icon>
+            <span>My Listings</span>
+          </button>
+          <mat-divider></mat-divider>
+          <button mat-menu-item (click)="deleteAccount()">
+            <mat-icon>delete_forever</mat-icon>
+            <span>Delete account</span>
+          </button>
+          <button mat-menu-item (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            <span>Logout</span>
+          </button>
+        </mat-menu>
+      </ng-container>
+      <ng-template #loggedOutDesktop>
+        <button mat-stroked-button (click)="login()">Login</button>
+        <button mat-raised-button color="primary" [matMenuTriggerFor]="registerMenu">Register</button>
+      </ng-template>
     </ng-container>
-    <ng-template #loggedOutDesktop>
-      <button mat-stroked-button (click)="login()">Login</button>
-      <button mat-raised-button color="primary" [matMenuTriggerFor]="registerMenu">Register</button>
+    <ng-template #authLoading>
+      <mat-progress-spinner diameter="22" mode="indeterminate" aria-label="Loading"></mat-progress-spinner>
     </ng-template>
-    <a mat-raised-button color="warn" [routerLink]="['/sell']" class="link-sell">Sell your car</a>
     <mat-menu #registerMenu="matMenu">
       <button mat-menu-item (click)="register('Individual')">Register as Individual</button>
       <button mat-menu-item (click)="register('Dealer')">Register as Dealer</button>
@@ -70,7 +79,14 @@
 
 <main class="page-container">
   <section class="page-content">
-    <router-outlet></router-outlet>
+    <ng-container *ngIf="authReady$ | async; else pageLoading">
+      <router-outlet></router-outlet>
+    </ng-container>
+    <ng-template #pageLoading>
+      <div class="page-loading" role="status" aria-label="Loading">
+        <mat-progress-spinner diameter="56" mode="indeterminate"></mat-progress-spinner>
+      </div>
+    </ng-template>
   </section>
 </main>
 

@@ -14,7 +14,7 @@ import { RouterModule } from '@angular/router';
 @Component({
   selector: 'app-listings-list',
   standalone: true,
-  imports: [CommonModule, MatTableModule, MatPaginatorModule, MatSortModule, MatProgressBarModule, MatIconModule, MatDialogModule, MatButtonModule, ConfirmDialogComponent, RouterModule],
+  imports: [CommonModule, MatTableModule, MatPaginatorModule, MatSortModule, MatProgressBarModule, MatIconModule, MatDialogModule, MatButtonModule, RouterModule],
   templateUrl: './listings-list.component.html'
 })
 export class ListingsListComponent {

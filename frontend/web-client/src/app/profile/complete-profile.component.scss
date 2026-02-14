@@ -1,30 +1,21 @@
-.profile-card {
-  max-width: 900px;
-  margin: 24px auto;
-}
+:host { display:block; overflow-x: hidden; }
 
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
+.profile-form { display:grid; gap:24px; justify-items: center; padding: 0 12px; }
 
-.span-2 {
-  grid-column: span 2;
-}
+.section-card { padding-bottom: 8px; width: 100%; max-width: 768px; }
 
-.actions {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
-}
+.page-title { width: 100%; max-width: 768px; margin: 0 0 4px; font-size: 28px; font-weight: 700; line-height: 1.2; }
 
-@media (max-width: 768px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
+.subheading { font-weight: 600; margin: 6px 0 14px; }
 
-  .span-2 {
-    grid-column: span 1;
-  }
-}
+.grid { display:grid; gap:12px; justify-items: stretch; grid-template-columns: 1fr; }
+.grid * { box-sizing: border-box; }
+
+.grid mat-form-field { grid-column: 1 / -1; width: 100%; display:block; min-width: 0; }
+.section-card .mat-mdc-form-field { width: 100%; }
+.section-card .mat-mdc-form-field-infix { width: 100%; }
+
+.field-check { position: relative; display:flex; align-items:center; gap:6px; width:100%; }
+.field-check mat-form-field { flex: 1 1 auto; min-width: 0; width: 100%; }
+
+.actions { display:flex; justify-content:flex-end; padding: 0 16px 16px; gap: 8px; }

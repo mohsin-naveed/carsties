@@ -16,6 +16,7 @@ public interface IImageStorageService
 {
     Task<(string Url, string? ThumbUrl, string FileName)> SaveListingImageAsync(int listingId, IFormFile file, CancellationToken cancellationToken = default);
     Task DeleteListingImageAsync(int listingId, string fileName, string? thumbUrl, CancellationToken cancellationToken = default);
+    Task DeleteAllListingImagesAsync(int listingId, CancellationToken cancellationToken = default);
 }
 
 public class AzureBlobImageStorageService : IImageStorageService
@@ -117,5 +118,22 @@ public class AzureBlobImageStorageService : IImageStorageService
         var thumbBlobName = $"{listingId}/thumbs/{thumbFileName}";
         var thumbClient = _container.GetBlobClient(thumbBlobName);
         await thumbClient.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots, cancellationToken: cancellationToken);
+    }
+
+    public async Task DeleteAllListingImagesAsync(int listingId, CancellationToken cancellationToken = default)
+    {
+        var prefix = $"{listingId}/";
+        await foreach (var blob in _container.GetBlobsAsync(prefix: prefix, cancellationToken: cancellationToken))
+        {
+            try
+            {
+                var blobClient = _container.GetBlobClient(blob.Name);
+                await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots, cancellationToken: cancellationToken);
+            }
+            catch
+            {
+                // Best-effort: leaving a blob behind should not block account deletion.
+            }
+        }
     }
 }

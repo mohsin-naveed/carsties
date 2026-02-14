@@ -7,6 +7,6 @@ export const environment = {
   identityAuthority: 'http://localhost:5001',
   identityClientId: 'web-client',
   identityRedirectUrl: 'http://localhost:4300',
-  identityPostLogoutRedirectUri: 'http://localhost:4300',
+  identityPostLogoutRedirectUri: 'http://localhost:4300/',
   identityScope: 'openid profile email webClient'
 };

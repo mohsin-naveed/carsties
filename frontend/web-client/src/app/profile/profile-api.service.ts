@@ -43,4 +43,8 @@ export class ProfileApiService {
   upsertMe(payload: UpsertMeRequest): Observable<UserProfileDto> {
     return this.http.put<UserProfileDto>(`${this.baseUrl}/profiles/me`, payload);
   }
+
+  deleteMe(): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/profiles/me`);
+  }
 }

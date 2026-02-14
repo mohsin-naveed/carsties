@@ -38,6 +38,7 @@ export class CompleteProfileComponent {
   private auth = inject(AuthService);
 
   saving = false;
+  private profileExists = false;
   private profileComplete = false;
 
   form = this.fb.group({
@@ -98,6 +99,9 @@ export class CompleteProfileComponent {
     // If profile already exists, prefill to reduce friction.
     this.api.getMe().subscribe({
       next: me => {
+        const emptyGuid = '00000000-0000-0000-0000-000000000000';
+        const exists = !!me.id && me.id !== emptyGuid;
+
         this.form.patchValue({
           email: me.email,
           userType: me.userType,
@@ -111,6 +115,11 @@ export class CompleteProfileComponent {
 
         this.form.get('email')?.disable({ emitEvent: false });
 
+        this.profileExists = exists;
+        if (exists) {
+          this.form.get('userType')?.disable({ emitEvent: false });
+        }
+
         this.profileComplete = !!me.isProfileComplete;
       },
       error: () => {
@@ -119,8 +128,22 @@ export class CompleteProfileComponent {
     });
   }
 
+  get isEditMode(): boolean {
+    return this.profileComplete;
+  }
+
+  get pageTitle(): string {
+    const type = this.form.getRawValue().userType;
+    const label = type === 'Dealer' ? 'Dealer' : 'Individual';
+    return this.isEditMode ? `Edit profile - ${label}` : `Create profile - ${label}`;
+  }
+
+  get showSubheading(): boolean {
+    return !this.isEditMode;
+  }
+
   get isDealer(): boolean {
-    return this.form.value.userType === 'Dealer';
+    return this.form.getRawValue().userType === 'Dealer';
   }
 
   submit(): void {
@@ -151,6 +174,13 @@ export class CompleteProfileComponent {
     }).subscribe({
       next: me => {
         this.saving = false;
+
+        // After the first successful save, lock account type.
+        if (!this.profileExists) {
+          this.profileExists = true;
+          this.form.get('userType')?.disable({ emitEvent: false });
+        }
+
         if (me.isProfileComplete) {
           this.profileComplete = true;
           this.snack.open('Profile completed', 'Close', { duration: 2500 });

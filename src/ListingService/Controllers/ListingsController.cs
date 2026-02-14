@@ -13,7 +13,7 @@ namespace ListingService.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ListingsController(ListingDbContext context, IMapper mapper, CatalogClient catalog) : ControllerBase
+public class ListingsController(ListingDbContext context, IMapper mapper, CatalogClient catalog, IImageStorageService imageStorage) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<List<ListingDto>>> GetAll(
@@ -622,6 +622,52 @@ public class ListingsController(ListingDbContext context, IMapper mapper, Catalo
         }
 
         return dtos;
+    }
+
+    [HttpDelete("mine")]
+    [Authorize]
+    public async Task<IActionResult> DeleteMyListings(CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Forbid();
+
+        var listings = await context.Listings
+            .Include(l => l.Images)
+            .Where(l => l.UserId == userId)
+            .ToListAsync(cancellationToken);
+
+        if (listings.Count == 0) return NoContent();
+
+        var listingIds = listings.Select(l => l.Id).ToArray();
+
+        // Delete blobs first (best-effort). Any failures should not block DB cleanup.
+        foreach (var listing in listings)
+        {
+            try
+            {
+                // Deletes everything under {listingId}/ (originals, thumbs, and any leftovers).
+                await imageStorage.DeleteAllListingImagesAsync(listing.Id, cancellationToken);
+            }
+            catch
+            {
+                // ignore blob deletion failures
+            }
+        }
+
+        var features = await context.ListingFeatures
+            .Where(f => listingIds.Contains(f.ListingId))
+            .ToListAsync(cancellationToken);
+        if (features.Count > 0) context.ListingFeatures.RemoveRange(features);
+
+        var images = await context.ListingImages
+            .Where(i => listingIds.Contains(i.ListingId))
+            .ToListAsync(cancellationToken);
+        if (images.Count > 0) context.ListingImages.RemoveRange(images);
+
+        context.Listings.RemoveRange(listings);
+        await context.SaveChangesAsync(cancellationToken);
+
+        return NoContent();
     }
 
     [HttpGet("{id:int}")]

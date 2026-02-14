@@ -1,69 +1,86 @@
-<mat-card class="profile-card">
-  <mat-card-header>
-    <mat-card-title>Complete your profile</mat-card-title>
-    <mat-card-subtitle>
-      We just need a few details before you can continue.
-    </mat-card-subtitle>
-  </mat-card-header>
+<form [formGroup]="form" (ngSubmit)="submit()" class="profile-form" [attr.aria-busy]="saving">
+  <h2 class="page-title">{{ pageTitle }}</h2>
 
-  <mat-card-content>
-    <form [formGroup]="form" (ngSubmit)="submit()">
+  <mat-card class="section-card">
+    <mat-card-content>
+      <div *ngIf="showSubheading" class="subheading">
+        We just need a few details before you can continue.
+      </div>
+
       <div class="grid">
-        <mat-form-field appearance="outline">
-          <mat-label>Email</mat-label>
-          <input matInput formControlName="email" autocomplete="email" />
-        </mat-form-field>
+        <div class="field-check">
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput formControlName="email" autocomplete="email" />
+          </mat-form-field>
+        </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Account type</mat-label>
-          <mat-select formControlName="userType">
-            <mat-option value="Individual">Individual</mat-option>
-            <mat-option value="Dealer">Dealer</mat-option>
-          </mat-select>
-        </mat-form-field>
+        <div class="field-check">
+          <mat-form-field appearance="outline">
+            <mat-label>Account type</mat-label>
+            <mat-select formControlName="userType">
+              <mat-option value="Individual">Individual</mat-option>
+              <mat-option value="Dealer">Dealer</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
 
-        <mat-form-field appearance="outline" class="span-2">
-          <mat-label>Display name</mat-label>
-          <input matInput formControlName="displayName" autocomplete="name" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Phone number</mat-label>
-          <input matInput formControlName="phoneNumber" autocomplete="tel" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Country</mat-label>
-          <input matInput formControlName="country" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>City</mat-label>
-          <input matInput formControlName="city" />
-        </mat-form-field>
+        <div class="field-check">
+          <mat-form-field appearance="outline">
+            <mat-label>Full name</mat-label>
+            <input matInput formControlName="displayName" autocomplete="name" />
+          </mat-form-field>
+        </div>
 
         <ng-container *ngIf="isDealer">
-          <mat-form-field appearance="outline" class="span-2">
-            <mat-label>Company name</mat-label>
-            <input matInput formControlName="companyName" />
-          </mat-form-field>
+          <div class="field-check">
+            <mat-form-field appearance="outline">
+              <mat-label>Company name</mat-label>
+              <input matInput formControlName="companyName" />
+            </mat-form-field>
+          </div>
+        </ng-container>
 
-          <mat-form-field appearance="outline" class="span-2">
-            <mat-label>Company registration number (optional)</mat-label>
-            <input matInput formControlName="companyRegistrationNumber" />
+        <div class="field-check">
+          <mat-form-field appearance="outline">
+            <mat-label>Phone number</mat-label>
+            <input matInput formControlName="phoneNumber" autocomplete="tel" />
           </mat-form-field>
+        </div>
+
+        <div class="field-check">
+          <mat-form-field appearance="outline">
+            <mat-label>Country</mat-label>
+            <input matInput formControlName="country" />
+          </mat-form-field>
+        </div>
+
+        <div class="field-check">
+          <mat-form-field appearance="outline">
+            <mat-label>City</mat-label>
+            <input matInput formControlName="city" />
+          </mat-form-field>
+        </div>
+
+        <ng-container *ngIf="isDealer">
+          <div class="field-check">
+            <mat-form-field appearance="outline">
+              <mat-label>Company registration number (optional)</mat-label>
+              <input matInput formControlName="companyRegistrationNumber" />
+            </mat-form-field>
+          </div>
         </ng-container>
       </div>
+    </mat-card-content>
 
-      <div class="actions">
-        <button mat-raised-button color="primary" type="submit" [disabled]="saving">
-          Save profile
-        </button>
+    <div class="actions">
+      <button mat-raised-button color="primary" type="submit" [disabled]="saving">
+        Save
+      </button>
 
-        <button mat-button type="button" [disabled]="saving" (click)="cancel()">
-          Cancel
-        </button>
-      </div>
-    </form>
-  </mat-card-content>
-</mat-card>
+      <button mat-stroked-button type="button" [disabled]="saving" (click)="cancel()">
+        Cancel
+      </button>
+    </div>
+  </mat-card>
+</form>
