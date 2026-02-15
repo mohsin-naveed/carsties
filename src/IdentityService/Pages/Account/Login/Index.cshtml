@@ -36,7 +36,7 @@
 }
 else
 {
-    <h1 class="auth-title">Login</h1>
+    <h1 class="auth-title">Log in</h1>
 
     @if (Model.View.EnableLocalLogin)
     {
@@ -67,18 +67,14 @@ else
 
             <div class="mt-2" style="text-align:center;">
                 <span style="color: var(--auth-muted);">New here?</span>
-                <a class="auth-link" asp-page="../Register/Index" asp-route-returnUrl="@Model.Input.ReturnUrl">Register</a>
-            </div>
-
-            <div class="mt-2" style="text-align:center;">
-                <button type="submit" class="btn btn-link p-0" name="Input.Button" value="cancel">Cancel</button>
+                <a class="auth-link" asp-page="../Register/Index" asp-route-returnUrl="@Model.Input.ReturnUrl">Sign up</a>
             </div>
         </form>
     }
 
     @if (Model.View.VisibleExternalProviders.Any())
     {
-        <div class="auth-divider">OR</div>
+        <div class="auth-divider">Or</div>
         <div class="d-grid" style="gap: 10px;">
             @foreach (var provider in Model.View.VisibleExternalProviders)
             {

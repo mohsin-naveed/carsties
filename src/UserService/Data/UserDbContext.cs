@@ -16,10 +16,10 @@ public class UserDbContext(DbContextOptions options) : DbContext(options)
             entity.ToTable("UserProfiles");
             entity.HasKey(x => x.Id);
 
-            entity.Property(x => x.IdentityUserId)
+            entity.Property(x => x.UserId)
                 .IsRequired()
                 .HasMaxLength(64);
-            entity.HasIndex(x => x.IdentityUserId).IsUnique();
+            entity.HasIndex(x => x.UserId).IsUnique();
 
             entity.Property(x => x.Email)
                 .IsRequired()

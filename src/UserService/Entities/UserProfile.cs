@@ -5,13 +5,13 @@ public class UserProfile
     public Guid Id { get; set; }
 
     // Link to IdentityService (AspNet Identity user id)
-    public string IdentityUserId { get; set; } = default!;
+    public string UserId { get; set; } = default!;
 
     // Convenience fields copied from token/identity
     public string Email { get; set; } = default!;
 
-    // Individual | Dealer | Admin
-    public string UserType { get; set; } = "Individual";
+    // PrivateSeller | Dealer | Admin
+    public string UserType { get; set; } = "PrivateSeller";
 
     // Common profile fields
     public string? DisplayName { get; set; }

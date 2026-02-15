@@ -11,7 +11,7 @@ public class Listing {
     public string? BodyColor { get; set; }
     // Identity user subject id (JWT 'sub')
     public string UserId { get; set; } = null!;
-    // Individual | Dealer | Admin (string snapshot at time of listing)
+    // PrivateSeller | Dealer | Admin (string snapshot at time of listing)
     public string UserType { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

@@ -3,11 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment.development';
 
-export type UserType = 'Individual' | 'Dealer' | 'Admin';
+export type UserType = 'PrivateSeller' | 'Dealer' | 'Admin';
 
 export interface UserProfileDto {
   id: string;
-  identityUserId: string;
+  userId: string;
   email: string;
   userType: UserType;
   displayName?: string | null;

@@ -66,7 +66,7 @@ export interface PaginationResponse<T> {
 
 export interface CreateListingDto {
   title: string; description?: string; year: number; mileage: number; price: number; color?: string; bodyColor?: string;
-  makeCode: string; modelCode: string; generationCode: string; derivativeCode: string; variantCode: string;
+  makeCode: string; modelCode: string; generationCode: string; derivativeCode: string; variantCode?: string;
   transmissionTypeCode?: string; fuelTypeCode?: string; bodyTypeCode: string;
   // Location snapshots
   provinceCode?: string; provinceName?: string; cityCode?: string; cityName?: string; areaCode?: string; areaName?: string;
@@ -104,15 +104,15 @@ export interface FacetCountsDto {
   transmissions: Record<string, number>;
   bodies: Record<string, number>;
   fuels: Record<string, number>;
-  seats: Record<number, number>;
-  doors: Record<number, number>;
-  years: Record<number, number>;
-  prices: Record<number, number>;
-  mileages: Record<number, number>;
+  seats: Record<string, number>;
+  doors: Record<string, number>;
+  years: Record<string, number>;
+  prices: Record<string, number>;
+  mileages: Record<string, number>;
   priceStep: number;
   mileageStep: number;
   minMileage?: number;
-  mileageExact?: Record<number, number>;
+  mileageExact?: Record<string, number>;
   // Labels and parent mapping from ListingService (snapshots)
   makeLabels?: Record<string, string>;
   modelLabels?: Record<string, string>;

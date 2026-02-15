@@ -72,7 +72,7 @@ export class AppComponent implements OnInit {
     this.authService.logout();
   }
 
-  register(type: 'Individual' | 'Dealer'): void {
+  register(type: 'PrivateSeller' | 'Dealer'): void {
     this.authService.register(type);
   }
 

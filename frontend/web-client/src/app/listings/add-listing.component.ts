@@ -45,8 +45,8 @@ export class AddListingComponent {
   form = this.fb.group({
     description: [''],
     year: [null as number | null, [Validators.required, Validators.min(1900)]],
-    mileage: [null as number | null, [Validators.required, Validators.min(1)]],
-    price: [null as number | null, [Validators.required, Validators.min(1)]],
+    mileage: [null as number | null, [Validators.required, Validators.min(0), Validators.max(1_000_000)]],
+    price: [null as number | null, [Validators.required, Validators.min(10_000), Validators.max(990_000_000)]],
     bodyColor: [null as string | null, Validators.required],
     makeId: [null as number | null, Validators.required],
     modelId: [null as number | null, Validators.required],
@@ -68,7 +68,7 @@ export class AddListingComponent {
     contactPhone: ['', [Validators.required, Validators.maxLength(30)]],
     contactEmail: ['', [Validators.email, Validators.maxLength(200)]],
     // Engine CC (optional, shown under Body Type)
-    engineSizeCC: [null as number | null, [Validators.required, Validators.min(1)]]
+    engineSizeCC: [null as number | null, [Validators.required, Validators.min(100), Validators.max(90_000)]]
   });
 
   // State subjects (mirroring web-admin style)
@@ -364,8 +364,9 @@ export class AddListingComponent {
     if (!this.isStepValid(3)) return;
     // Also ensure overall form validity (Angular validators)
     if (this.form.invalid) return;
-    // Enforce variant selection rule: must select or explicitly skip
-    if (!this.form.value.variantId && !this.skipVariant) {
+    // Enforce variant selection rule only when variants exist for the selected model.
+    // If there are no variants, allow submit without forcing Skip.
+    if (this.showVariantSelector && !this.form.value.variantId && !this.skipVariant) {
       this.notify.error('Please select a Variant or choose Skip.');
       return;
     }
@@ -398,7 +399,7 @@ export class AddListingComponent {
       modelCode: this.models.find(x => x.id === raw.modelId!)?.code!,
       generationCode: this.generations.find(x => x.id === raw.generationId!)?.code!,
       derivativeCode: this.derivatives.find(x => x.id === raw.derivativeId!)?.code!,
-      variantCode: this.variants.find(x => x.id === raw.variantId!)?.code!,
+      variantCode: (raw.variantId ? this.variants.find(x => x.id === raw.variantId!)?.code : undefined),
       transmissionTypeCode: (raw.transmissionId ? this.transmissions.find(x => x.id === raw.transmissionId)?.code : undefined),
       fuelTypeCode: (raw.fuelTypeId ? this.fuelTypes.find(x => x.id === raw.fuelTypeId)?.code : undefined),
       bodyTypeCode: this.bodyTypes.find(x => x.id === raw.bodyTypeId!)?.code!,
@@ -407,7 +408,7 @@ export class AddListingComponent {
       modelName,
       generationName: this.generations.find(x => x.id === raw.generationId!)?.name,
       derivativeName: this.derivatives.find(x => x.id === raw.derivativeId!)?.name,
-      variantName: this.variants.find(x => x.id === raw.variantId!)?.name,
+      variantName: (raw.variantId ? this.variants.find(x => x.id === raw.variantId!)?.name : undefined),
       bodyTypeName: this.bodyTypes.find(x => x.id === raw.bodyTypeId!)?.name ?? this.derivatives.find(x => x.id === raw.derivativeId!)?.bodyType,
       transmissionTypeName: (raw.transmissionId ? this.transmissions.find(x => x.id === raw.transmissionId)?.name : undefined)
         ?? this.derivatives.find(x => x.id === raw.derivativeId!)?.transmission,

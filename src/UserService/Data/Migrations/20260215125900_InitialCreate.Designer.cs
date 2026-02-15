@@ -12,7 +12,7 @@ using UserService.Data;
 namespace UserService.Data.Migrations
 {
     [DbContext(typeof(UserDbContext))]
-    [Migration("20260214155328_InitialCreate")]
+    [Migration("20260215125900_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -61,11 +61,6 @@ namespace UserService.Data.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<string>("IdentityUserId")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
                     b.Property<bool>("IsProfileComplete")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -80,6 +75,11 @@ namespace UserService.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("now() at time zone 'utc'");
 
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<string>("UserType")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -89,7 +89,7 @@ namespace UserService.Data.Migrations
 
                     b.HasIndex("Email");
 
-                    b.HasIndex("IdentityUserId")
+                    b.HasIndex("UserId")
                         .IsUnique();
 
                     b.ToTable("UserProfiles", (string)null);

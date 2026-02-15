@@ -43,7 +43,7 @@ export class CompleteProfileComponent {
 
   form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
-    userType: ['Individual' as UserType, [Validators.required]],
+    userType: ['PrivateSeller' as UserType, [Validators.required]],
     displayName: ['', [Validators.required, Validators.maxLength(200)]],
     phoneNumber: ['', [Validators.maxLength(32)]],
     country: [''],
@@ -57,12 +57,12 @@ export class CompleteProfileComponent {
     const rawReturnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/';
     const returnUrl = rawReturnUrl.startsWith('/') ? rawReturnUrl : '/';
 
-    if (desiredType === 'Individual' || desiredType === 'Dealer') {
+    if (desiredType === 'PrivateSeller' || desiredType === 'Dealer') {
       this.form.patchValue({ userType: desiredType });
     }
 
     // If no explicit query param, use the locally remembered choice from registration.
-    if (desiredType !== 'Individual' && desiredType !== 'Dealer') {
+    if (desiredType !== 'PrivateSeller' && desiredType !== 'Dealer') {
       const remembered = this.auth.consumeDesiredUserType();
       if (remembered) this.form.patchValue({ userType: remembered });
     }
@@ -134,7 +134,7 @@ export class CompleteProfileComponent {
 
   get pageTitle(): string {
     const type = this.form.getRawValue().userType;
-    const label = type === 'Dealer' ? 'Dealer' : 'Individual';
+    const label = type === 'Dealer' ? 'Dealer' : 'Private Seller';
     return this.isEditMode ? `Edit profile - ${label}` : `Create profile - ${label}`;
   }
 

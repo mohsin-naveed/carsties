@@ -46,15 +46,15 @@
       </ng-container>
       <ng-template #loggedOutDesktop>
         <button mat-stroked-button (click)="login()">Login</button>
-        <button mat-raised-button color="primary" [matMenuTriggerFor]="registerMenu">Register</button>
+        <button mat-raised-button color="primary" [matMenuTriggerFor]="registerMenu">Sign up</button>
       </ng-template>
     </ng-container>
     <ng-template #authLoading>
       <mat-progress-spinner diameter="22" mode="indeterminate" aria-label="Loading"></mat-progress-spinner>
     </ng-template>
     <mat-menu #registerMenu="matMenu">
-      <button mat-menu-item (click)="register('Individual')">Register as Individual</button>
-      <button mat-menu-item (click)="register('Dealer')">Register as Dealer</button>
+      <button mat-menu-item (click)="register('PrivateSeller')">Sign up as Private Seller</button>
+      <button mat-menu-item (click)="register('Dealer')">Sign up as Dealer</button>
     </mat-menu>
   </div>
 </mat-toolbar>
@@ -72,7 +72,7 @@
   </ng-container>
   <ng-template #mobileLoggedOut>
     <button mat-menu-item (click)="login()">Login</button>
-    <button mat-menu-item [matMenuTriggerFor]="registerMenu">Register</button>
+    <button mat-menu-item [matMenuTriggerFor]="registerMenu">Sign up</button>
   </ng-template>
   <!-- Removed CTA button; keep primary Sell route in main links -->
 </mat-menu>

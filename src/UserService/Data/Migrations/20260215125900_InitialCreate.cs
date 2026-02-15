@@ -16,7 +16,7 @@ namespace UserService.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    IdentityUserId = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    UserId = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     UserType = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     DisplayName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
@@ -40,9 +40,9 @@ namespace UserService.Data.Migrations
                 column: "Email");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserProfiles_IdentityUserId",
+                name: "IX_UserProfiles_UserId",
                 table: "UserProfiles",
-                column: "IdentityUserId",
+                column: "UserId",
                 unique: true);
         }
 

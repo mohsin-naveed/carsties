@@ -60,11 +60,27 @@ export class AuthService {
   }
 
   logout(): void {
-    // Trigger server-side sign-out; IdentityServer will redirect back to the SPA
+    // Trigger server-side sign-out; IdentityServer should redirect back to the SPA
     // using the configured postLogoutRedirectUri.
+    // Some OIDC client versions/providers may not reliably redirect after revoke,
+    // so we follow up with an explicit logoff call.
     this.oidcAuthService.logoffAndRevokeTokens().subscribe({
-      error: () => this.oidcAuthService.logoff().subscribe()
+      next: () => {
+        this.oidcAuthService.logoff().subscribe({
+          error: () => this.redirectToPostLogout()
+        });
+      },
+      error: () => {
+        this.oidcAuthService.logoff().subscribe({
+          error: () => this.redirectToPostLogout()
+        });
+      }
     });
+  }
+
+  private redirectToPostLogout(): void {
+    const target = environment.identityPostLogoutRedirectUri || `${window.location.origin}/`;
+    window.location.href = target;
   }
 
   logoutLocal(): void {
@@ -76,7 +92,7 @@ export class AuthService {
     return this.oidcAuthService.getAccessToken();
   }
 
-  register(accountType: 'Individual' | 'Dealer'): void {
+  register(accountType: 'PrivateSeller' | 'Dealer'): void {
     // IdentityService registration is email+password only. We keep the selected type locally
     // and complete the profile after the first login.
     localStorage.setItem(this.desiredTypeKey, accountType);
@@ -86,10 +102,10 @@ export class AuthService {
     window.location.href = registerUrl;
   }
 
-  consumeDesiredUserType(): 'Individual' | 'Dealer' | null {
+  consumeDesiredUserType(): 'PrivateSeller' | 'Dealer' | null {
     const v = localStorage.getItem(this.desiredTypeKey);
     localStorage.removeItem(this.desiredTypeKey);
-    if (v === 'Individual' || v === 'Dealer') return v;
+    if (v === 'PrivateSeller' || v === 'Dealer') return v;
     return null;
   }
 }

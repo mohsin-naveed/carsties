@@ -71,7 +71,7 @@ public partial class CreateListingDto : IValidatableObject
     public string ModelCode { get; set; } = string.Empty;
     public string GenerationCode { get; set; } = string.Empty;
     public string DerivativeCode { get; set; } = string.Empty;
-    public string VariantCode { get; set; } = string.Empty;
+    public string? VariantCode { get; set; }
     public string? TransmissionTypeCode { get; set; }
     public string? FuelTypeCode { get; set; }
     public string BodyTypeCode { get; set; } = string.Empty;
@@ -112,6 +112,26 @@ public partial class CreateListingDto
 {
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        var currentYear = DateTime.UtcNow.Year;
+        if (Year < 1886 || Year > currentYear + 1)
+            yield return new ValidationResult($"year must be between 1886 and {currentYear + 1}.", new[] { nameof(Year) });
+
+        if (Mileage < 0 || Mileage > 2_000_000)
+            yield return new ValidationResult("mileage must be between 0 and 2,000,000.", new[] { nameof(Mileage) });
+
+        // Keep price within a realistic range and within Int32 for facet bucketing.
+        if (Price < 0 || Price > 2_000_000_000m)
+            yield return new ValidationResult("price must be between 0 and 2,000,000,000.", new[] { nameof(Price) });
+
+        if (EngineSizeCC is < 0 or > 20_000)
+            yield return new ValidationResult("engineSizeCC must be between 0 and 20,000.", new[] { nameof(EngineSizeCC) });
+
+        if (EngineSizeL is < 0 or > 20)
+            yield return new ValidationResult("engineSizeL must be between 0 and 20.", new[] { nameof(EngineSizeL) });
+
+        if (BatteryKWh is < 0 or > 500)
+            yield return new ValidationResult("batteryKWh must be between 0 and 500.", new[] { nameof(BatteryKWh) });
+
         if (FeatureCodes is not null && FeatureCodes.Length > 0)
             yield return new ValidationResult("featureCodes is deprecated. Provide full feature metadata in 'features'.", new[] { nameof(FeatureCodes) });
         if (Features is null || Features.Count == 0)
@@ -171,6 +191,25 @@ public partial class UpdateListingDto
 {
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        var currentYear = DateTime.UtcNow.Year;
+        if (Year.HasValue && (Year.Value < 1886 || Year.Value > currentYear + 1))
+            yield return new ValidationResult($"year must be between 1886 and {currentYear + 1}.", new[] { nameof(Year) });
+
+        if (Mileage.HasValue && (Mileage.Value < 0 || Mileage.Value > 2_000_000))
+            yield return new ValidationResult("mileage must be between 0 and 2,000,000.", new[] { nameof(Mileage) });
+
+        if (Price.HasValue && (Price.Value < 0 || Price.Value > 2_000_000_000m))
+            yield return new ValidationResult("price must be between 0 and 2,000,000,000.", new[] { nameof(Price) });
+
+        if (EngineSizeCC.HasValue && (EngineSizeCC.Value < 0 || EngineSizeCC.Value > 20_000))
+            yield return new ValidationResult("engineSizeCC must be between 0 and 20,000.", new[] { nameof(EngineSizeCC) });
+
+        if (EngineSizeL.HasValue && (EngineSizeL.Value < 0 || EngineSizeL.Value > 20))
+            yield return new ValidationResult("engineSizeL must be between 0 and 20.", new[] { nameof(EngineSizeL) });
+
+        if (BatteryKWh.HasValue && (BatteryKWh.Value < 0 || BatteryKWh.Value > 500))
+            yield return new ValidationResult("batteryKWh must be between 0 and 500.", new[] { nameof(BatteryKWh) });
+
         if (FeatureCodes is not null && FeatureCodes.Length > 0)
             yield return new ValidationResult("featureCodes is deprecated. Provide full feature metadata in 'features'.", new[] { nameof(FeatureCodes) });
         // For updates, require features present to align with new policy

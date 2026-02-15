@@ -15,16 +15,16 @@ public class ProfilesController(UserDbContext db) : ControllerBase
     [HttpGet("me")]
     public async Task<ActionResult<UserProfile>> GetMe()
     {
-        var identityUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)
-                             ?? User.FindFirstValue("sub");
-        if (string.IsNullOrWhiteSpace(identityUserId)) return Unauthorized();
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                     ?? User.FindFirstValue("sub");
+        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
 
         var identityEmail = User.FindFirstValue(ClaimTypes.Email)
                             ?? User.FindFirstValue("email");
 
         var profile = await db.UserProfiles
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.IdentityUserId == identityUserId);
+            .FirstOrDefaultAsync(x => x.UserId == userId);
 
         if (profile == null)
         {
@@ -33,9 +33,9 @@ public class ProfilesController(UserDbContext db) : ControllerBase
             return Ok(new UserProfile
             {
                 Id = Guid.Empty,
-                IdentityUserId = identityUserId,
+                UserId = userId,
                 Email = identityEmail ?? string.Empty,
-                UserType = "Individual",
+                UserType = "PrivateSeller",
                 DisplayName = null,
                 PhoneNumber = null,
                 Country = null,
@@ -54,12 +54,12 @@ public class ProfilesController(UserDbContext db) : ControllerBase
     [HttpDelete("me")]
     public async Task<IActionResult> DeleteMe()
     {
-        var identityUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)
-                             ?? User.FindFirstValue("sub");
-        if (string.IsNullOrWhiteSpace(identityUserId)) return Unauthorized();
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                     ?? User.FindFirstValue("sub");
+        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
 
         var profile = await db.UserProfiles
-            .FirstOrDefaultAsync(x => x.IdentityUserId == identityUserId);
+            .FirstOrDefaultAsync(x => x.UserId == userId);
 
         if (profile != null)
         {
@@ -83,17 +83,17 @@ public class ProfilesController(UserDbContext db) : ControllerBase
     [HttpPut("me")]
     public async Task<ActionResult<UserProfile>> UpsertMe([FromBody] UpsertMeRequest request)
     {
-        var identityUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)
-                             ?? User.FindFirstValue("sub");
-        if (string.IsNullOrWhiteSpace(identityUserId)) return Unauthorized();
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                     ?? User.FindFirstValue("sub");
+        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
 
         var identityEmail = User.FindFirstValue(ClaimTypes.Email)
                             ?? User.FindFirstValue("email");
 
         var requestedType = NormalizeUserType(request.UserType);
-        if (requestedType is not ("Individual" or "Dealer" or "Admin"))
+        if (requestedType is not ("PrivateSeller" or "Dealer" or "Admin"))
         {
-            return BadRequest(new { error = "Invalid userType. Allowed: Individual, Dealer, Admin." });
+            return BadRequest(new { error = "Invalid userType. Allowed: PrivateSeller, Dealer, Admin." });
         }
 
         // Caller role (from token). IdentityService should only issue role claims.
@@ -108,7 +108,7 @@ public class ProfilesController(UserDbContext db) : ControllerBase
         }
 
         var profile = await db.UserProfiles
-            .FirstOrDefaultAsync(x => x.IdentityUserId == identityUserId);
+            .FirstOrDefaultAsync(x => x.UserId == userId);
 
         var isNewProfile = profile == null;
 
@@ -117,21 +117,21 @@ public class ProfilesController(UserDbContext db) : ControllerBase
             profile = new UserProfile
             {
                 Id = Guid.NewGuid(),
-                IdentityUserId = identityUserId,
+                UserId = userId,
                 CreatedAt = DateTime.UtcNow
             };
             db.UserProfiles.Add(profile);
         }
 
         // UserType rules:
-        // - Non-admin users can pick Individual/Dealer on first completion.
+        // - Non-admin users can pick PrivateSeller/Dealer on first completion.
         // - Non-admin users cannot change an existing type (prevents switching to influence authZ).
         // - Admin can set/change freely.
         if (!isCallerAdmin)
         {
             if (isNewProfile)
             {
-                // First save: allow Individual/Dealer selection.
+                // First save: allow PrivateSeller/Dealer selection.
                 profile.UserType = requestedType;
             }
             else
@@ -167,7 +167,7 @@ public class ProfilesController(UserDbContext db) : ControllerBase
     private static bool ComputeProfileComplete(UserProfile profile)
     {
         // Rules (per web-client UX):
-        // - Individual: UserType + DisplayName
+        // - PrivateSeller: UserType + DisplayName
         // - Dealer: UserType + DisplayName + CompanyName
         // Email is required and comes from IdentityService.
         if (string.IsNullOrWhiteSpace(profile.Email)) return false;

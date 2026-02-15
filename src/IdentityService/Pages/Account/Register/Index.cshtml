@@ -27,7 +27,7 @@
 
 <partial name="_ValidationSummary" />
 
-<h1 class="auth-title">Sign Up</h1>
+<h1 class="auth-title">Sign up</h1>
 
 <form class="auth-form" asp-page="/Account/Register/Index">
     <input type="hidden" asp-for="Input.ReturnUrl" />
@@ -53,14 +53,11 @@
         <a class="auth-link" asp-page="../Login/Index" asp-route-returnUrl="@Model.Input.ReturnUrl">Log in</a>
     </div>
 
-    <div class="mt-2" style="text-align:center;">
-        <button type="submit" class="btn btn-link p-0" name="Input.Button" value="cancel">Cancel</button>
-    </div>
 </form>
 
 @if (Model.ExternalProviders.Any())
 {
-    <div class="auth-divider">OR</div>
+    <div class="auth-divider">Or</div>
     <div class="d-grid" style="gap: 10px;">
         @foreach (var provider in Model.ExternalProviders)
         {
@@ -78,7 +75,7 @@
 @if (Model.RegisterSuccess)
 {
     <div class="alert alert-success mt-3">
-        <strong>Successfully registered!</strong> You can now login.
+        <strong>Successfully registered!</strong> You can now log in.
     </div>
 }
 

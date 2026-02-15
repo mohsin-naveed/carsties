@@ -375,7 +375,8 @@ public class ListingsController(ListingDbContext context, IMapper mapper, Catalo
         // Bucketed price counts (step = 1000)
         const int priceStep = 1000;
         var priceCounts = await ApplyWithoutPrice(BaseWithoutPrice())
-            .GroupBy(l => ((int)l.Price / priceStep) * priceStep)
+            .Where(l => l.Price >= 0 && l.Price <= 2_000_000_000)
+            .GroupBy(l => ((int)(l.Price / priceStep)) * priceStep)
             .Select(g => new { Id = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Id, x => x.Count);
         // Bucketed mileage counts (fixed step = 5000)
@@ -706,7 +707,7 @@ public class ListingsController(ListingDbContext context, IMapper mapper, Catalo
     listing.UserId = userId;
     // UserType is owned by UserService. We keep a snapshot field for convenience,
     // but we no longer rely on Identity to mint an account_type claim.
-    listing.UserType = "Individual";
+    listing.UserType = "PrivateSeller";
 
         // Populate engine size and battery from payload if provided; else from Catalog Derivative
         if (dto.EngineSizeCC.HasValue) listing.EngineSizeCC = dto.EngineSizeCC.Value;
