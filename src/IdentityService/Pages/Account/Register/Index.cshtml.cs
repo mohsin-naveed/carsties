@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Duende.IdentityModel;
 using IdentityService.Models;
 using IdentityService.Pages.Account.Register;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -17,15 +18,24 @@ namespace IdentityService.Pages.Register
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IConfiguration _config;
+        private readonly IAuthenticationSchemeProvider _schemeProvider;
 
-        public Index(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration config)
+        public Index(
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
+            IConfiguration config,
+            IAuthenticationSchemeProvider schemeProvider)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _config = config;
+            _schemeProvider = schemeProvider;
         }
         [BindProperty] public RegisterViewModel Input { get; set; } = default!;
         [BindProperty] public bool RegisterSuccess { get; set; }
+
+        public record ExternalProvider(string AuthenticationScheme, string? DisplayName);
+        public ExternalProvider[] ExternalProviders { get; set; } = Array.Empty<ExternalProvider>();
 
         public IActionResult OnGet(string returnUrl)
         {
@@ -33,6 +43,13 @@ namespace IdentityService.Pages.Register
             {
                 ReturnUrl = returnUrl
             };
+
+            var schemes = _schemeProvider.GetAllSchemesAsync().GetAwaiter().GetResult();
+            ExternalProviders = schemes
+                .Where(x => x.DisplayName != null)
+                .Select(x => new ExternalProvider(x.Name, x.DisplayName))
+                .ToArray();
+
             return Page();
         }
 

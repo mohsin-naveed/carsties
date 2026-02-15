@@ -1,0 +1,46 @@
+@*
+  Auth-only layout (Login/Register).
+  Keeps existing functionality and uses a split-screen design.
+*@
+@inject IConfiguration Configuration
+
+@{
+        var clientApp = (Configuration["ClientApp"] ?? "/").TrimEnd('/') + "/";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" />
+
+    <title>Carsties Identity</title>
+
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
+    <link rel="shortcut icon" type="image/x-icon" href="~/favicon.ico" />
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/auth.css" />
+
+    @RenderSection("head", required: false)
+</head>
+<body class="auth-shell">
+    <div class="auth-shell__left" aria-hidden="true">
+        <div class="auth-hero">
+            <a class="auth-hero__brand" href="@clientApp">carsties</a>
+            <img class="auth-hero__car" src="~/img/auth-car.svg" alt="" />
+        </div>
+    </div>
+
+    <div class="auth-shell__right">
+        <main class="auth-card" role="main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.slim.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @RenderSection("scripts", required: false)
+</body>
+</html>

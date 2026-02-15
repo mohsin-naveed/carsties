@@ -54,8 +54,11 @@ internal static class HostingExtensions
         {
             authBuilder.AddGoogle("Google", options =>
             {
+                options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
                 options.ClientId = googleClientId;
                 options.ClientSecret = googleClientSecret;
+                options.Scope.Add("email");
+                options.Scope.Add("profile");
             });
         }
 
@@ -65,9 +68,12 @@ internal static class HostingExtensions
         {
             authBuilder.AddFacebook("Facebook", options =>
             {
+                options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
                 options.AppId = fbAppId;
                 options.AppSecret = fbAppSecret;
                 options.Fields.Add("email");
+                options.Fields.Add("name");
+                options.Scope.Add("email");
             });
         }
 

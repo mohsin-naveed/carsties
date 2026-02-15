@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 420" fill="none">
+  <defs>
+    <linearGradient id="paint0" x1="140" y1="40" x2="860" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5EEAD4" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#93C5FD" stop-opacity="0.16"/>
+    </linearGradient>
+    <linearGradient id="paint1" x1="220" y1="120" x2="760" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.06"/>
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="100%" height="100%">
+      <feDropShadow dx="0" dy="20" stdDeviation="18" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <!-- Abstract, non-branded "car" silhouette (safe to use) -->
+  <g filter="url(#shadow)">
+    <path d="M240 240c20-64 54-104 112-118 58-14 220-14 278 0 58 14 92 54 112 118l14 44c6 18-6 36-26 36h-44c-10 0-18-6-22-14l-10-20H328l-10 20c-4 8-12 14-22 14h-44c-20 0-32-18-26-36l14-44Z" fill="url(#paint0)"/>
+    <path d="M356 152c28-34 62-52 104-56 42-4 118-4 160 0 42 4 76 22 104 56l-36 20c-18-24-42-38-76-42-40-5-132-5-172 0-34 4-58 18-76 42l-36-20Z" fill="url(#paint1)"/>
+
+    <circle cx="330" cy="310" r="52" fill="rgba(255,255,255,0.14)"/>
+    <circle cx="330" cy="310" r="26" fill="rgba(255,255,255,0.08)"/>
+    <circle cx="650" cy="310" r="52" fill="rgba(255,255,255,0.14)"/>
+    <circle cx="650" cy="310" r="26" fill="rgba(255,255,255,0.08)"/>
+
+    <path d="M370 210h240c18 0 32 14 32 32v10H338v-10c0-18 14-32 32-32Z" fill="rgba(255,255,255,0.08)"/>
+    <path d="M268 240h444" stroke="rgba(255,255,255,0.22)" stroke-width="3"/>
+  </g>
+</svg>
