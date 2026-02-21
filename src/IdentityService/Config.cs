@@ -1,5 +1,6 @@
 using Duende.IdentityModel;
 using Duende.IdentityServer.Models;
+using Duende.IdentityServer;
 
 namespace IdentityService;
 
@@ -80,10 +81,17 @@ public static class Config
                 {
                     config["ClientApp"] ?? "http://localhost:4200"
                 },
-                AllowedScopes = { "openid", "profile", "email", "webClient" },
+                AllowedScopes = { "openid", "profile", "email", "webClient", IdentityServerConstants.StandardScopes.OfflineAccess },
+                AllowOfflineAccess = true,
                 AllowAccessTokensViaBrowser = true,
                 AccessTokenLifetime = 3600,
-                AlwaysIncludeUserClaimsInIdToken = true
+                AlwaysIncludeUserClaimsInIdToken = true,
+
+                // Keep the SPA logged in for up to 30 days (unless user signs out).
+                RefreshTokenExpiration = TokenExpiration.Sliding,
+                SlidingRefreshTokenLifetime = 3600 * 24 * 30,
+                AbsoluteRefreshTokenLifetime = 3600 * 24 * 30,
+                UpdateAccessTokenClaimsOnRefresh = true
             }
         ];
 }

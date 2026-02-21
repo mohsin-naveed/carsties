@@ -7,7 +7,7 @@ import { apiBaseUrlInterceptor } from './core/api-base-url.interceptor';
 import { errorInterceptor } from './core/error.interceptor';
 import { authInterceptor } from './core/auth.interceptor';
 import { routes } from './app.routes';
-import { AuthModule, LogLevel } from 'angular-auth-oidc-client';
+import { AbstractSecurityStorage, AuthModule, DefaultLocalStorageService, LogLevel } from 'angular-auth-oidc-client';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -18,6 +18,7 @@ export const appConfig: ApplicationConfig = {
       authInterceptor,
       errorInterceptor
     ])),
+    { provide: AbstractSecurityStorage, useClass: DefaultLocalStorageService },
     importProvidersFrom(
       AuthModule.forRoot({
         config: {

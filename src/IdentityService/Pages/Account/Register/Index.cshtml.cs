@@ -75,7 +75,7 @@ namespace IdentityService.Pages.Register
                     ]);
 
                     // Create an IdentityServer session cookie so the SPA can immediately do an OIDC authorize redirect.
-                    await _signInManager.SignInAsync(user, isPersistent: false);
+                    await _signInManager.SignInAsync(user, isPersistent: true);
 
                     if (IsSafeReturnUrl(Input.ReturnUrl))
                     {

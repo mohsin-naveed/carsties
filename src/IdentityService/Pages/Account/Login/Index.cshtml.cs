@@ -94,8 +94,9 @@ public class Index : PageModel
 
         if (ModelState.IsValid)
         {
-            // Only remember login if allowed
-            var rememberLogin = LoginOptions.AllowRememberLogin && Input.RememberLogin;
+            // Keep users signed in unless they explicitly sign out.
+            // Cookie lifetime is controlled via ConfigureApplicationCookie (30 days sliding).
+            var rememberLogin = true;
 
             // In this repo, local users use email as username (see registration: UserName = Email).
             var result = await _signInManager.PasswordSignInAsync(Input.Email!, Input.Password!, isPersistent: rememberLogin, lockoutOnFailure: true);
@@ -152,7 +153,8 @@ public class Index : PageModel
     {
         Input = new InputModel
         {
-            ReturnUrl = returnUrl
+            ReturnUrl = returnUrl,
+            RememberLogin = true
         };
 
         var context = await _interaction.GetAuthorizationContextAsync(returnUrl);

@@ -42,6 +42,8 @@ internal static class HostingExtensions
         builder.Services.ConfigureApplicationCookie(options => 
         {
             options.Cookie.SameSite = SameSiteMode.Lax;
+            options.ExpireTimeSpan = TimeSpan.FromDays(30);
+            options.SlidingExpiration = true;
         });
 
         // External authentication (OIDC clients initiate ExternalLogin/Challenge)
