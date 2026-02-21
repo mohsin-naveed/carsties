@@ -21,6 +21,7 @@ import { map, shareReplay, distinctUntilChanged, switchMap, startWith, finalize,
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NotificationService } from '../core/notification.service';
 import { DestroyRef } from '@angular/core';
+import { ProfileApiService } from '../profile/profile-api.service';
 
 @Component({
   selector: 'app-add-listing',
@@ -35,12 +36,15 @@ export class AddListingComponent {
   private loc = inject(LocationApiService);
   private notify = inject(NotificationService);
   private destroyRef = inject(DestroyRef);
+  private profileApi = inject(ProfileApiService);
 
   saving = false;
   years: number[] = [];
   // Simple stepper: 0..3
   currentStep = 0; // 0: Car Information, 1: Additional Info, 2: Upload Photos, 3: Contact Info
   readonly stepTitles = ['Car Information', 'Additional Information', 'Upload Photos', 'Contact Information'];
+
+  private contactPrefillAttempted = false;
 
   form = this.fb.group({
     description: [''],
@@ -311,6 +315,7 @@ export class AddListingComponent {
   goNext() {
     if (!this.isStepValid(this.currentStep)) return;
     if (this.currentStep < 3) this.currentStep++;
+    if (this.currentStep === 3) this.prefillContactInfoFromProfile();
   }
 
   goTo(index: number) {
@@ -318,6 +323,29 @@ export class AddListingComponent {
     if (index < 0 || index > 3) return;
     if (!this.canNavigate(index)) return;
     this.currentStep = index;
+    if (this.currentStep === 3) this.prefillContactInfoFromProfile();
+  }
+
+  private prefillContactInfoFromProfile(): void {
+    if (this.contactPrefillAttempted) return;
+    this.contactPrefillAttempted = true;
+
+    this.profileApi.getMe().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: me => {
+        const currentName = (this.form.get('contactName')?.value ?? '').toString().trim();
+        const currentPhone = (this.form.get('contactPhone')?.value ?? '').toString().trim();
+        const currentEmail = (this.form.get('contactEmail')?.value ?? '').toString().trim();
+
+        this.form.patchValue({
+          contactName: currentName ? currentName : (me.displayName ?? ''),
+          contactPhone: currentPhone ? currentPhone : (me.phoneNumber ?? ''),
+          contactEmail: currentEmail ? currentEmail : (me.email ?? '')
+        }, { emitEvent: false });
+      },
+      error: () => {
+        // No profile yet (e.g. 404) - that's fine; leave contact fields empty.
+      }
+    });
   }
 
   canNavigate(index: number): boolean {
