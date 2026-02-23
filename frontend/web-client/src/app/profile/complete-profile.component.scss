@@ -4,9 +4,9 @@
 
 .section-card { padding-bottom: 8px; width: 100%; max-width: 768px; }
 
-.page-title { width: 100%; max-width: 768px; margin: 0 0 4px; font-size: 28px; font-weight: 700; line-height: 1.2; }
+.page-title { width: 100%; max-width: 768px; margin: 0 0 4px; font-size: 28px; font-weight: 700; line-height: 1.2; color: var(--mat-app-text-color); }
 
-.subheading { font-weight: 600; margin: 6px 0 14px; }
+.subheading { font-weight: 600; margin: 6px 0 14px; color: color-mix(in srgb, var(--mat-app-text-color) 80%, transparent); }
 
 .grid { display:grid; gap:12px; justify-items: stretch; grid-template-columns: 1fr; }
 .grid * { box-sizing: border-box; }

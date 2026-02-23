@@ -3,10 +3,17 @@
 	position: sticky;
 	top: 0;
 	z-index: 1000;
+	min-height: 72px;
 	box-shadow: var(--app-shadow-1);
 	backdrop-filter: blur(10px);
 	/* Prefer token-driven surfaces over hard-coded colors */
 	background: color-mix(in srgb, var(--mat-toolbar-container-background-color) 92%, transparent);
+}
+
+.app-toolbar ::ng-deep .mat-toolbar-row,
+.app-toolbar ::ng-deep .mat-toolbar-single-row {
+	min-height: 72px;
+	align-items: center;
 }
 .spacer { flex: 1 1 auto; }
 
@@ -23,17 +30,11 @@
 .link-sell { margin-right: 8px; font-weight: 700; }
 
 .theme-toggle {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
 	margin-left: 4px;
 }
 
-.theme-toggle__label { display: none; }
-
 @media (min-width: 768px) {
 	.nav__links { display: inline-flex; }
-	.theme-toggle__label { display: inline; }
 }
 @media (min-width: 992px) {
 	.nav__auth { display: inline-flex; }

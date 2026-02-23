@@ -10,7 +10,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { FooterComponent } from './shared/footer.component';
 import { AuthService } from './core/auth.service';
 import { ThemeService } from './core/theme.service';
@@ -26,7 +25,7 @@ import { take } from 'rxjs/operators';
   standalone: true,
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  imports: [CommonModule, RouterOutlet, RouterModule, RouterLink, MatToolbarModule, MatButtonModule, MatIconModule, MatSnackBarModule, MatMenuModule, MatDividerModule, MatDialogModule, MatProgressSpinnerModule, MatSlideToggleModule, FooterComponent]
+  imports: [CommonModule, RouterOutlet, RouterModule, RouterLink, MatToolbarModule, MatButtonModule, MatIconModule, MatSnackBarModule, MatMenuModule, MatDividerModule, MatDialogModule, MatProgressSpinnerModule, FooterComponent]
 })
 export class AppComponent implements OnInit {
   isAuthenticated$!: Observable<boolean>;
