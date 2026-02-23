@@ -37,8 +37,8 @@
     <aside class="filter-sidebar" id="filters-panel" [class.show-mobile]="(filtersVisible$ | async)">
       <div class="filters-panel-inner">
         <div class="filter-header">
-          <h3 class="filter-title">Filters</h3>
-          <a href="#" class="clear-all" (click)="$event.preventDefault(); clearAll()">Clear all</a>
+          <h3 class="filter-title">Search Filters</h3>
+          <a href="#" class="clear-all" (click)="$event.preventDefault(); clearAll()">Clear All</a>
         </div>
         <!-- Active chips directly under Filters title (remove individually) -->
         <div class="active-filters active-filters--filters" *ngIf="(activeFilterChips$ | async)?.length">
@@ -299,9 +299,15 @@
     </aside>
 
     <main class="car-results">
-      <div class="results-header">
-        We have found {{ (totalCount$ | async) ?? 0 }} vehicles
-      </div>
+      <header class="results-heading" aria-label="Search results">
+        <h1 class="results-heading__title">Find your next used car</h1>
+        <div class="results-heading__sub">
+          <div class="results-heading__count">
+            {{ ((totalCount$ | async) ?? 0) | number:'1.0-0' }} cars in results
+          </div>
+          <button class="stock-alert-btn" type="button" disabled aria-disabled="true">Create Stock Alert</button>
+        </div>
+      </header>
       <!-- Active filters chips shown under results label (desktop only via CSS) -->
       <div class="active-filters active-filters--results" *ngIf="(activeFilterChips$ | async)?.length">
         <span class="filter-chip" *ngFor="let c of (activeFilterChips$ | async)">
@@ -336,8 +342,11 @@
             <div class="price-row">
               <div class="price">£{{ car.price | number:'1.0-0' }}</div>
             </div>
-            <div class="actions">
-              <a class="btn btn-primary" [routerLink]="['/listings', car.id]" [queryParamsHandling]="'preserve'">View Details</a>
+            <div class="card-actions" aria-label="Card actions">
+              <button class="fav-btn" type="button" aria-label="Save listing" title="Save">
+                <mat-icon>favorite_border</mat-icon>
+              </button>
+              <a class="btn btn-primary" [routerLink]="['/listings', car.id]" [queryParamsHandling]="'preserve'">View car</a>
             </div>
           </div>
         </div>
