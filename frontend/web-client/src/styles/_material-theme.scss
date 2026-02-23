@@ -1,0 +1,63 @@
+// Angular Material (MDC) Material Design 3 theming
+//
+// This file defines the app's light + dark themes using the modern theming API
+// (`mat.define-theme`). It intentionally exposes a couple of mixins so that
+// `src/styles.scss` stays mostly about global layout + UX polish.
+//
+// Notes:
+// - Material 3 uses `primary` + `tertiary` (instead of the legacy `accent`).
+//   Angular Material still supports the `accent` color attribute on components;
+//   it maps to the theme's tertiary palette.
+// - Density is slightly reduced for a more premium, less "default Material"
+//   look without changing component logic.
+
+@use '@angular/material' as mat;
+
+// Brand typography (keeps the existing font stack).
+$typography: (
+  brand-family: (Inter, Roboto, "Helvetica Neue", Arial, sans-serif),
+  plain-family: (Inter, Roboto, "Helvetica Neue", Arial, sans-serif)
+);
+
+// Premium automotive-ish palette: cool primary, warm tertiary.
+// Using built-in M3 palettes to keep token generation consistent.
+$primary: mat.$azure-palette;
+$tertiary: mat.$orange-palette;
+
+// Slightly denser than default (0) but not cramped.
+$density: (scale: -1);
+
+$light-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: $primary,
+    tertiary: $tertiary
+  ),
+  typography: $typography,
+  density: $density
+));
+
+$dark-theme: mat.define-theme((
+  color: (
+    theme-type: dark,
+    primary: $primary,
+    tertiary: $tertiary
+  ),
+  typography: $typography,
+  density: $density
+));
+
+// Public mixins used by `styles.scss`.
+@mixin core() {
+  @include mat.core();
+}
+
+@mixin light() {
+  @include mat.all-component-themes($light-theme);
+  @include mat.typography-hierarchy($light-theme);
+}
+
+@mixin dark-colors() {
+  // Only swap colors for dark mode so density/typography stay stable.
+  @include mat.all-component-colors($dark-theme);
+}

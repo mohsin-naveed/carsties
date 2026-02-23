@@ -1,33 +1,84 @@
 <section class="featured" aria-label="Featured listings">
   <div class="featured__header">
-    <h2>Featured Listings</h2>
+    <h2 class="mat-headline-medium featured__title">Featured Listings</h2>
   </div>
 
   <div class="carousel" *ngIf="(listings$ | async) as items; else loadingOrError">
-    <button class="carousel__nav carousel__nav--left" aria-label="Previous" (click)="scrollLeft()">‹</button>
+    <button mat-icon-button class="carousel__nav carousel__nav--left" aria-label="Previous" (click)="scrollLeft()" type="button">
+      <mat-icon aria-hidden="true">chevron_left</mat-icon>
+    </button>
     <div #track class="carousel__track" role="region" aria-label="Featured listings">
       <div class="carousel__items">
-        <article class="feat-card" *ngFor="let car of items" tabindex="0" (keyup.enter)="navigateTo(car)">
-          <div class="feat-card__media" (click)="navigateTo(car)">
-            <img [src]="(car.images?.[currentIndex(car)]?.url) || car.images?.[0]?.url || 'assets/placeholder-car.jpg'" alt="{{car.makeName}} {{car.modelName}}" />
-            <div class="feat-card__price">£{{ car.price | number:'1.0-0' }}</div>
-          </div>
-          <div class="feat-card__body">
-            <h3 class="feat-card__title">{{ car.makeName }} {{ car.modelName }} <span class="year">{{ car.year }}</span></h3>
-            <div class="feat-card__meta">
-              <span>{{ car.mileage | number }} mi</span>
-              <span *ngIf="car.fuelTypeName">{{ car.fuelTypeName }}</span>
-              <span *ngIf="car.transmissionTypeName">{{ car.transmissionTypeName }}</span>
+        <mat-card
+          class="listing-card"
+          *ngFor="let car of items; trackBy: trackByListingId"
+          tabindex="0"
+          role="link"
+          (click)="navigateTo(car)"
+          (keyup.enter)="navigateTo(car)"
+          (keyup.space)="navigateTo(car)"
+          aria-label="Open listing details"
+        >
+          <div class="listing-card__media" aria-hidden="true">
+            <img
+              [src]="(car.images?.[currentIndex(car)]?.url) || car.images?.[0]?.url || 'assets/placeholder-car.jpg'"
+              [alt]="(car.makeName || '') + ' ' + (car.modelName || '')"
+              loading="lazy"
+              decoding="async"
+              width="640"
+              height="360"
+            />
+
+            <div class="listing-card__price" aria-label="Price">
+              £{{ car.price | number:'1.0-0' }}
             </div>
+
+            <button
+              mat-icon-button
+              class="listing-card__favorite"
+              type="button"
+              aria-label="Add to favorites"
+              (click)="$event.stopPropagation()"
+            >
+              <mat-icon aria-hidden="true">favorite_border</mat-icon>
+            </button>
           </div>
-        </article>
+
+          <mat-card-content class="listing-card__content">
+            <div class="listing-card__topline">
+              <mat-chip-set aria-label="Badges">
+                <mat-chip class="badge" color="primary" highlighted>
+                  <mat-icon aria-hidden="true">verified</mat-icon>
+                  Featured
+                </mat-chip>
+                <mat-chip class="badge" *ngIf="car.fuelTypeName" aria-label="Fuel type">
+                  {{ car.fuelTypeName }}
+                </mat-chip>
+              </mat-chip-set>
+            </div>
+
+            <h3 class="mat-title-large listing-card__title">
+              {{ car.makeName }} {{ car.modelName }}
+              <span class="listing-card__year">{{ car.year }}</span>
+            </h3>
+
+            <div class="listing-card__meta" aria-label="Key specs">
+              <span>{{ car.mileage | number }} mi</span>
+              <span *ngIf="car.transmissionTypeName">{{ car.transmissionTypeName }}</span>
+              <span *ngIf="car.bodyTypeName">{{ car.bodyTypeName }}</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
       </div>
     </div>
-    <button class="carousel__nav carousel__nav--right" aria-label="Next" (click)="scrollRight()">›</button>
+    <button mat-icon-button class="carousel__nav carousel__nav--right" aria-label="Next" (click)="scrollRight()" type="button">
+      <mat-icon aria-hidden="true">chevron_right</mat-icon>
+    </button>
   </div>
 
   <ng-template #loadingOrError>
     <div class="featured__grid" *ngIf="!(error$ | async); else errorTpl">
+      <mat-progress-bar mode="indeterminate" aria-label="Loading featured listings"></mat-progress-bar>
       <div class="skeleton" *ngFor="let n of [1,2,3,4,5,6,7,8]"></div>
     </div>
   </ng-template>

@@ -1,5 +1,13 @@
-/* Sticky header with subtle shadow */
-.app-toolbar { position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+/* Sticky header with premium surface + soft shadow */
+.app-toolbar {
+	position: sticky;
+	top: 0;
+	z-index: 1000;
+	box-shadow: var(--app-shadow-1);
+	backdrop-filter: blur(10px);
+	/* Prefer token-driven surfaces over hard-coded colors */
+	background: color-mix(in srgb, var(--mat-toolbar-container-background-color) 92%, transparent);
+}
 .spacer { flex: 1 1 auto; }
 
 :host {
@@ -14,16 +22,31 @@
 .nav__mobile-toggle { margin-right: 8px; }
 .link-sell { margin-right: 8px; font-weight: 700; }
 
+.theme-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin-left: 4px;
+}
+
+.theme-toggle__label { display: none; }
+
 @media (min-width: 768px) {
 	.nav__links { display: inline-flex; }
+	.theme-toggle__label { display: inline; }
 }
 @media (min-width: 992px) {
 	.nav__auth { display: inline-flex; }
 	.nav__mobile-toggle { display: none; }
 }
 
-.page-container { background: #f8fafc; flex: 1 0 auto; }
-.page-content { padding: 16px; margin: 0 auto; max-width: 1400px; background: #fff; }
+.page-container { background: transparent; flex: 1 0 auto; }
+.page-content {
+	padding: 16px;
+	margin: 0 auto;
+	max-width: var(--app-container-max);
+	background: transparent;
+}
 
 .page-loading {
 	display: flex;

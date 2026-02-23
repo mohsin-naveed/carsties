@@ -1,105 +1,80 @@
-// Angular Material theming setup
-@use '@angular/material' as mat;
+// Global styles & theming entrypoint
+//
+// IMPORTANT:
+// - UI/UX only. No business logic changes.
+// - Angular Material is themed using Material Design 3 tokens.
 
-// Include the common styles for Angular Material. This only needs to be done once.
-@include mat.core();
+@use './styles/material-theme' as appTheme;
 
-// Custom palettes aligned with admin app
-$primary-palette: mat.m2-define-palette(mat.$m2-indigo-palette, 500, 300, 700);
-$accent-palette: mat.m2-define-palette(mat.$m2-pink-palette, A200, A100, A400);
-$warn-palette: mat.m2-define-palette(mat.$m2-red-palette);
+// Angular Material base styles (only once).
+@include appTheme.core();
 
-// Light theme definition
-$app-theme: mat.m2-define-light-theme((
-	color: (
-		primary: $primary-palette,
-		accent: $accent-palette,
-		warn: $warn-palette
-	),
-	typography: mat.m2-define-typography-config(),
-	density: 0
-));
-
-// Dark theme definition using same palettes
-$app-dark-theme: mat.m2-define-dark-theme((
-	color: (
-		primary: $primary-palette,
-		accent: $accent-palette,
-		warn: $warn-palette
-	),
-	typography: mat.m2-define-typography-config(),
-	density: 0
-));
-
-// Emit base (light) component theme styles
-@include mat.all-component-themes($app-theme);
-
-// CSS custom properties for light/dark theming
+// Default theme is light.
 :root {
-	--app-bg: #f5f7fa;
-	--app-text: #222222;
-	--app-card-bg: #ffffff;
-	--app-toolbar-bg: #1e3a8a;
-	--app-toolbar-text: #ffffff;
+  @include appTheme.light();
+
+  // App-level design tokens (premium / automotive feel)
+  --app-container-max: 1440px;
+
+  --app-radius-card: 16px;
+  --app-radius-chip: 9999px;
+
+  // Soft, layered shadows (avoid the harsh default Material look)
+  --app-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.06), 0 6px 18px rgba(0, 0, 0, 0.06);
+  --app-shadow-2: 0 2px 6px rgba(0, 0, 0, 0.08), 0 14px 34px rgba(0, 0, 0, 0.08);
+  --app-shadow-3: 0 12px 28px rgba(0, 0, 0, 0.14);
+
+  // Reduce ripple intensity globally.
+  --mat-ripple-color: color-mix(in srgb, var(--mat-app-text-color) 10%, transparent);
+
+  // Global shape overrides (MDC tokens).
+  --mdc-elevated-card-container-shape: var(--app-radius-card);
+  --mdc-outlined-card-container-shape: var(--app-radius-card);
+
+  // Premium card shadow override (affects mat-card elevation rendering).
+  --mdc-elevated-card-container-elevation: var(--app-shadow-1);
+
+  // Slightly taller inputs for a premium feel.
+  --mat-form-field-container-height: 60px;
 }
 
+// Dark mode: only swap Material component colors.
 body.dark-theme {
-	--app-bg: #020617; // slate-950
-	--app-text: #e5e7eb; // gray-200
-	--app-card-bg: #020617;
-	--app-toolbar-bg: #020617;
-	--app-toolbar-text: #e5e7eb;
-	// Apply Material dark colors when dark theme is active
-	@include mat.all-component-colors($app-dark-theme);
+  @include appTheme.dark-colors();
+
+  // Dark mode shadow tuning (so shadows don't look muddy).
+  --app-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 20px rgba(0, 0, 0, 0.25);
+  --app-shadow-2: 0 2px 8px rgba(0, 0, 0, 0.42), 0 20px 44px rgba(0, 0, 0, 0.28);
+  --app-shadow-3: 0 18px 50px rgba(0, 0, 0, 0.5);
+
+  // Dark surfaces: avoid pure black while keeping AA contrast.
+  --mdc-elevated-card-container-color: color-mix(in srgb, var(--mat-app-background-color) 88%, white);
+
+  // Outlined form fields: slightly brighter outline in dark mode.
+  --mdc-outlined-text-field-outline-color: color-mix(in srgb, var(--mat-app-text-color) 28%, transparent);
+  --mdc-outlined-text-field-hover-outline-color: color-mix(in srgb, var(--mat-app-text-color) 45%, transparent);
 }
 
 // Global layout helpers
 html, body { height: 100%; }
+
 body {
-	margin: 0;
-	font-family: Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
-	background: var(--app-bg);
-	color: var(--app-text);
-	-webkit-font-smoothing: antialiased;
-	min-height: 100vh;
-	display: flex;
-	flex-direction: column;
+  margin: 0;
+  font-family: Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--mat-app-background-color);
+  color: var(--mat-app-text-color);
 }
 
-// Reusable container
+// Reusable centered container (1440px)
 .page-container {
-	max-width: 1280px;
-	margin: 0 auto;
-	padding-top: 10px;
-	padding-bottom: 10px;
-	padding-left: 0px;
-	padding-right: 0px;
-	width: 100%;
-	flex: 1 0 auto;
-}
-
-// Elevation utility shortcut
-.elevated { @include mat.elevation(2); background: var(--app-card-bg); border-radius:8px; }
-
-// Toolbar refinement
-.app-toolbar {
-	box-shadow: 0 2px 4px rgba(0,0,0,.08);
-	background-color: var(--app-toolbar-bg);
-	color: var(--app-toolbar-text);
-}
-
-// Navigation and card theming
-.app-toolbar .mat-mdc-button, .app-toolbar .mat-mdc-icon-button, .app-toolbar a {
-	color: var(--app-toolbar-text);
-}
-
-.mat-mdc-card {
-	background-color: var(--app-card-bg);
-	color: var(--app-text);
-}
-
-.page-content, .sell-form, .search-layout {
-	background-color: transparent;
+  max-width: var(--app-container-max);
+  margin: 0 auto;
+  width: 100%;
+  flex: 1 0 auto;
 }
 
 // Utility classes
@@ -108,6 +83,39 @@ body {
 .justify-between { justify-content:space-between; }
 .gap-sm { gap:.75rem; }
 .spacer { flex: 1 1 auto; }
+
+// Premium card base polish (applies everywhere, but still token-driven)
+.mat-mdc-card {
+  border-radius: var(--app-radius-card);
+  box-shadow: var(--app-shadow-1);
+}
+
+// Visible focus states
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--mat-sys-primary) 55%, transparent);
+  outline-offset: 3px;
+}
+
+// Motion system (transform + opacity only, respect reduced motion)
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+// Scroll reveal helper (paired with `RevealOnScrollDirective`).
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 10px, 0);
+  transition: opacity 240ms ease, transform 260ms ease;
+}
+.reveal.reveal--visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
 
 // Scrollbar (WebKit)
 *::-webkit-scrollbar { width: 10px; height:10px; }

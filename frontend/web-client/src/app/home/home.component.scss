@@ -1,22 +1,76 @@
-.hero { position: relative; color: #fff; }
-.hero__bg { position: absolute; inset: 0; background: linear-gradient(180deg, #2e026d 0%, #7c3aed 30%, #9333ea 60%, #a855f7 100%); }
-.hero__grid { position: relative; max-width: 1280px; margin: 0 auto; padding: 40px 16px; display: grid; grid-template-columns: 460px 1fr; gap: 40px; align-items: center; }
-/* .hero__left intentionally left without specific styles; remove empty rule to satisfy lint */
-.hero__right { text-align: left; }
-.hero__title { font-size: clamp(1.6rem, 3vw, 2.6rem); line-height: 1.15; margin: 0 0 10px; font-weight: 800; }
-.hero__subtitle { font-size: clamp(0.95rem, 1.4vw, 1.1rem); margin: 0 0 12px; opacity: 0.95; }
-.hero__cta { display: inline-block; color: #fff; background: rgba(255,255,255,0.2); padding: 10px 16px; border-radius: 999px; text-decoration: none; font-weight: 600; }
-.hero__cta:hover { background: rgba(255,255,255,0.25); }
-.hero__cars { margin-top: 16px; height: 120px; background: radial-gradient(closest-side, rgba(255,255,255,0.25), transparent 70%); filter: blur(0.2px); }
+/* Premium, token-driven hero */
+.hero {
+  position: relative;
+  color: var(--mat-sys-on-primary);
+  overflow: clip;
+}
 
-.section { padding: 40px 16px; max-width: 1280px; margin: 0 auto; }
+.hero__bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(900px 520px at 15% 25%, color-mix(in srgb, var(--mat-sys-tertiary) 35%, transparent) 0%, transparent 65%),
+    radial-gradient(900px 520px at 85% 35%, color-mix(in srgb, var(--mat-sys-primary) 40%, transparent) 0%, transparent 62%),
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--mat-sys-primary) 92%, black) 0%,
+      color-mix(in srgb, var(--mat-sys-primary) 70%, var(--mat-sys-tertiary)) 55%,
+      color-mix(in srgb, var(--mat-sys-primary) 92%, black) 100%
+    );
+}
+
+.hero__container {
+  position: relative;
+  max-width: var(--app-container-max);
+  margin: 0 auto;
+  padding: 56px 16px;
+}
+
+.hero__grid {
+  display: grid;
+  grid-template-columns: 1.1fr 480px;
+  gap: 28px;
+  align-items: center;
+}
+
+.hero__copy {
+  max-width: 720px;
+}
+
+.hero__title {
+  margin: 0 0 10px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.hero__subtitle {
+  margin: 0 0 18px;
+  opacity: 0.92;
+  max-width: 62ch;
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.hero__actions a {
+  transition: transform 220ms ease, box-shadow 240ms ease;
+}
+
+.hero__actions a:hover {
+  transform: translate3d(0, -1px, 0);
+  box-shadow: var(--app-shadow-2);
+}
+
+.section { padding: 40px 16px; max-width: var(--app-container-max); margin: 0 auto; }
 .section__header { margin-bottom: 16px; display: flex; align-items: baseline; gap: 12px; }
-.section__title { font-size: 1.6rem; margin: 0; font-weight: 700; }
-.section__subtitle { margin: 0; color: #64748b; }
-.section--latest { background: linear-gradient(180deg, #f8fafc, #fff); }
-.section--browse { background: #fff; }
+.section__title { margin: 0; font-weight: 800; }
+.section__subtitle { margin: 0; color: color-mix(in srgb, var(--mat-app-text-color) 70%, transparent); }
+.section--latest { background: transparent; }
+.section--browse { background: transparent; }
 
 @media (max-width: 959px) {
-  .hero__grid { grid-template-columns: 1fr; padding: 24px 12px; gap: 20px; }
-  .hero__cars { display: none; }
+	.hero__container { padding: 28px 12px; }
+	.hero__grid { grid-template-columns: 1fr; gap: 18px; }
 }

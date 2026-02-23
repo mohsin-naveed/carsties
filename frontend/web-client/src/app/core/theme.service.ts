@@ -10,13 +10,39 @@ const STORAGE_KEY = 'carsties-theme';
 export class ThemeService {
   private readonly themeSubject: BehaviorSubject<ThemeMode>;
   readonly isDarkMode$;
+  private prefersDarkMql?: MediaQueryList;
+  private hasStoredPreference = false;
 
   constructor() {
-    const stored = (typeof window !== 'undefined') ? (localStorage.getItem(STORAGE_KEY) as ThemeMode | null) : null;
-    const initial: ThemeMode = stored === 'dark' ? 'dark' : 'light';
+    const stored = (typeof window !== 'undefined')
+      ? (localStorage.getItem(STORAGE_KEY) as ThemeMode | null)
+      : null;
+
+    this.hasStoredPreference = stored === 'light' || stored === 'dark';
+
+    const initial: ThemeMode = this.hasStoredPreference
+      ? (stored as ThemeMode)
+      : this.getPreferredTheme();
+
     this.themeSubject = new BehaviorSubject<ThemeMode>(initial);
     this.isDarkMode$ = this.themeSubject.asObservable().pipe(map(mode => mode === 'dark'));
     this.applyTheme(initial);
+
+    // If the user hasn't explicitly chosen a theme, keep tracking OS preference.
+    if (typeof window !== 'undefined' && !this.hasStoredPreference) {
+      this.prefersDarkMql = window.matchMedia?.('(prefers-color-scheme: dark)') ?? undefined;
+      const onChange = () => {
+        if (this.hasStoredPreference) return;
+        this.setTheme(this.getPreferredTheme(), { persist: false });
+      };
+
+      // Modern + legacy event APIs.
+      try {
+        this.prefersDarkMql?.addEventListener?.('change', onChange);
+      } catch {
+        this.prefersDarkMql?.addListener?.(onChange as any);
+      }
+    }
   }
 
   toggleTheme(): void {
@@ -24,11 +50,15 @@ export class ThemeService {
     this.setTheme(next);
   }
 
-  setTheme(mode: ThemeMode): void {
+  setTheme(mode: ThemeMode, options?: { persist?: boolean }): void {
     this.themeSubject.next(mode);
-    if (typeof window !== 'undefined') {
+
+    const persist = options?.persist ?? true;
+    if (typeof window !== 'undefined' && persist) {
       localStorage.setItem(STORAGE_KEY, mode);
+      this.hasStoredPreference = true;
     }
+
     this.applyTheme(mode);
   }
 
@@ -40,5 +70,11 @@ export class ThemeService {
     } else {
       body.classList.remove('dark-theme');
     }
+  }
+
+  private getPreferredTheme(): ThemeMode {
+    if (typeof window === 'undefined') return 'light';
+    const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ?? false;
+    return prefersDark ? 'dark' : 'light';
   }
 }

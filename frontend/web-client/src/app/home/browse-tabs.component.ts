@@ -63,4 +63,9 @@ export class BrowseTabsComponent {
   goToMake(code: string) { this.router.navigate(['/search'], { queryParams: { makeCodes: [code] } }); }
   goToModel(code: string) { this.router.navigate(['/search'], { queryParams: { modelCodes: [code] } }); }
   goToBody(code: string) { this.router.navigate(['/search'], { queryParams: { bodyTypeCodes: [code] } }); }
+
+  // Rendering-only optimization (does not change behavior).
+  trackByCode(_index: number, item: { code: string }): string {
+    return item.code;
+  }
 }

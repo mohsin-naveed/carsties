@@ -1,5 +1,10 @@
 import { Component, ChangeDetectionStrategy, inject, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router } from '@angular/router';
 import { ListingsApiService, ListingDto, PaginationResponse } from '../listings/listings-api.service';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -8,7 +13,7 @@ import { catchError, map, shareReplay, startWith } from 'rxjs/operators';
 @Component({
   selector: 'app-featured-listings',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatCardModule, MatIconModule, MatButtonModule, MatChipsModule, MatProgressBarModule],
   templateUrl: './featured-listings.component.html',
   styleUrls: ['./featured-listings.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -33,6 +38,11 @@ export class FeaturedListingsComponent implements AfterViewInit {
     );
 
   readonly listings$ = this.response$.pipe(map(r => r.data));
+
+  // Rendering-only optimization (does not change business behavior).
+  trackByListingId(_index: number, item: ListingDto): number {
+    return item.id;
+  }
 
   navigateTo(listing: ListingDto) {
     this.router.navigate(['/listings', listing.id]);
