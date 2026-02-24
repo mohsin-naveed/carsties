@@ -305,7 +305,6 @@
           <div class="results-heading__count">
             {{ ((totalCount$ | async) ?? 0) | number:'1.0-0' }} cars in results
           </div>
-          <button class="stock-alert-btn" type="button" disabled aria-disabled="true">Create Stock Alert</button>
         </div>
       </header>
       <!-- Active filters chips shown under results label (desktop only via CSS) -->
@@ -329,15 +328,18 @@
             <ng-template #noImage>
               <div class="media-placeholder"><mat-icon>directions_car</mat-icon></div>
             </ng-template>
-            <div class="price-tag">£{{ car.price | number:'1.0-0' }}</div>
           </div>
           <div class="card-body">
-            <div class="title">{{ car.makeName || car.makeId }} {{ car.modelName || car.modelId }}</div>
+            <div class="title">{{ car.makeName || car.makeCode }} {{ car.modelName || car.modelCode }}</div>
             <div class="subtitle">{{ car.variantName || car.derivativeName || '' }}</div>
             <div class="chips chips--inline">
               <span class="chip">{{ car.year }}</span>
               <span class="chip">{{ car.mileage | number }} miles</span>
               <span class="chip" *ngIf="car.fuelTypeName as f">{{ f }}</span>
+            </div>
+            <div class="location" *ngIf="car.cityName || car.areaName || car.provinceName">
+              <mat-icon aria-hidden="true">location_on</mat-icon>
+              <span class="location__text">{{ car.cityName || car.areaName || car.provinceName }}</span>
             </div>
             <div class="price-row">
               <div class="price">£{{ car.price | number:'1.0-0' }}</div>
@@ -346,7 +348,7 @@
               <button class="fav-btn" type="button" aria-label="Save listing" title="Save">
                 <mat-icon>favorite_border</mat-icon>
               </button>
-              <a class="btn btn-primary" [routerLink]="['/listings', car.id]" [queryParamsHandling]="'preserve'">View car</a>
+              <a class="view-car-btn" [routerLink]="['/listings', car.id]" [queryParamsHandling]="'preserve'">View car</a>
             </div>
           </div>
         </div>
