@@ -168,14 +168,14 @@
                   <label class="range-mini-label">From</label>
                   <select class="range-select" [ngModel]="((mileageMin$ | async) ?? '')" (ngModelChange)="onMileageMinChange($event)">
                     <option value="">Any</option>
-                    <option *ngFor="let m of (fromMileageOptionsVisible$ | async) ?? []" [value]="m">{{ m | number:'1.0-0' }} miles ({{ (fromMileageDisplayCounts$ | async)?.get(m) ?? 0 }})</option>
+                    <option *ngFor="let m of (fromMileageOptionsVisible$ | async) ?? []" [value]="m">{{ m | number:'1.0-0' }} m ({{ (fromMileageDisplayCounts$ | async)?.get(m) ?? 0 }})</option>
                   </select>
                 </div>
                 <div class="range-input">
                   <label class="range-mini-label">To</label>
                   <select class="range-select" [ngModel]="((mileageMax$ | async) ?? '')" (ngModelChange)="onMileageMaxChange($event)">
                     <option value="">Any</option>
-                    <option *ngFor="let m of (toMileageOptionsStepped$ | async) ?? []" [value]="m">{{ m | number:'1.0-0' }} miles ({{ (toMileageDisplayCounts$ | async)?.get(m) ?? 0 }})</option>
+                    <option *ngFor="let m of (toMileageOptionsStepped$ | async) ?? []" [value]="m">{{ m | number:'1.0-0' }} m ({{ (toMileageDisplayCounts$ | async)?.get(m) ?? 0 }})</option>
                   </select>
                 </div>
               </div>
@@ -334,7 +334,7 @@
             <div class="subtitle">{{ car.variantName || car.derivativeName || '' }}</div>
             <div class="chips chips--inline">
               <span class="chip">{{ car.year }}</span>
-              <span class="chip">{{ car.mileage | number }} miles</span>
+              <span class="chip">{{ car.mileage | number }} m</span>
               <span class="chip" *ngIf="car.fuelTypeName as f">{{ f }}</span>
             </div>
             <div class="location" *ngIf="car.cityName || car.areaName || car.provinceName">

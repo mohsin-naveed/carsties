@@ -21,6 +21,9 @@
 	align-items: start;
 }
 
+
+/* Mobile-only footer ("See X Results") */
+.mobile-filter-footer { display: none; }
 /* Topbar (Sort + View) */
 .topbar {
 	display: flex;
@@ -30,10 +33,12 @@
 }
 
 .right-controls {
-	display: inline-flex;
+	display: flex;
 	align-items: center;
+	justify-content: flex-end;
 	gap: 12px;
 	margin-left: auto;
+	flex: 1 1 auto;
 }
 
 .sort-wrap {
@@ -42,7 +47,6 @@
 	gap: 10px;
 	position: relative;
 }
-
 .sort-label {
 	font-weight: 700;
 	letter-spacing: 0.04em;
@@ -58,7 +62,7 @@
 	border: 1px solid color-mix(in srgb, var(--mat-app-text-color) 16%, transparent);
 	background: color-mix(in srgb, var(--mat-app-background-color) 92%, transparent);
 	color: var(--mat-app-text-color);
-	font-weight: 800;
+	font-weight: 700;
 	letter-spacing: 0.01em;
 	cursor: pointer;
 }
@@ -293,7 +297,7 @@
 .option-text .count {
 	color: color-mix(in srgb, var(--mat-app-text-color) 60%, transparent);
 	font-size: 12px;
-	font-weight: 800;
+	font-weight: 700;
 }
 
 /* Range facets (Price/Year/Mileage) */
@@ -321,7 +325,7 @@
 	border: 1px solid color-mix(in srgb, var(--mat-app-text-color) 16%, transparent);
 	background: color-mix(in srgb, var(--mat-app-background-color) 92%, transparent);
 	color: var(--mat-app-text-color);
-	font-weight: 800;
+	font-weight: 700;
 	letter-spacing: 0.01em;
 }
 
@@ -401,11 +405,13 @@
 	grid-template-columns: repeat(3, minmax(0, 1fr));
 	gap: 16px;
 	padding-bottom: 18px;
+	align-items: stretch;
 }
 
 .car-card {
 	display: flex;
 	flex-direction: column;
+	height: 100%;
 	border-radius: 16px;
 	overflow: hidden;
 	background: color-mix(in srgb, var(--mdc-elevated-card-container-color) 96%, var(--mat-app-background-color));
@@ -459,6 +465,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
+	flex: 1 1 auto;
 }
 
 .title {
@@ -470,7 +477,7 @@
 .subtitle {
 	color: color-mix(in srgb, var(--mat-app-text-color) 68%, transparent);
 	font-size: 14px;
-	font-weight: 800;
+	font-weight: 700;
 	letter-spacing: 0.01em;
 	line-height: 1.2;
 }
@@ -484,7 +491,7 @@
 .chips--inline { margin-top: 2px; }
 
 .chip {
-	background: color-mix(in srgb, var(--mat-sys-primary) 10%, transparent);
+	background: #eaf8fc;
 	border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 18%, transparent);
 	border-radius: 8px;
 	padding: 8px 10px;
@@ -500,14 +507,21 @@
 	gap: 8px;
 	color: color-mix(in srgb, var(--mat-app-text-color) 70%, transparent);
 	font-weight: 850;
-	font-size: 16px;
+	font-size: 14px;
+	line-height: 1;
 	letter-spacing: 0.01em;
 }
 
+.location__text { line-height: 1; }
+
 .location mat-icon {
-	font-size: 14px;
-	height: 20px;
-	width: 20px;
+	font-size: 16px;
+	height: 16px;
+	width: 16px;
+	line-height: 16px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	color: color-mix(in srgb, var(--mat-app-text-color) 58%, transparent);
 }
 
@@ -524,7 +538,7 @@
 
 /* Bottom action bar (screenshot-like) */
 .card-actions {
-	margin-top: 10px;
+	margin-top: auto;
 	display: grid;
 	grid-template-columns: 76px 1fr;
 	align-items: stretch;
