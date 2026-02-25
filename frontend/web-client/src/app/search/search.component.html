@@ -364,12 +364,31 @@
           <p>Try adjusting your filters to see more results.</p>
         </div>
       </div>
-      <!-- Simple Pagination Controls -->
-      <div class="pagination" *ngIf="((totalPages$ | async) ?? 1) > 1">
-        <button class="page-btn" [disabled]="((page$ | async) ?? 1) === 1 || (loading$ | async)" (click)="prevPage()">Previous</button>
-        <span class="page-info">Page {{ (page$ | async) }} of {{ (totalPages$ | async) }}</span>
-        <button class="page-btn" [disabled]="((page$ | async) ?? 1) === ((totalPages$ | async) ?? 1) || (loading$ | async)" (click)="nextPage()">Next</button>
-      </div>
+      <!-- Pagination (numbered, screenshot-like) -->
+      <nav class="pagination" *ngIf="((totalPages$ | async) ?? 1) > 1" aria-label="Pagination">
+        <button class="page-nav"
+                type="button"
+                aria-label="Previous page"
+                [disabled]="((page$ | async) ?? 1) === 1 || (loading$ | async)"
+                (click)="prevPage()">‹</button>
+
+        <ng-container *ngFor="let item of (pageItems$ | async) ?? []">
+          <span *ngIf="item === 'ellipsis'" class="page-ellipsis">…</span>
+          <button *ngIf="item !== 'ellipsis'"
+                  class="page-number"
+                  type="button"
+                  [class.active]="((page$ | async) ?? 1) === item"
+                  [attr.aria-current]="((page$ | async) ?? 1) === item ? 'page' : null"
+                  [disabled]="(loading$ | async)"
+                  (click)="setPage(item)">{{ item }}</button>
+        </ng-container>
+
+        <button class="page-nav"
+                type="button"
+                aria-label="Next page"
+                [disabled]="((page$ | async) ?? 1) === ((totalPages$ | async) ?? 1) || (loading$ | async)"
+                (click)="nextPage()">›</button>
+      </nav>
       <mat-progress-bar *ngIf="(loading$ | async)" mode="indeterminate"></mat-progress-bar>
     </main>
   </div>

@@ -30,6 +30,22 @@ export class SearchComponent {
   private seedingFromUrl = false;
   private hasSeeded = false;
 
+  private sameArray<T>(a: T[] | null | undefined, b: T[] | null | undefined) {
+    if (a === b) return true;
+    if (!a || !b) return (a?.length ?? 0) === (b?.length ?? 0);
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
+
+  private setArrayIfChanged<T>(subject: BehaviorSubject<T[]>, next: T[]) {
+    if (!this.sameArray(subject.value, next)) subject.next(next);
+  }
+
+  private setIfChanged<T>(subject: BehaviorSubject<T>, next: T) {
+    if (subject.value !== next) subject.next(next);
+  }
+
   // Sorting options (used in template)
   readonly sortOptions = [
     { label: 'Price: Low to High', value: 'price-asc' },
@@ -208,6 +224,12 @@ export class SearchComponent {
   readonly totalCount$ = this.results$.pipe(map(r => r.totalCount));
   readonly totalPages$ = this.results$.pipe(map(r => r.totalPages));
 
+  // Pagination UI (numbered buttons + ellipsis)
+  readonly pageItems$ = combineLatest([this.page$, this.totalPages$]).pipe(
+    map(([current, total]) => this.buildPageItems(current, total)),
+    shareReplay(1)
+  );
+
   // Facet counts: server already computes counts ignoring each facet selection within a single response
 
   // Filtered facet option streams (only show options with count > 0)
@@ -233,19 +255,11 @@ export class SearchComponent {
   readonly doorsCounts$ = this.facetCounts$.pipe(map(x => x.doors));
   // Options show only values with count > 0 (self-excluding counts already applied)
   readonly seats$ = this.seatsCounts$.pipe(
-    map(m => {
-      const defaults = [2,3,4,5,6,7,8,9];
-      const fromCounts = Array.from(m.keys());
-      return Array.from(new Set([...defaults, ...fromCounts])).sort((a,b)=>a-b);
-    }),
+    map(m => Array.from(m.entries()).filter(([, c]) => (c ?? 0) > 0).map(([k]) => k).sort((a, b) => a - b)),
     shareReplay(1)
   );
   readonly doors$ = this.doorsCounts$.pipe(
-    map(m => {
-      const defaults = [2,3,4,5];
-      const fromCounts = Array.from(m.keys());
-      return Array.from(new Set([...defaults, ...fromCounts])).sort((a,b)=>a-b);
-    }),
+    map(m => Array.from(m.entries()).filter(([, c]) => (c ?? 0) > 0).map(([k]) => k).sort((a, b) => a - b)),
     shareReplay(1)
   );
   // Models already depend on selected make; apply counts filter too
@@ -763,9 +777,8 @@ export class SearchComponent {
       this.allBodyTypes$.pipe(startWith([] as any[])),
       this.allFuelTypes$.pipe(startWith([] as any[]))
     ]).subscribe(([q, makes, models, transmissions, bodies, fuels]) => {
-      // Only treat the first emission as initial seeding
       const isFirstSeed = !this.hasSeeded;
-      if (isFirstSeed) this.seedingFromUrl = true;
+      this.seedingFromUrl = true;
       const namesToCodes = (param: string | null, list: { code: string; name: string }[]) => {
         if (!param) return [] as string[];
         const normalizeQuery = (s: string) => s.trim().toLowerCase().replace(/[+\-]+/g, ' ').replace(/\s+/g, ' ');
@@ -785,25 +798,30 @@ export class SearchComponent {
       const btCodes = codesFrom('bodyTypeCodes');
       const fuCodes = codesFrom('fuelTypeCodes');
 
-      this.selectedMakeCodes$.next(mkCodes.length ? mkCodes : namesToCodes(q.get('make'), makes));
-      this.selectedModelCodes$.next(mdCodes.length ? mdCodes : namesToCodes(q.get('model'), models));
-      this.selectedTransmissionCodes$.next(trCodes.length ? trCodes : namesToCodes(q.get('trans'), transmissions));
-      this.selectedBodyTypeCodes$.next(btCodes.length ? btCodes : namesToCodes(q.get('body'), bodies));
-      this.selectedFuelTypeCodes$.next(fuCodes.length ? fuCodes : namesToCodes(q.get('fuel'), fuels));
+      this.setArrayIfChanged(this.selectedMakeCodes$, mkCodes.length ? mkCodes : namesToCodes(q.get('make'), makes));
+      this.setArrayIfChanged(this.selectedModelCodes$, mdCodes.length ? mdCodes : namesToCodes(q.get('model'), models));
+      this.setArrayIfChanged(this.selectedTransmissionCodes$, trCodes.length ? trCodes : namesToCodes(q.get('trans'), transmissions));
+      this.setArrayIfChanged(this.selectedBodyTypeCodes$, btCodes.length ? btCodes : namesToCodes(q.get('body'), bodies));
+      this.setArrayIfChanged(this.selectedFuelTypeCodes$, fuCodes.length ? fuCodes : namesToCodes(q.get('fuel'), fuels));
       // Numeric facets and ranges
-      this.selectedSeats$.next(numbersFromCsv(q.get('seats')));
-      this.selectedDoors$.next(numbersFromCsv(q.get('doors')));
+      this.setArrayIfChanged(this.selectedSeats$, numbersFromCsv(q.get('seats')));
+      this.setArrayIfChanged(this.selectedDoors$, numbersFromCsv(q.get('doors')));
       const toNum = (v: string | null) => (v == null || v === '') ? undefined : Number(v);
-      this.priceMin$.next(toNum(q.get('pmin')) ?? toNum(q.get('priceMin')));
-      this.priceMax$.next(toNum(q.get('pmax')) ?? toNum(q.get('priceMax')));
-      this.yearMin$.next(toNum(q.get('ymin')));
-      this.yearMax$.next(toNum(q.get('ymax')));
-      this.mileageMin$.next(toNum(q.get('mmin')) ?? toNum(q.get('mileageMin')));
-      this.mileageMax$.next(toNum(q.get('mmax')) ?? toNum(q.get('mileageMax')));
-      const s = q.get('sort'); if (s) this.sort$.next(s);
-      const v = (q.get('view') || '').toLowerCase(); if (v === 'list' || v === 'grid') this.view$.next(v as any);
-      const p = q.get('page'); this.page$.next(p ? Number(p) : 1);
-      const fv = (q.get('filters') || '').toLowerCase(); if (fv && (fv === '1' || fv === 'true' || fv === 'open')) this.filtersVisible$.next(true);
+      this.setIfChanged(this.priceMin$, toNum(q.get('pmin')) ?? toNum(q.get('priceMin')));
+      this.setIfChanged(this.priceMax$, toNum(q.get('pmax')) ?? toNum(q.get('priceMax')));
+      this.setIfChanged(this.yearMin$, toNum(q.get('ymin')));
+      this.setIfChanged(this.yearMax$, toNum(q.get('ymax')));
+      this.setIfChanged(this.mileageMin$, toNum(q.get('mmin')) ?? toNum(q.get('mileageMin')));
+      this.setIfChanged(this.mileageMax$, toNum(q.get('mmax')) ?? toNum(q.get('mileageMax')));
+      const s = q.get('sort');
+      if (s) this.setIfChanged(this.sort$, s);
+      const v = (q.get('view') || '').toLowerCase();
+      if (v === 'list' || v === 'grid') this.setIfChanged(this.view$, v as any);
+      const pRaw = q.get('page');
+      const pNum = pRaw ? Number(pRaw) : 1;
+      this.setIfChanged(this.page$, Number.isFinite(pNum) && pNum >= 1 ? pNum : 1);
+      const fv = (q.get('filters') || '').toLowerCase();
+      if (fv && (fv === '1' || fv === 'true' || fv === 'open')) this.setIfChanged(this.filtersVisible$, true);
 
       // On initial load, open facets that have selections
       if ((this.selectedMakeCodes$.value?.length ?? 0) > 0) this.makePref$.next(true);
@@ -813,7 +831,8 @@ export class SearchComponent {
       if ((this.selectedFuelTypeCodes$.value?.length ?? 0) > 0) this.fuelPref$.next(true);
       if ((this.selectedSeats$.value?.length ?? 0) > 0) this.seatsPref$.next(true);
       if ((this.selectedDoors$.value?.length ?? 0) > 0) this.doorsPref$.next(true);
-      if (isFirstSeed) { this.hasSeeded = true; this.seedingFromUrl = false; }
+      if (isFirstSeed) this.hasSeeded = true;
+      this.seedingFromUrl = false;
     });
 
     // Persist to URL on changes
@@ -830,6 +849,7 @@ export class SearchComponent {
       this.sort$, this.page$,
       this.filtersVisible$
     ]).pipe(debounceTime(50)).subscribe(([mkIds, makes, mdIds, models, trIds, transmissions, btIds, bodies, fuIds, fuels, seats, doors, pmin, pmax, ymin, ymax, mmin, mmax, sort, page, filtersVisible]) => {
+      if (this.seedingFromUrl) return;
       const slug = (s: string) => (s || '').toLowerCase().trim().replace(/[\s_]+/g, '+').replace(/[+]+/g, '+');
       const namesFor = (codes: string[], list: { code: string; name: string }[]) =>
         codes
@@ -881,7 +901,10 @@ export class SearchComponent {
       this.priceMin$, this.priceMax$, this.yearMin$, this.yearMax$, this.mileageMin$, this.mileageMax$,
       this.sort$
     ])
-      .pipe(debounceTime(50)).subscribe(() => this.page$.next(1));
+      .pipe(debounceTime(50)).subscribe(() => {
+        if (this.seedingFromUrl) return;
+        this.page$.next(1);
+      });
 
     // Reset dependent selections to avoid stale combos
     this.selectedMakeCodes$.pipe(distinctUntilChanged()).subscribe(() => {
@@ -901,8 +924,40 @@ export class SearchComponent {
     }
   }
 
-  prevPage() { combineLatest([this.page$, this.totalPages$]).pipe(take(1)).subscribe(([p]) => { if (p > 1) this.page$.next(p - 1); }); }
-  nextPage() { combineLatest([this.page$, this.totalPages$]).pipe(take(1)).subscribe(([p, t]) => { if (p < t) this.page$.next(p + 1); }); }
+  setPage(page: number) {
+    combineLatest([this.totalPages$]).pipe(take(1)).subscribe(([t]) => {
+      const target = Math.max(1, Math.min(Number(page) || 1, t || 1));
+      this.page$.next(target);
+    });
+  }
+
+  prevPage() { combineLatest([this.page$]).pipe(take(1)).subscribe(([p]) => { if (p > 1) this.setPage(p - 1); }); }
+  nextPage() { combineLatest([this.page$, this.totalPages$]).pipe(take(1)).subscribe(([p, t]) => { if (p < t) this.setPage(p + 1); }); }
+
+  private buildPageItems(current: number, total: number): Array<number | 'ellipsis'> {
+    const t = Math.max(1, total || 1);
+    const c = Math.max(1, Math.min(current || 1, t));
+    if (t <= 9) return Array.from({ length: t }, (_, i) => i + 1);
+
+    const items: Array<number | 'ellipsis'> = [1];
+
+    let start = Math.max(2, c - 3);
+    let end = Math.min(t - 1, c + 3);
+
+    if (c <= 5) {
+      start = 2;
+      end = 8;
+    } else if (c >= t - 4) {
+      start = t - 7;
+      end = t - 1;
+    }
+
+    if (start > 2) items.push('ellipsis');
+    for (let i = start; i <= end; i++) items.push(i);
+    if (end < t - 1) items.push('ellipsis');
+    items.push(t);
+    return items;
+  }
 
   // Toggle helpers for multiselect checkboxes
   private toggle<T>(ids$: BehaviorSubject<T[]>, id: T) {
