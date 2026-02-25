@@ -48,11 +48,9 @@
 	position: relative;
 }
 .sort-label {
-	font-weight: 700;
-	letter-spacing: 0.04em;
-	text-transform: uppercase;
-	font-size: 12px;
-	color: color-mix(in srgb, var(--mat-app-text-color) 72%, transparent);
+	font-size: 14px;
+	font-weight: 600;
+	color: #262965;
 }
 
 .sort-select {
@@ -61,10 +59,16 @@
 	border-radius: 12px;
 	border: 1px solid color-mix(in srgb, var(--mat-app-text-color) 16%, transparent);
 	background: color-mix(in srgb, var(--mat-app-background-color) 92%, transparent);
-	color: var(--mat-app-text-color);
-	font-weight: 700;
-	letter-spacing: 0.01em;
+	color: #262965;
+	font-size: 14px;
+	font-weight: 600;
 	cursor: pointer;
+}
+
+.sort-select option {
+	font-size: 14px;
+	font-weight: 500;
+	color: #262965;
 }
 
 .sort-select:focus-visible {
@@ -129,8 +133,8 @@
 	padding: 10px 10px;
 	border-radius: 12px;
 	font-size: 14px;
-	font-weight: 850;
-	color: var(--mat-app-text-color);
+	font-weight: 500;
+	color: #262965;
 	cursor: pointer;
 }
 
@@ -147,7 +151,7 @@
 .filters-panel-inner {
 	border-radius: var(--app-radius-card);
 	box-shadow: var(--app-shadow-1);
-	background: color-mix(in srgb, var(--mdc-elevated-card-container-color) 96%, var(--mat-app-background-color));
+	background: #fff;
 	border: 1px solid color-mix(in srgb, var(--mat-app-text-color) 10%, transparent);
 	overflow: hidden;
 }
@@ -162,11 +166,9 @@
 
 .filter-title {
 	margin: 0;
-	font-size: 12px;
-	font-weight: 700;
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-	color: color-mix(in srgb, var(--mat-app-text-color) 70%, transparent);
+	color: #262965;
+	font-size: 14px;
+	font-weight: 600;
 }
 
 .clear-all {
@@ -218,11 +220,9 @@
 
 .section-title {
 	margin: 0;
-	font-size: 13px;
-	font-weight: 700;
-	letter-spacing: 0.05em;
-	text-transform: uppercase;
-	color: color-mix(in srgb, var(--mat-app-text-color) 86%, transparent);
+	font-size: 14px;
+	font-weight: 600;
+	color: #262965;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -254,7 +254,9 @@
 	align-items: center;
 	gap: 10px;
 	cursor: pointer;
-	font-size: 13px;
+	font-size: 14px;
+	font-weight: 500;
+	color: #262965;
 	line-height: 1.35;
 }
 
@@ -290,8 +292,9 @@
 	align-items: baseline;
 	justify-content: space-between;
 	gap: 8px;
-	font-weight: 750;
-	letter-spacing: 0.01em;
+	font-size: 14px;
+	font-weight: 500;
+	color: #262965;
 }
 
 .option-text .count {
@@ -324,9 +327,15 @@
 	border-radius: 12px;
 	border: 1px solid color-mix(in srgb, var(--mat-app-text-color) 16%, transparent);
 	background: color-mix(in srgb, var(--mat-app-background-color) 92%, transparent);
-	color: var(--mat-app-text-color);
-	font-weight: 700;
-	letter-spacing: 0.01em;
+	color: #262965;
+	font-size: 14px;
+	font-weight: 500;
+}
+
+.range-select option {
+	font-size: 14px;
+	font-weight: 500;
+	color: #262965;
 }
 
 .range-select:focus-visible {
@@ -343,9 +352,9 @@
 
 .results-heading__title {
 	margin: 0;
-	font-size: 24px;
-	font-weight: 950;
-	letter-spacing: -0.02em;
+	font-size: 27px;
+	font-weight: 600;
+	color: #262965;
 }
 
 .results-heading__sub {
@@ -357,7 +366,7 @@
 }
 
 .results-heading__count {
-	color: color-mix(in srgb, var(--mat-app-text-color) 70%, transparent);
+	color: #262965;
 	font-weight: 850;
 	font-size: 13px;
 	letter-spacing: 0.01em;
@@ -466,19 +475,19 @@
 	flex-direction: column;
 	gap: 10px;
 	flex: 1 1 auto;
+	background: #fff;
 }
 
 .title {
 	font-weight: 700;
-	font-size: 16px;
-	letter-spacing: -0.01em;
+	font-size: 18px;
+	color: #060606;
 }
 
 .subtitle {
-	color: color-mix(in srgb, var(--mat-app-text-color) 68%, transparent);
-	font-size: 14px;
+	color: #747474;
+	font-size: 12px;
 	font-weight: 700;
-	letter-spacing: 0.01em;
 	line-height: 1.2;
 }
 
@@ -495,21 +504,19 @@
 	border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 18%, transparent);
 	border-radius: 8px;
 	padding: 8px 10px;
-	font-size: 14px;
-	font-weight: 850;
-	letter-spacing: 0.01em;
-	color: color-mix(in srgb, var(--mat-app-text-color) 88%, transparent);
+	font-size: 12px;
+	font-weight: 500;
+	color: #262965;
 }
 
 .location {
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
-	color: color-mix(in srgb, var(--mat-app-text-color) 70%, transparent);
-	font-weight: 850;
-	font-size: 14px;
+	color: #747474;
+	font-weight: 400;
+	font-size: 12px;
 	line-height: 1;
-	letter-spacing: 0.01em;
 }
 
 .location__text { line-height: 1; }
@@ -530,10 +537,9 @@
 }
 
 .price {
-	font-size: 16px;
+	font-size: 20px;
 	font-weight: 700;
-	letter-spacing: -0.03em;
-	color: color-mix(in srgb, var(--mat-app-text-color) 94%, transparent);
+	color: #747474;
 }
 
 /* Bottom action bar (screenshot-like) */
@@ -572,8 +578,8 @@
 	font-weight: 950;
 	font-size: 14px;
 	letter-spacing: 0.01em;
-	color: var(--mat-sys-on-primary);
-	background: var(--mat-sys-primary);
+	background: #101242;
+	color: #fff;
 }
 
 .view-car-btn:hover { filter: brightness(1.03); }
