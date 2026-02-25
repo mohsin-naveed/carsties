@@ -13,7 +13,7 @@
     <button mat-button [routerLink]="['/']" fragment="reviews">Reviews</button>
   </nav>
   <span class="spacer"></span>
-  <a mat-raised-button color="warn" [routerLink]="['/sell']" class="link-sell">Sell your car</a>
+  <a mat-button [routerLink]="['/sell']" class="nav__action-link">Sell your car</a>
   <div class="nav__auth">
     <ng-container *ngIf="authReady$ | async; else authLoading">
       <ng-container *ngIf="isAuthenticated$ | async; else loggedOutDesktop">
@@ -41,8 +41,8 @@
         </mat-menu>
       </ng-container>
       <ng-template #loggedOutDesktop>
-        <button mat-stroked-button (click)="login()">Login</button>
-        <button mat-raised-button color="primary" [matMenuTriggerFor]="registerMenu">Sign up</button>
+        <button mat-button class="nav__action-link" (click)="login()">Sign in</button>
+        <button mat-button class="nav__action-link" [matMenuTriggerFor]="registerMenu">Sign up</button>
       </ng-template>
     </ng-container>
     <ng-template #authLoading>

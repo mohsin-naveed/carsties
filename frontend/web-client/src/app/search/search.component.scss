@@ -10,14 +10,14 @@
 .find-car-container {
 	max-width: var(--app-container-max);
 	margin: 0 auto;
-	padding: 20px 16px;
+	padding: 12px 12px;
 	color: var(--mat-app-text-color);
 }
 
 .main-content {
 	display: grid;
 	grid-template-columns: 280px 1fr;
-	gap: 24px;
+	gap: 16px;
 	align-items: start;
 }
 
@@ -29,7 +29,7 @@
 	display: flex;
 	align-items: center;
 	gap: 12px;
-	padding: 4px 0 12px;
+	padding: 0;
 }
 
 .right-controls {
@@ -157,7 +157,7 @@
 }
 
 .filter-header {
-	padding: 14px 16px;
+	padding: 10px 12px;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -195,7 +195,7 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
-	padding: 14px;
+	padding: 10px 12px;
 	cursor: pointer;
 	user-select: none;
 }
@@ -244,7 +244,7 @@
 }
 
 .options-container {
-	padding: 8px 14px 14px;
+	padding: 8px 12px 12px;
 	display: grid;
 	gap: 10px;
 }
@@ -308,7 +308,7 @@
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 10px;
-	padding: 10px 14px 14px;
+	padding: 10px 12px 12px;
 }
 
 .range-input { display: grid; gap: 6px; }
@@ -347,7 +347,23 @@
 .car-results { min-width: 0; }
 
 .results-heading {
-	padding: 8px 0 10px;
+	padding: 4px 0 6px;
+}
+
+.results-heading__row {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.results-heading__text { min-width: 0; }
+
+.results-heading__actions {
+	display: inline-flex;
+	align-items: center;
+	gap: 12px;
+	flex-shrink: 0;
 }
 
 .results-heading__title {
@@ -378,7 +394,7 @@
 	gap: 10px;
 	align-items: center;
 	flex-wrap: wrap;
-	margin: 10px 0 14px;
+	margin: 8px 0 10px;
 }
 
 .filter-chip {
@@ -658,6 +674,12 @@
 	.car-grid { grid-template-columns: 1fr; gap: 0; }
 	.car-card { border-radius: 0; border-left: none; border-right: none; box-shadow: none; }
 	.card-body { padding: 12px; }
+
+	.results-heading__row {
+		flex-direction: column;
+		align-items: stretch;
+	}
+	.results-heading__actions { justify-content: flex-start; }
 
 	.filters-toggle { display: inline-flex; }
 	.view-wrap { display: none; }

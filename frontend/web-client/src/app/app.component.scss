@@ -24,9 +24,22 @@
 }
 
 .nav__brand { display: inline-flex; align-items: center; gap: 8px; }
+.nav__brand strong { color: #2c2965; }
+.nav__brand mat-icon { color: #2c2965; }
+
+/* Navbar link styling (except brand) */
+.app-toolbar .nav__links .mat-mdc-button,
+.app-toolbar .nav__action-link.mat-mdc-button {
+	color: #2c2965;
+	font-weight: 700;
+}
+
+/* Keep right actions aligned but visually consistent */
+.nav__action-link { margin-right: 8px; }
 .nav__links { display: none; gap: 8px; }
 .nav__auth { display: none; gap: 4px; }
 .nav__mobile-toggle { margin-right: 8px; }
+/* legacy */
 .link-sell { margin-right: 8px; font-weight: 700; }
 
 .theme-toggle {

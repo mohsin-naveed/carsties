@@ -5,31 +5,6 @@
       <mat-icon>tune</mat-icon>
       <span>Filters</span>
     </button>
-    <div class="right-controls">
-      <div class="sort-wrap">
-        <label for="sort-select" class="sort-label desktop-only">Sort</label>
-        <select id="sort-select" class="sort-select desktop-only" [ngModel]="(sort$ | async)" (ngModelChange)="sort$.next($event)">
-          <option *ngFor="let option of sortOptions" [value]="option.value">{{ option.label }}</option>
-        </select>
-        <!-- Mobile sort button -->
-        <button class="mobile-sort-btn" (click)="toggleMobileSort()" [attr.aria-expanded]="(mobileSortOpen$ | async) ? 'true' : 'false'" aria-controls="mobile-sort-panel">
-          <span>Sort</span>
-          <mat-icon>expand_more</mat-icon>
-        </button>
-        <div class="sort-panel" id="mobile-sort-panel" *ngIf="(mobileSortOpen$ | async)">
-          <button class="sort-item" *ngFor="let option of sortOptions" [class.active]="(sort$ | async) === option.value" (click)="setSort(option.value)">{{ option.label }}</button>
-        </div>
-      </div>
-      <div class="view-wrap">
-        <button class="view-btn view-btn--single"
-                (click)="toggleView()"
-                [attr.aria-label]="(view$ | async) === 'grid' ? 'Switch to list view' : 'Switch to grid view'"
-                [attr.aria-pressed]="(view$ | async) === 'list' ? 'true' : 'false'">
-          <mat-icon *ngIf="(view$ | async) === 'grid'">grid_view</mat-icon>
-          <mat-icon *ngIf="(view$ | async) === 'list'">list</mat-icon>
-        </button>
-      </div>
-    </div>
   </div>
 
   <div class="main-content" [class.mobile-filters-open]="(filtersVisible$ | async)">
@@ -300,10 +275,40 @@
 
     <main class="car-results">
       <header class="results-heading" aria-label="Search results">
-        <h1 class="results-heading__title">Find your next used car</h1>
-        <div class="results-heading__sub">
-          <div class="results-heading__count">
-            {{ ((totalCount$ | async) ?? 0) | number:'1.0-0' }} cars in results
+        <div class="results-heading__row">
+          <div class="results-heading__text">
+            <h1 class="results-heading__title">Find your next used car</h1>
+            <div class="results-heading__sub">
+              <div class="results-heading__count">
+                {{ ((totalCount$ | async) ?? 0) | number:'1.0-0' }} cars in results
+              </div>
+            </div>
+          </div>
+
+          <div class="results-heading__actions">
+            <div class="sort-wrap">
+              <label for="sort-select" class="sort-label desktop-only">Sort</label>
+              <select id="sort-select" class="sort-select desktop-only" [ngModel]="(sort$ | async)" (ngModelChange)="sort$.next($event)">
+                <option *ngFor="let option of sortOptions" [value]="option.value">{{ option.label }}</option>
+              </select>
+              <!-- Mobile sort button -->
+              <button class="mobile-sort-btn" (click)="toggleMobileSort()" [attr.aria-expanded]="(mobileSortOpen$ | async) ? 'true' : 'false'" aria-controls="mobile-sort-panel">
+                <span>Sort</span>
+                <mat-icon>expand_more</mat-icon>
+              </button>
+              <div class="sort-panel" id="mobile-sort-panel" *ngIf="(mobileSortOpen$ | async)">
+                <button class="sort-item" *ngFor="let option of sortOptions" [class.active]="(sort$ | async) === option.value" (click)="setSort(option.value)">{{ option.label }}</button>
+              </div>
+            </div>
+            <div class="view-wrap">
+              <button class="view-btn view-btn--single"
+                      (click)="toggleView()"
+                      [attr.aria-label]="(view$ | async) === 'grid' ? 'Switch to list view' : 'Switch to grid view'"
+                      [attr.aria-pressed]="(view$ | async) === 'list' ? 'true' : 'false'">
+                <mat-icon *ngIf="(view$ | async) === 'grid'">grid_view</mat-icon>
+                <mat-icon *ngIf="(view$ | async) === 'list'">list</mat-icon>
+              </button>
+            </div>
           </div>
         </div>
       </header>
