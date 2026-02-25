@@ -6,14 +6,14 @@
     <mat-icon aria-hidden="true">directions_car</mat-icon>
     <strong>Carsties</strong>
   </a>
+  <span class="spacer"></span>
   <nav class="nav__links" aria-label="Main">
-    <button mat-button [routerLink]="['/search']">Buy</button>
-    <button mat-button [routerLink]="['/sell']">Sell</button>
+    <button mat-button [routerLink]="['/search']">Search cars</button>
+    <button mat-button [routerLink]="['/sell']">Sell your car</button>
     <button mat-button [routerLink]="['/dealers']">Dealers</button>
     <button mat-button [routerLink]="['/']" fragment="reviews">Reviews</button>
   </nav>
   <span class="spacer"></span>
-  <a mat-button [routerLink]="['/sell']" class="nav__action-link">Sell your car</a>
   <div class="nav__auth">
     <ng-container *ngIf="authReady$ | async; else authLoading">
       <ng-container *ngIf="isAuthenticated$ | async; else loggedOutDesktop">
@@ -56,7 +56,7 @@
 </mat-toolbar>
 
 <mat-menu #mobileMenu="matMenu">
-  <button mat-menu-item [routerLink]="['/search']"><mat-icon>search</mat-icon> <span>Buy</span></button>
+  <button mat-menu-item [routerLink]="['/search']"><mat-icon>search</mat-icon> <span>Search cars</span></button>
   <button mat-menu-item [routerLink]="['/sell']"><mat-icon>sell</mat-icon> <span>Sell your car</span></button>
   <button mat-menu-item [routerLink]="['/dealers']"><mat-icon>store</mat-icon> <span>Dealers</span></button>
   <button mat-menu-item [routerLink]="['/']" fragment="reviews"><mat-icon>star</mat-icon> <span>Reviews</span></button>
