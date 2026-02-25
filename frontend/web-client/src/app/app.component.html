@@ -14,15 +14,6 @@
   </nav>
   <span class="spacer"></span>
   <a mat-raised-button color="warn" [routerLink]="['/sell']" class="link-sell">Sell your car</a>
-  <button
-    class="theme-toggle"
-    mat-icon-button
-    type="button"
-    (click)="toggleTheme()"
-    [attr.aria-label]="((isDarkMode$ | async) ?? false) ? 'Switch to light theme' : 'Switch to dark theme'"
-  >
-    <mat-icon aria-hidden="true">{{ ((isDarkMode$ | async) ?? false) ? 'light_mode' : 'dark_mode' }}</mat-icon>
-  </button>
   <div class="nav__auth">
     <ng-container *ngIf="authReady$ | async; else authLoading">
       <ng-container *ngIf="isAuthenticated$ | async; else loggedOutDesktop">

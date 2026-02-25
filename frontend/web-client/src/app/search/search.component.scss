@@ -172,9 +172,9 @@
 }
 
 .clear-all {
-	color: var(--mat-sys-primary);
+	color: #2c2965;
 	text-decoration: none;
-	font-weight: 700;
+	font-weight: 400;
 	font-size: 12px;
 	letter-spacing: 0.01em;
 }
@@ -298,9 +298,9 @@
 }
 
 .option-text .count {
-	color: color-mix(in srgb, var(--mat-app-text-color) 60%, transparent);
+	color: #262965;
 	font-size: 12px;
-	font-weight: 700;
+	font-weight: 500;
 }
 
 /* Range facets (Price/Year/Mileage) */
@@ -421,7 +421,7 @@
 	display: flex;
 	flex-direction: column;
 	height: 100%;
-	border-radius: 16px;
+	border-radius: 10px;
 	overflow: hidden;
 	background: color-mix(in srgb, var(--mdc-elevated-card-container-color) 96%, var(--mat-app-background-color));
 	border: 1px solid color-mix(in srgb, var(--mat-app-text-color) 10%, transparent);
@@ -539,7 +539,7 @@
 .price {
 	font-size: 20px;
 	font-weight: 700;
-	color: #747474;
+	color: #2c2965;
 }
 
 /* Bottom action bar (screenshot-like) */
@@ -548,10 +548,17 @@
 	display: grid;
 	grid-template-columns: 76px 1fr;
 	align-items: stretch;
-	height: 64px;
-	border-radius: 14px;
+	height: 48px;
+	width: calc(100% + 32px);
+	margin-left: -16px;
+	margin-right: -16px;
+	margin-bottom: -16px;
+	border-radius: 0 0 10px 10px;
 	overflow: hidden;
-	border: 1px solid color-mix(in srgb, var(--mat-app-text-color) 10%, transparent);
+	border-top: 1px solid color-mix(in srgb, var(--mat-app-text-color) 10%, transparent);
+	border-left: none;
+	border-right: none;
+	border-bottom: none;
 	background: color-mix(in srgb, var(--mat-app-background-color) 94%, transparent);
 }
 
@@ -564,7 +571,19 @@
 	cursor: pointer;
 }
 
-.fav-btn mat-icon { font-size: 30px; height: 30px; width: 30px; }
+.fav-btn mat-icon { font-size: 26px; height: 26px; width: 26px; }
+
+/* Mobile card-body padding differs, so align the full-width action bar accordingly */
+@media (max-width: 767px) {
+	.card-actions {
+		width: calc(100% + 24px);
+		margin-left: -12px;
+		margin-right: -12px;
+		margin-bottom: -12px;
+		border-radius: 0;
+	}
+	.fav-btn mat-icon { font-size: 24px; height: 24px; width: 24px; }
+}
 
 .fav-btn:hover {
 	background: color-mix(in srgb, var(--mat-app-text-color) 5%, transparent);

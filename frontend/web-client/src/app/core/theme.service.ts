@@ -10,71 +10,43 @@ const STORAGE_KEY = 'carsties-theme';
 export class ThemeService {
   private readonly themeSubject: BehaviorSubject<ThemeMode>;
   readonly isDarkMode$;
-  private prefersDarkMql?: MediaQueryList;
   private hasStoredPreference = false;
 
   constructor() {
-    const stored = (typeof window !== 'undefined')
-      ? (localStorage.getItem(STORAGE_KEY) as ThemeMode | null)
-      : null;
-
-    this.hasStoredPreference = stored === 'light' || stored === 'dark';
-
-    const initial: ThemeMode = this.hasStoredPreference
-      ? (stored as ThemeMode)
-      : this.getPreferredTheme();
+    const initial: ThemeMode = 'light';
 
     this.themeSubject = new BehaviorSubject<ThemeMode>(initial);
     this.isDarkMode$ = this.themeSubject.asObservable().pipe(map(mode => mode === 'dark'));
     this.applyTheme(initial);
 
-    // If the user hasn't explicitly chosen a theme, keep tracking OS preference.
-    if (typeof window !== 'undefined' && !this.hasStoredPreference) {
-      this.prefersDarkMql = window.matchMedia?.('(prefers-color-scheme: dark)') ?? undefined;
-      const onChange = () => {
-        if (this.hasStoredPreference) return;
-        this.setTheme(this.getPreferredTheme(), { persist: false });
-      };
-
-      // Modern + legacy event APIs.
-      try {
-        this.prefersDarkMql?.addEventListener?.('change', onChange);
-      } catch {
-        this.prefersDarkMql?.addListener?.(onChange as any);
-      }
+    // Ensure any previously stored preference can't re-enable dark mode.
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY);
     }
   }
 
   toggleTheme(): void {
-    const next: ThemeMode = this.themeSubject.value === 'dark' ? 'light' : 'dark';
-    this.setTheme(next);
+    // Theme toggle disabled: always stay in light mode.
+    this.setTheme('light', { persist: false });
   }
 
   setTheme(mode: ThemeMode, options?: { persist?: boolean }): void {
-    this.themeSubject.next(mode);
+    // Force light theme even if callers request dark.
+    const enforced: ThemeMode = 'light';
+    this.themeSubject.next(enforced);
 
     const persist = options?.persist ?? true;
     if (typeof window !== 'undefined' && persist) {
-      localStorage.setItem(STORAGE_KEY, mode);
+      localStorage.setItem(STORAGE_KEY, enforced);
       this.hasStoredPreference = true;
     }
 
-    this.applyTheme(mode);
+    this.applyTheme(enforced);
   }
 
   private applyTheme(mode: ThemeMode): void {
     if (typeof document === 'undefined') return;
     const body = document.body;
-    if (mode === 'dark') {
-      body.classList.add('dark-theme');
-    } else {
-      body.classList.remove('dark-theme');
-    }
-  }
-
-  private getPreferredTheme(): ThemeMode {
-    if (typeof window === 'undefined') return 'light';
-    const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ?? false;
-    return prefersDark ? 'dark' : 'light';
+    body.classList.remove('dark-theme');
   }
 }
